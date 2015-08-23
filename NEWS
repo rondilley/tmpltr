@@ -1,0 +1,26 @@
+Version 0.1 (September 17, 2011):
+
+* First public release.
+
+Version 0.3 (Septemeber 23, 2011):
+
+* Added support to load templates to ignore
+* Added support to write discovered templates to file
+
+Version 0.4 (November 12, 2011):
+
+* Added faux clustering to improve readability of emplate output
+* Added "greedy" parsing which ignores quotes
+
+Version 0.5 (January 17, 2012):
+
+* Added option to read from STDIN
+
+Version 0.6 (December 28, 2013):
+
+* Added IPv4, IPv6, MAC and HEX parsing
+
+Version 0.7 (January 19, 2014):
+
+* Added display of lines based on template matching
+

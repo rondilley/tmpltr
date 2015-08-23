@@ -1,0 +1,26 @@
+2011-09-17  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Initial public release.
+
+2011-09-23  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added ability to ignore templates
+	* Added ability to save templates
+
+2011-11-12  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added clustering
+	* Added option to ignore double quotes
+
+2012-01-17  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added stdin option '-'
+	
+2013-12-28  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added IPv4, HEX and IPv6 fields
+      
+2014-01-19  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added ability to search for and display lines that match templates
+
