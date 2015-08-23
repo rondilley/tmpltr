@@ -1,5 +1,4 @@
-.\"$Id: tmpltr.1.in,v 1.5 2012/01/18 06:47:21 rdilley Exp $\"
-.TH TMPLTR 1  "15 January 2012" "tmpltr @VERSION@" "tmpltr @VERSION@"
+.TH TMPLTR 1  "23 August 2015" "tmpltr @VERSION@" "tmpltr @VERSION@"
 .SH NAME
 tmpltr \- High speed log template generator..
 .SH SYNOPSIS
