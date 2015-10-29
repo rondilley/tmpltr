@@ -126,7 +126,7 @@ char *clusterTemplate( char *template, metaData_t *md, char *oBuf, int bufSize )
 
 int printTemplate( const struct hashRec_s *hashRec ) {
   metaData_t *tmpMd;
-  struct Fields_s **curFieldPtr, *tmpFieldPtr;
+  struct Fields_s *curFieldPtr, *tmpFieldPtr;
   char oBuf[4096];
 
 #ifdef DEBUG
@@ -151,13 +151,13 @@ int printTemplate( const struct hashRec_s *hashRec ) {
     /* cleanup after clustering */
     if ( config->cluster ) {
       if ( tmpMd != NULL )
-        curFieldPtr = &tmpMd->head;
+        curFieldPtr = tmpMd->head;
       else
         curFieldPtr = NULL;
     
-      while( *curFieldPtr != NULL ) {
-        tmpFieldPtr = *curFieldPtr;
-        curFieldPtr = &(*curFieldPtr)->next;
+      while( curFieldPtr != NULL ) {
+        tmpFieldPtr = curFieldPtr;
+        curFieldPtr = curFieldPtr->next;
         destroyBinTree( tmpFieldPtr->head );
         XFREE( tmpFieldPtr );
       }
