@@ -139,7 +139,7 @@ int loadMatchTemplates( char *fName ) {
   if ( config->debug >= 6 ) {
 	  struct templateMatchList_s *matchPtr = matchTemplates;
 
-	printf( "DEBUG - matchPtr: 0x%08x", matchPtr );
+	printf( "DEBUG - matchPtr: 0x%08lx", (unsigned long)matchPtr );
 	
 	  /* search templates for match */
 	  while( matchPtr != NULL ) {

@@ -119,7 +119,7 @@ int display( int level, char *format, ... ) {
 
   if ( config->mode != MODE_INTERACTIVE ) {
     /* display info via syslog */
-    syslog( level, tmp_buf );
+    syslog( level, "%s", tmp_buf );
   } else {
     if ( level <= LOG_ERR ) {
       /* display info via stderr */
@@ -213,17 +213,20 @@ int is_dir_safe( const char *dir ) {
   if ( !new_dir[1] ) rc = 1;
 
 #ifdef LINUX
-  fchdir( dirfd( start ) );
+  if ( fchdir( dirfd( start ) ) EQ FAILED ) {
 #elif MACOS
-  fchdir( start->__dd_fd );
+  if ( fchdir( start->__dd_fd ) EQ FAILED ) {
 #elif CYGWIN
-  fchdir( start->__d_fd );
+  if ( fchdir( start->__d_fd ) EQ FAILED ) {
 #elif OPENBSD
-  fchdir( dirfd( start ) );
+  if ( fchdir( dirfd( start ) ) EQ FAILED ) {
 #else
-  fchdir( start->dd_fd );
+  if ( fchdir( start->dd_fd ) EQ FAILED ) {
 #endif
-
+    closedir ( start );
+    return( FAILED );
+  }
+  
   closedir( start );
   return rc;
 }

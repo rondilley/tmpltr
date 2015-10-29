@@ -126,7 +126,7 @@ char *clusterTemplate( char *template, metaData_t *md, char *oBuf, int bufSize )
 
 int printTemplate( const struct hashRec_s *hashRec ) {
   metaData_t *tmpMd;
-  struct Fields_s *curFieldPtr, *tmpFieldPtr;
+  struct Fields_s **curFieldPtr, *tmpFieldPtr;
   char oBuf[4096];
 
 #ifdef DEBUG
@@ -139,6 +139,7 @@ int printTemplate( const struct hashRec_s *hashRec ) {
     /* save template if -w was used */
     if ( config->outFile_st != NULL )
       fprintf( config->outFile_st, "%s\n", hashRec->keyString );
+    
     if ( config->cluster ) {
       if ( tmpMd->count > 1 )
 	printf( "%12lu %s||%s", tmpMd->count, clusterTemplate( hashRec->keyString, tmpMd, oBuf, sizeof( oBuf ) ), tmpMd->lBuf );
@@ -146,19 +147,23 @@ int printTemplate( const struct hashRec_s *hashRec ) {
 	printf( "%12lu %s\n", tmpMd->count, clusterTemplate( hashRec->keyString, tmpMd, oBuf, sizeof( oBuf ) ) );
     } else
       printf( "%12lu %s||%s", tmpMd->count, hashRec->keyString, tmpMd->lBuf );
-  }
 
-  /* cleanup after clustering */
-  if ( config->cluster ) {
-    curFieldPtr = tmpMd->head;
-    while( curFieldPtr != NULL ) {
-      tmpFieldPtr = curFieldPtr;
-      curFieldPtr = curFieldPtr->next;
-      destroyBinTree( tmpFieldPtr->head );
-      XFREE( tmpFieldPtr );
+    /* cleanup after clustering */
+    if ( config->cluster ) {
+      if ( tmpMd != NULL )
+        curFieldPtr = &tmpMd->head;
+      else
+        curFieldPtr = NULL;
+    
+      while( *curFieldPtr != NULL ) {
+        tmpFieldPtr = *curFieldPtr;
+        curFieldPtr = &(*curFieldPtr)->next;
+        destroyBinTree( tmpFieldPtr->head );
+        XFREE( tmpFieldPtr );
+      }
     }
   }
-
+  
   /* can use this later to interrupt traversing the hash */
   if ( quit )
     return( TRUE );

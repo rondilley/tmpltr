@@ -185,6 +185,8 @@ AC_CHECK_FUNCS([fopen64])
 AC_CHECK_FUNCS([strerror])
 AC_CHECK_FUNCS([strstr])
 AC_CHECK_FUNCS([strtol])
+AC_CHECK_FUNCS([strncat])
+AC_CHECK_FUNCS([strlcat])
 AC_CHECK_FUNC(gethostbyname, , AC_CHECK_LIB(nsl, gethostbyname))
 AC_CHECK_FUNC(socket, , AC_CHECK_LIB(socket, socket))
 AC_FUNC_CLOSEDIR_VOID
