@@ -1,15 +1,17 @@
 #!/bin/sh
 #
-# $Id: bootstrap,v 1.5 2014/01/19 12:25:48 rdilley Exp $
-#
 # desc: simple script to run all auto commands
 #
 ####
 
+# defines needed for OpenBSD
 AUTOMAKE_VERSION=1.15;export AUTOMAKE_VERSION
 AUTOCONF_VERSION=2.69;export AUTOCONF_VERSION
 
-echo "tmpltr - bootstrap"
+if [ ! -d config ]; then
+ mkdir config
+fi
+
 aclocal
 automake --gnu --add-missing
 autoheader

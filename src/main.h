@@ -52,7 +52,6 @@
 #include <common.h>
 #include "util.h"
 #include "mem.h"
-#include "getopt.h"
 #include "tmpltr.h"
 #include "match.h"
 
