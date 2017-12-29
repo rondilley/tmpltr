@@ -43,6 +43,7 @@
 #include "util.h"
 #include "mem.h"
 #include "hash.h"
+#include "tmpltr.h"
 
 /****
  *

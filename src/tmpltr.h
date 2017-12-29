@@ -48,10 +48,10 @@
 #endif
 
 #include <common.h>
+#include "hash.h"
 #include "util.h"
 #include "mem.h"
 #include "parser.h"
-#include "hash.h"
 #include "bintree.h"
 #include "match.h"
 
