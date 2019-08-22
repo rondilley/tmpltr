@@ -269,7 +269,7 @@ int processFile( const char *fName ) {
 	  printf( "%s", inBuf );
       } else {
 	/* load it into the hash */
-	if ( ( tmpRec = getHashRecord( templateHash, oBuf ) ) EQ NULL ) { /* new template */
+	if ( ( tmpRec = getHashRecord( templateHash, oBuf, strlen(oBuf)+1 ) ) EQ NULL ) { /* new template */
 
 #ifdef DEBUG
 	  if ( config->debug >= 3 )
@@ -292,7 +292,7 @@ int processFile( const char *fName ) {
 
 		/* we don't know if the field is variable */
 		/* only chain based on certain field types */
-		/* XXX need to expant field types that can be chained */
+		/* XXX need to expand field types that can be chained */
 		if ( ( inBuf[0] EQ 'i' ) | ( inBuf[0] EQ 'I' ) | ( inBuf[0] EQ 'm' ) ) {
 		    
 #ifdef DEBUG
@@ -323,7 +323,7 @@ int processFile( const char *fName ) {
 	  }
 
 	  /* stuff the new record into the hash */
-	  addUniqueHashRec( templateHash, oBuf, strlen( oBuf ), tmpMd );
+	  addUniqueHashRec( templateHash, oBuf, strlen(oBuf)+1, tmpMd );
 
 	} else {
 

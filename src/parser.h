@@ -74,8 +74,8 @@
 
 #define PARSER_MIN_FIELD_LEN 0
 
-#define MAX_FIELD_POS 1024
-#define MAX_FIELD_LEN 2048
+#define MAX_FIELD_POS 2048
+#define MAX_FIELD_LEN 8192
 
 /****
  *
