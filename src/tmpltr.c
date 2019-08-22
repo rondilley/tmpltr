@@ -483,7 +483,7 @@ int loadTemplateFile( const char *fName ) {
 #endif
 
       count++;
-      addUniqueHashRec( templateHash, inBuf, strlen( inBuf ), NULL );
+      addUniqueHashRec( templateHash, inBuf, strlen( inBuf )+1, NULL );
     }
   }
 
