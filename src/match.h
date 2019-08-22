@@ -30,13 +30,13 @@
  ****/
 
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+#include <config.h>
 #endif
 
 #include <sysdep.h>
 
 #ifndef __SYSDEP_H__
-# error something is messed up
+#error something is messed up
 #endif
 
 #include <common.h>
@@ -51,14 +51,14 @@
  *
  ****/
 
-
 /****
  *
  * typdefs & structs
  *
  ****/
 
-struct templateMatchList_s {
+struct templateMatchList_s
+{
   char *template;
   int len;
   int count;
@@ -71,12 +71,11 @@ struct templateMatchList_s {
  *
  ****/
 
-int addMatchTemplate( char *template );
-int loadMatchTemplates( char *fName );
-int addMatchLine( char *line );
-int loadMatchLines( char *fName );
-int templateMatches( char *template );
-void cleanMatchList( void );
+int addMatchTemplate(char *template);
+int loadMatchTemplates(char *fName);
+int addMatchLine(char *line);
+int loadMatchLines(char *fName);
+int templateMatches(char *template);
+void cleanMatchList(void);
 
 #endif /* end of MATCH_DOT_H */
-

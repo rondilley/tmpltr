@@ -68,7 +68,8 @@
  *
  ****/
 
-struct Mem_s {
+struct Mem_s
+{
   void *buf_ptr;
   unsigned int buf_size;
   int status;

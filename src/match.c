@@ -62,28 +62,31 @@ extern Config_t *config;
  *
  ****/
 
-int addMatchTemplate( char *template ) {
-  int templateLen = strlen( template );
+int addMatchTemplate(char *template)
+{
+  int templateLen = strlen(template);
   struct templateMatchList_s *head = matchTemplates;
-  struct templateMatchList_s *tmpMatch = XMALLOC( sizeof( struct templateMatchList_s ) );
+  struct templateMatchList_s *tmpMatch = XMALLOC(sizeof(struct templateMatchList_s));
 
-  fprintf( stderr, "Adding template to search list [%s]\n", template );
+  fprintf(stderr, "Adding template to search list [%s]\n", template);
 
-  XMEMSET( tmpMatch, 0, sizeof( struct templateMatchList_s ) );
-  if ( templateLen > MAX_FIELD_LEN ) {
-    fprintf( stderr, "ERR - Match template too long\n" );
-    XFREE( tmpMatch );
+  XMEMSET(tmpMatch, 0, sizeof(struct templateMatchList_s));
+  if (templateLen > MAX_FIELD_LEN)
+  {
+    fprintf(stderr, "ERR - Match template too long\n");
+    XFREE(tmpMatch);
     return FALSE;
   }
-  tmpMatch->template = XMALLOC( templateLen + 1 );
-  XMEMSET( tmpMatch->template, 0, templateLen + 1 );
-  XMEMCPY( tmpMatch->template, template, templateLen );
+  tmpMatch->template = XMALLOC(templateLen + 1);
+  XMEMSET(tmpMatch->template, 0, templateLen + 1);
+  XMEMCPY(tmpMatch->template, template, templateLen);
   tmpMatch->len = templateLen;
 
-  if ( head EQ NULL )
+  if (head EQ NULL)
     head = tmpMatch;
-  else {
-    while( head->next != NULL )
+  else
+  {
+    while (head->next != NULL)
       head = head->next;
     head->next = tmpMatch;
   }
@@ -96,63 +99,71 @@ int addMatchTemplate( char *template ) {
  *
  ****/
 
-int loadMatchTemplates( char *fName ) {
+int loadMatchTemplates(char *fName)
+{
   FILE *inFile;
   char inBuf[8192];
   size_t count = 0;
   int lLen, i;
 
 #ifdef DEBUG
-  if ( config->debug >= 1 )
-    printf( "DEBUG - Loading match template file [%s]\n", fName );
+  if (config->debug >= 1)
+    printf("DEBUG - Loading match template file [%s]\n", fName);
 #endif
 
-  if ( ( inFile = fopen( fName, "r" ) ) EQ NULL ) {
-    fprintf( stderr, "ERR - Unable to open match template file [%s]\n", fName );
-    return( FAILED );
+  if ((inFile = fopen(fName, "r")) EQ NULL)
+  {
+    fprintf(stderr, "ERR - Unable to open match template file [%s]\n", fName);
+    return (FAILED);
   }
 
-  while( fgets( inBuf, sizeof( inBuf ), inFile ) != NULL ) {
-    if ( inBuf[0] != '#' ) {
+  while (fgets(inBuf, sizeof(inBuf), inFile) != NULL)
+  {
+    if (inBuf[0] != '#')
+    {
       /* strip of <CR> or <LF> */
-      lLen = strlen( inBuf );
-      for( i = 0; i < lLen; i++ ) {
-	if ( inBuf[i] EQ '\n' | inBuf[i] EQ '\r' ) {
-	  inBuf[i] = '\0';
-	  i = lLen;
-	}
+      lLen = strlen(inBuf);
+      for (i = 0; i < lLen; i++)
+      {
+        if (inBuf[i] EQ '\n' | inBuf[i] EQ '\r')
+        {
+          inBuf[i] = '\0';
+          i = lLen;
+        }
       }
 
 #ifdef DEBUG
-      if ( config->debug >= 3 )
-	printf( "DEBUG - Loading match template [%s]\n", inBuf );
+      if (config->debug >= 3)
+        printf("DEBUG - Loading match template [%s]\n", inBuf);
 #endif
 
       count++;
-      addMatchTemplate( inBuf );
+      addMatchTemplate(inBuf);
     }
   }
 
-  fclose( inFile );
+  fclose(inFile);
 
 #ifdef DEBUG
-  if ( config->debug >= 6 ) {
-	  struct templateMatchList_s *matchPtr = matchTemplates;
+  if (config->debug >= 6)
+  {
+    struct templateMatchList_s *matchPtr = matchTemplates;
 
-	printf( "DEBUG - matchPtr: 0x%08lx", (unsigned long)matchPtr );
-	
-	  /* search templates for match */
-	  while( matchPtr != NULL ) {
-	      printf( "DEBUG - Loaded [%s]\n", matchPtr->template );
-	    matchPtr = matchPtr->next;
-	  }
-	}
-	
-  if ( config->debug >= 1 )
-    printf( "DEBUG - Loaded [%lu] match templates\n", count );
+    printf("DEBUG - matchPtr: 0x%08lx", (unsigned long)matchPtr);
+
+    /* search templates for match */
+    while (matchPtr != NULL)
+    {
+      printf("DEBUG - Loaded [%s]\n", matchPtr->template);
+      matchPtr = matchPtr->next;
+    }
+  }
+
+  if (config->debug >= 1)
+    printf("DEBUG - Loaded [%lu] match templates\n", count);
 #endif
 
-  return( EXIT_SUCCESS );
+  return (EXIT_SUCCESS);
 }
 
 /****
@@ -161,12 +172,14 @@ int loadMatchTemplates( char *fName ) {
  *
  ****/
 
-int addMatchLine( char *line ) {
+int addMatchLine(char *line)
+{
   char oBuf[4096];
 
-  if ( parseLine( line ) > 0 ) {
-    getParsedField( oBuf, sizeof( oBuf ), 0 );
-    addMatchTemplate( oBuf );
+  if (parseLine(line) > 0)
+  {
+    getParsedField(oBuf, sizeof(oBuf), 0);
+    addMatchTemplate(oBuf);
     return TRUE;
   }
 
@@ -179,52 +192,57 @@ int addMatchLine( char *line ) {
  *
  ****/
 
-int loadMatchLines( char *fName ) {
+int loadMatchLines(char *fName)
+{
   FILE *inFile;
   char inBuf[8192];
   size_t count = 0;
   int lLen, i;
 
 #ifdef DEBUG
-  if ( config->debug >= 1 )
-    printf( "DEBUG - Loading match line file [%s]\n", fName );
+  if (config->debug >= 1)
+    printf("DEBUG - Loading match line file [%s]\n", fName);
 #endif
 
-  if ( ( inFile = fopen( fName, "r" ) ) EQ NULL ) {
-    fprintf( stderr, "ERR - Unable to open match line file [%s]\n", fName );
-    return( FAILED );
+  if ((inFile = fopen(fName, "r")) EQ NULL)
+  {
+    fprintf(stderr, "ERR - Unable to open match line file [%s]\n", fName);
+    return (FAILED);
   }
 
-  while( fgets( inBuf, sizeof( inBuf ), inFile ) != NULL ) {
-    if ( inBuf[0] != '#' ) {
+  while (fgets(inBuf, sizeof(inBuf), inFile) != NULL)
+  {
+    if (inBuf[0] != '#')
+    {
       /* strip of <CR> */
-      lLen = strlen( inBuf );
-      for( i = 0; i < lLen; i++ ) {
-	if ( inBuf[i] EQ '\n' ) {
-	  inBuf[i] = '\0';
-	  i = lLen;
-	}
+      lLen = strlen(inBuf);
+      for (i = 0; i < lLen; i++)
+      {
+        if (inBuf[i] EQ '\n')
+        {
+          inBuf[i] = '\0';
+          i = lLen;
+        }
       }
 
-      
 #ifdef DEBUG
-      if ( config->debug >= 3 )
-	printf( "DEBUG - Loading match line [%s]\n", inBuf );
+      if (config->debug >= 3)
+        printf("DEBUG - Loading match line [%s]\n", inBuf);
 #endif
 
       count++;
-      addMatchLine( inBuf );
+      addMatchLine(inBuf);
     }
   }
 
-  fclose( inFile );
+  fclose(inFile);
 
 #ifdef DEBUG
-  if ( config->debug >= 1 )
-    printf( "DEBUG - Loaded [%lu] match lines\n", count );
+  if (config->debug >= 1)
+    printf("DEBUG - Loaded [%lu] match lines\n", count);
 #endif
 
-  return( TRUE );
+  return (TRUE);
 }
 
 /****
@@ -233,23 +251,26 @@ int loadMatchLines( char *fName ) {
  *
  ****/
 
-int templateMatches( char *template ) {
+int templateMatches(char *template)
+{
   int i, match = TRUE;
-  int templateLen = strlen( template );
+  int templateLen = strlen(template);
   struct templateMatchList_s *matchPtr = matchTemplates;
 
   /* search templates for match */
-  while( matchPtr != NULL ) {
+  while (matchPtr != NULL)
+  {
 #ifdef DEBUG
-    if ( config->debug >= 3 )
-      printf( "DEBUG - Compairing [%s] to [%s]\n", template, matchPtr->template );
+    if (config->debug >= 3)
+      printf("DEBUG - Compairing [%s] to [%s]\n", template, matchPtr->template);
 #endif
-    if ( matchPtr->len EQ templateLen ) {
-      for( i = templateLen; match EQ TRUE && i >= 0; i-- )
-	if ( template[i] != matchPtr->template[i] )
-	  match = FALSE;
-      if ( match EQ TRUE )
-	return TRUE;
+    if (matchPtr->len EQ templateLen)
+    {
+      for (i = templateLen; match EQ TRUE && i >= 0; i--)
+        if (template[i] != matchPtr->template[i])
+          match = FALSE;
+      if (match EQ TRUE)
+        return TRUE;
     }
     matchPtr = matchPtr->next;
     match = TRUE;
@@ -266,14 +287,16 @@ int templateMatches( char *template ) {
  *
  ****/
 
-void cleanMatchList( void ) {
+void cleanMatchList(void)
+{
   struct templateMatchList_s *matchPtr;
 
-  while( matchTemplates != NULL ) {
+  while (matchTemplates != NULL)
+  {
     matchPtr = matchTemplates;
-    if ( matchPtr->template != NULL )
-      XFREE( matchPtr->template );
+    if (matchPtr->template != NULL)
+      XFREE(matchPtr->template);
     matchTemplates = matchTemplates->next;
-    XFREE( matchPtr );
+    XFREE(matchPtr);
   }
 }

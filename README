@@ -49,18 +49,23 @@ To get a list of all the options, you can execute the
 command with the -h or --help switch.
 
 ----
-tmpltr v0.6 [Dec 28 2013 - 15:55:46]
+tmpltr v0.8 [Aug 21 2019 - 17:58:45]
 
 syntax: tmpltr [options] filename [filename ...]
- -c|--cluster          show invariable fields in output
- -d|--debug (0-9)      enable debugging info
- -g|--greedy           ignore quotes
- -h|--help             this info
- -n|--cnum {num}       Max cluster args [default: 1]
- -t|--templates {file} load templates to ignore
- -v|--version          display version information
- -w|--write {file}     save templates to file
- filename              one or more files to process, use '-' to read from stdin
+ -C|--chain             show related log lines
+ -c|--cluster           show invariable fields in output
+ -d|--debug (0-9)       enable debugging info
+ -g|--greedy            ignore quotes
+ -h|--help              this info
+ -l|--line {line}       show all lines that match template of {line}
+ -L|--linefile {fname}  show all the lines that match templates of lines in {fname}
+ -m|--match {template}  show all lines that match {template}
+ -M|--matchfile {fname} show all the lines that match templates in {fname}
+ -n|--cnum {num}        max cluster args [default: 1]
+ -t|--templates {file}  load templates to ignore
+ -v|--version           display version information
+ -w|--write {file}      save templates to file
+ filename               one or more files to process, use '-' to read from stdin
 
 The debug option is most useful when the tool is compiled
 with the --ENABLE-DEBUG switch.

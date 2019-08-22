@@ -62,7 +62,8 @@ extern Config_t *config;
  *
  ****/
 
-void initParser(void) {
+void initParser(void)
+{
   /* make sure the field list of clean */
   XMEMSET(fields, 0, sizeof(char *) * MAX_FIELD_POS);
 
@@ -75,7 +76,8 @@ void initParser(void) {
  *
  ****/
 
-void deInitParser(void) {
+void deInitParser(void)
+{
   int i;
 
   for (i = 0; i < MAX_FIELD_POS; i++)
@@ -92,7 +94,8 @@ void deInitParser(void) {
  *
  ****/
 
-int parseLine(char *line) {
+int parseLine(char *line)
+{
   int curFormPos = 0;
   int curLinePos = 0;
   int startOfField, startOfOctet;
@@ -113,30 +116,38 @@ int parseLine(char *line) {
   int inQuotes = FALSE;
   char fieldTypeChar;
 
-  if (fields[fieldPos] EQ NULL) {
-    if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL) {
+  if (fields[fieldPos] EQ NULL)
+  {
+    if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL)
+    {
       display(LOG_ERR, "Unable to allocate memory for string");
       return (0);
     }
   }
   fieldPos++;
 
-  while (line[curLinePos] != '\0') {
+  while (line[curLinePos] != '\0')
+  {
 
-    if (runLen >= MAX_FIELD_LEN) {
+    if (runLen >= MAX_FIELD_LEN)
+    {
 
       fprintf(stderr, "ERR - Field is too long\n");
       return (fieldPos - 1);
-
-    } else if (fieldPos >= MAX_FIELD_POS) {
+    }
+    else if (fieldPos >= MAX_FIELD_POS)
+    {
 
       fprintf(stderr, "ERR - Too many fields in line\n");
       return (fieldPos - 1);
+    }
+    else if (curFieldType EQ FIELD_TYPE_EXTRACT)
+    {
 
-    } else if (curFieldType EQ FIELD_TYPE_EXTRACT) {
-
-      if (fields[fieldPos] EQ NULL) {
-        if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL) {
+      if (fields[fieldPos] EQ NULL)
+      {
+        if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL)
+        {
           fprintf(stderr, "ERR - Unable to allocate memory for string\n");
           return (fieldPos - 1);
         }
@@ -146,8 +157,10 @@ int parseLine(char *line) {
       XMEMCPY(fields[fieldPos] + 1, line + startOfField, runLen);
 
 #ifdef DEBUG
-      if (config->debug >= 5) {
-        switch (fieldTypeChar) {
+      if (config->debug >= 5)
+      {
+        switch (fieldTypeChar)
+        {
         case 's':
           printf("DEBUG - Extracted string [%s]\n", fields[fieldPos] + 1);
           break;
@@ -178,7 +191,8 @@ int parseLine(char *line) {
 #endif
 
       /* update template */
-      if (templatePos > (MAX_FIELD_LEN - 3)) {
+      if (templatePos > (MAX_FIELD_LEN - 3))
+      {
         fprintf(stderr, "ERR - Template is too long\n");
         return (fieldPos - 1);
       }
@@ -189,8 +203,9 @@ int parseLine(char *line) {
 
       /* switch field state */
       curFieldType = FIELD_TYPE_UNDEF;
-
-    } else if (curFieldType EQ FIELD_TYPE_STRING) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_STRING)
+    {
 
       /****
        *
@@ -198,7 +213,8 @@ int parseLine(char *line) {
        *
        ****/
 
-      if (isalnum(line[curLinePos])) {
+      if (isalnum(line[curLinePos]))
+      {
 
         /****
          *
@@ -208,20 +224,22 @@ int parseLine(char *line) {
 
         runLen++;
         curLinePos++;
-      } else if ((line[curLinePos] EQ '.') |
-                 ((inQuotes) && (line[curLinePos] EQ ',')) |
-                 (line[curLinePos] EQ '-') |
-                 ((inQuotes) && (line[curLinePos] EQ ':')) |
-                 ((inQuotes) && (line[curLinePos] EQ ';')) |
-                 ((inQuotes) && (line[curLinePos] EQ '+')) |
-                 ((inQuotes) && (line[curLinePos] EQ '!')) |
-                 ((inQuotes) && (line[curLinePos] EQ '/')) |
-                 (line[curLinePos] EQ '#') | (line[curLinePos] EQ '$') |
-                 ((inQuotes) && (line[curLinePos] EQ ' ')) |
-                 ((inQuotes) && (line[curLinePos] EQ '(')) |
-                 ((inQuotes) && (line[curLinePos] EQ ')')) |
-                 (line[curLinePos] EQ '~') | (line[curLinePos] EQ '@') |
-                 (line[curLinePos] EQ '\\') | (line[curLinePos] EQ '_')) {
+      }
+      else if ((line[curLinePos] EQ '.') |
+               ((inQuotes) && (line[curLinePos] EQ ',')) |
+               (line[curLinePos] EQ '-') |
+               ((inQuotes) && (line[curLinePos] EQ ':')) |
+               ((inQuotes) && (line[curLinePos] EQ ';')) |
+               ((inQuotes) && (line[curLinePos] EQ '+')) |
+               ((inQuotes) && (line[curLinePos] EQ '!')) |
+               ((inQuotes) && (line[curLinePos] EQ '/')) |
+               (line[curLinePos] EQ '#') | (line[curLinePos] EQ '$') |
+               ((inQuotes) && (line[curLinePos] EQ ' ')) |
+               ((inQuotes) && (line[curLinePos] EQ '(')) |
+               ((inQuotes) && (line[curLinePos] EQ ')')) |
+               (line[curLinePos] EQ '~') | (line[curLinePos] EQ '@') |
+               (line[curLinePos] EQ '\\') | (line[curLinePos] EQ '_'))
+      {
 
         /****
          *
@@ -231,8 +249,9 @@ int parseLine(char *line) {
 
         runLen++;
         curLinePos++;
-
-      } else if (line[curLinePos] EQ '%') {
+      }
+      else if (line[curLinePos] EQ '%')
+      {
 
         /****
          *
@@ -242,8 +261,9 @@ int parseLine(char *line) {
 
         runLen++;
         curLinePos++;
-
-      } else if ((line[curLinePos] EQ '\"') | (line[curLinePos] EQ '\'')) {
+      }
+      else if ((line[curLinePos] EQ '\"') | (line[curLinePos] EQ '\''))
+      {
 
         /****
          *
@@ -254,12 +274,15 @@ int parseLine(char *line) {
 
         /* check to see if it is the start or end */
 
-        if (inQuotes | config->greedy) {
+        if (inQuotes | config->greedy)
+        {
 
           /* extract string */
 
-          if (fields[fieldPos] EQ NULL) {
-            if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL) {
+          if (fields[fieldPos] EQ NULL)
+          {
+            if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL)
+            {
               fprintf(stderr, "ERR - Unable to allocate memory for string\n");
               return (fieldPos - 1);
             }
@@ -274,7 +297,8 @@ int parseLine(char *line) {
 #endif
 
           /* update template */
-          if (templatePos > (MAX_FIELD_LEN - 4)) {
+          if (templatePos > (MAX_FIELD_LEN - 4))
+          {
             fprintf(stderr, "ERR - Template is too long\n");
             return (fieldPos - 1);
           }
@@ -290,17 +314,19 @@ int parseLine(char *line) {
           runLen = 1;
           startOfField = ++curLinePos;
           inQuotes = FALSE;
-
-        } else {
+        }
+        else
+        {
 
           /* at the start */
           inQuotes = TRUE;
           runLen++;
           curLinePos++;
         }
-
-      } else if ((line[curLinePos] EQ ':') | (line[curLinePos] EQ ' ') |
-                 (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '=')) {
+      }
+      else if ((line[curLinePos] EQ ':') | (line[curLinePos] EQ ' ') |
+               (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '='))
+      {
 
         /****
          *
@@ -309,14 +335,16 @@ int parseLine(char *line) {
          *
          ****/
 
-        if (inQuotes) {
+        if (inQuotes)
+        {
 
           /* just add it to the string */
 
           runLen++;
           curLinePos++;
-
-        } else {
+        }
+        else
+        {
 
           /* treat it as a delimeter */
 
@@ -324,8 +352,9 @@ int parseLine(char *line) {
           fieldTypeChar = 's';
           curFieldType = FIELD_TYPE_EXTRACT;
         }
-
-      } else if (ispunct(line[curLinePos])) {
+      }
+      else if (ispunct(line[curLinePos]))
+      {
 
         /****
          *
@@ -333,8 +362,10 @@ int parseLine(char *line) {
          *
          ****/
 
-        if (curLinePos > 0) {
-          if ((line[curLinePos - 1] EQ ' ') | (line[curLinePos - 1] EQ '\t')) {
+        if (curLinePos > 0)
+        {
+          if ((line[curLinePos - 1] EQ ' ') | (line[curLinePos - 1] EQ '\t'))
+          {
             /* last char was a blank */
             runLen--;
           }
@@ -343,8 +374,9 @@ int parseLine(char *line) {
         /* extract field */
         fieldTypeChar = 's';
         curFieldType = FIELD_TYPE_EXTRACT;
-
-      } else if ((iscntrl(line[curLinePos])) | !(isprint(line[curLinePos]))) {
+      }
+      else if ((iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      {
 
         /****
          *
@@ -356,8 +388,9 @@ int parseLine(char *line) {
         fieldTypeChar = 's';
         curFieldType = FIELD_TYPE_EXTRACT;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_CHAR) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_CHAR)
+    {
 
       /****
        *
@@ -369,7 +402,8 @@ int parseLine(char *line) {
           (line[curLinePos] EQ '@') |
           ((inQuotes) && (line[curLinePos] EQ ' ')) |
           (line[curLinePos] EQ '\\') | (line[curLinePos] EQ ' ') |
-          (line[curLinePos] EQ '-') | (line[curLinePos] EQ ':')) {
+          (line[curLinePos] EQ '-') | (line[curLinePos] EQ ':'))
+      {
 
         /* convery char to string */
         curFieldType = FIELD_TYPE_STRING;
@@ -377,20 +411,25 @@ int parseLine(char *line) {
         curLinePos++;
 
 #ifdef HAVE_ISBLANK
-      } else if ((ispunct(line[curLinePos])) | (iscntrl(line[curLinePos])) |
-                 !(isprint(line[curLinePos])) | (isblank(line[curLinePos]))) {
+      }
+      else if ((ispunct(line[curLinePos])) | (iscntrl(line[curLinePos])) |
+               !(isprint(line[curLinePos])) | (isblank(line[curLinePos])))
+      {
 #else
-      } else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
-                 (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])) |
-                 (line[curLinePos] EQ '\t')) {
+      }
+      else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
+               (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])) |
+               (line[curLinePos] EQ '\t'))
+      {
 #endif
 
         /* extract field */
         fieldTypeChar = 'c';
         curFieldType = FIELD_TYPE_EXTRACT;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_IP4) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_IP4)
+    {
 
       /****
        *
@@ -399,48 +438,58 @@ int parseLine(char *line) {
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isdigit(line[curLinePos]) && (octetLen < 3)) {
+      if (isdigit(line[curLinePos]) && (octetLen < 3))
+      {
 
         runLen++;
         curLinePos++;
         octetLen++;
-
-      } else if ((octet < 3) && (line[curLinePos] EQ '.')) {
+      }
+      else if ((octet < 3) && (line[curLinePos] EQ '.'))
+      {
 
         if ((octetLen > 0) && (octetLen <= 3) &&
-            (atoi(line + startOfOctet) < 256)) { /* is the octet valid */
+            (atoi(line + startOfOctet) < 256))
+        { /* is the octet valid */
 
           /* convert field to IPv4 */
           runLen++;
           startOfOctet = ++curLinePos;
           octet++;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
           /* not a valid ipv4 octet */
           curFieldType = FIELD_TYPE_STRING;
           runLen++;
           curLinePos++;
         }
-
-      } else if (octet EQ 3) {
+      }
+      else if (octet EQ 3)
+      {
 
         if ((octetLen > 0) && (octetLen <= 3) &&
-            (atoi(line + startOfOctet) < 256)) { /* is the octet valid */
+            (atoi(line + startOfOctet) < 256))
+        { /* is the octet valid */
 
           /* extract field */
           fieldTypeChar = 'i';
           curFieldType = FIELD_TYPE_EXTRACT;
-
-        } else {
+        }
+        else
+        {
           /* last octec is invalid */
           curFieldType = FIELD_TYPE_STRING;
         }
-      } else {
+      }
+      else
+      {
         curFieldType = FIELD_TYPE_STRING;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_IP6) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_IP6)
+    {
 
       /****
        *
@@ -450,21 +499,25 @@ int parseLine(char *line) {
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(line[curLinePos]) && (octetLen < 4)) {
+      if (isxdigit(line[curLinePos]) && (octetLen < 4))
+      {
         runLen++;
         curLinePos++;
         octetLen++;
+      }
+      else if ((octet < 8) && (line[curLinePos] EQ ':'))
+      {
 
-      } else if ((octet < 8) && (line[curLinePos] EQ ':')) {
-
-        if ((octetLen > 0) && (octetLen <= 4)) { /* is the octet valid */
+        if ((octetLen > 0) && (octetLen <= 4))
+        { /* is the octet valid */
 
           runLen++;
           startOfOctet = ++curLinePos;
           octet++;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* not a valid ipv6 octet */
           /* XXX need to add rollback so we dont loose previous fields */
@@ -472,24 +525,30 @@ int parseLine(char *line) {
           runLen++;
           curLinePos++;
         }
+      }
+      else if (octet EQ 7)
+      {
 
-      } else if (octet EQ 7) {
-
-        if ((octetLen > 0) && (octetLen <= 4)) { /* is the octet valid */
+        if ((octetLen > 0) && (octetLen <= 4))
+        { /* is the octet valid */
 
           /* extract field */
           fieldTypeChar = 'I';
           curFieldType = FIELD_TYPE_EXTRACT;
-
-        } else {
+        }
+        else
+        {
           /* last octec is invalid */
           curFieldType = FIELD_TYPE_STRING;
         }
-      } else {
+      }
+      else
+      {
         curFieldType = FIELD_TYPE_STRING;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_MACADDR) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_MACADDR)
+    {
 
       /****
        *
@@ -498,22 +557,26 @@ int parseLine(char *line) {
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(line[curLinePos]) && (octetLen < 2)) {
+      if (isxdigit(line[curLinePos]) && (octetLen < 2))
+      {
         runLen++;
         curLinePos++;
         octetLen++;
+      }
+      else if ((octet < 5) &&
+               ((line[curLinePos] EQ ':') || line[curLinePos] EQ '-'))
+      {
 
-      } else if ((octet < 5) &&
-                 ((line[curLinePos] EQ ':') || line[curLinePos] EQ '-')) {
-
-        if (octetLen EQ 2) { /* is the octet valid */
+        if (octetLen EQ 2)
+        { /* is the octet valid */
 
           runLen++;
           startOfOctet = ++curLinePos;
           octet++;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* not a valid ipv6 octet */
           /* XXX need to add rollback so we dont loose previous fields */
@@ -521,24 +584,30 @@ int parseLine(char *line) {
           runLen++;
           curLinePos++;
         }
+      }
+      else if (octet EQ 5)
+      {
 
-      } else if (octet EQ 5) {
-
-        if (octetLen EQ 2) { /* is the octet valid */
+        if (octetLen EQ 2)
+        { /* is the octet valid */
 
           /* extract field */
           fieldTypeChar = 'm';
           curFieldType = FIELD_TYPE_EXTRACT;
-
-        } else {
+        }
+        else
+        {
           /* last octec is invalid */
           curFieldType = FIELD_TYPE_STRING;
         }
-      } else {
+      }
+      else
+      {
         curFieldType = FIELD_TYPE_STRING;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_NUM_INT) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_NUM_INT)
+    {
 
       /****
        *
@@ -547,31 +616,36 @@ int parseLine(char *line) {
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isdigit(line[curLinePos])) {
+      if (isdigit(line[curLinePos]))
+      {
 
         runLen++;
         curLinePos++;
-
-      } else if (isxdigit(line[curLinePos])) {
+      }
+      else if (isxdigit(line[curLinePos]))
+      {
 
         /* convert field to hex */
         curFieldType = FIELD_TYPE_NUM_HEX;
         runLen++;
         curLinePos++;
-
-      } else if (isalpha(line[curLinePos]) | (line[curLinePos] EQ '@') |
-                 ((inQuotes) && (line[curLinePos] EQ ' ')) |
-                 (line[curLinePos] EQ '\\')) {
+      }
+      else if (isalpha(line[curLinePos]) | (line[curLinePos] EQ '@') |
+               ((inQuotes) && (line[curLinePos] EQ ' ')) |
+               (line[curLinePos] EQ '\\'))
+      {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
         runLen++;
         curLinePos++;
-
-      } else if (line[curLinePos] EQ '.') {
+      }
+      else if (line[curLinePos] EQ '.')
+      {
 
         if ((runLen <= 3) &
             (atoi(line + startOfField) <
-             256)) { /* check to see if this is the start of an IP address */
+             256))
+        { /* check to see if this is the start of an IP address */
 
           /* convert field to IPv4 */
           curFieldType = FIELD_TYPE_IP4;
@@ -579,17 +653,20 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* extract field */
           fieldTypeChar = 'd';
           curFieldType = FIELD_TYPE_EXTRACT;
         }
+      }
+      else if (line[curLinePos] EQ ':')
+      {
 
-      } else if (line[curLinePos] EQ ':') {
-
-        if (runLen EQ 2) {
+        if (runLen EQ 2)
+        {
 
           /* convert field to MAC */
           curFieldType = FIELD_TYPE_MACADDR;
@@ -597,8 +674,9 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else if (runLen EQ 4) {
+        }
+        else if (runLen EQ 4)
+        {
 
           /* convert field to IPv6 */
           curFieldType = FIELD_TYPE_IP6;
@@ -606,17 +684,20 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* extract field */
           fieldTypeChar = 'd';
           curFieldType = FIELD_TYPE_EXTRACT;
         }
+      }
+      else if (line[curLinePos] EQ '-')
+      {
 
-      } else if (line[curLinePos] EQ '-') {
-
-        if (runLen EQ 2) {
+        if (runLen EQ 2)
+        {
 
           /* convert field to MAC */
           curFieldType = FIELD_TYPE_MACADDR;
@@ -624,8 +705,9 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* extract field */
           fieldTypeChar = 'd';
@@ -633,29 +715,35 @@ int parseLine(char *line) {
         }
 
 #ifdef HAVE_ISBLANK
-      } else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
-                 (line[curLinePos] EQ '/') | (iscntrl(line[curLinePos])) |
-                 !(isprint(line[curLinePos]))) {
+      }
+      else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
+               (line[curLinePos] EQ '/') | (iscntrl(line[curLinePos])) |
+               !(isprint(line[curLinePos])))
+      {
 #else
-      } else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
-                 (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '/') |
-                 (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos]))) {
+      }
+      else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
+               (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '/') |
+               (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      {
 #endif
 
         /* extract field */
         fieldTypeChar = 'd';
         curFieldType = FIELD_TYPE_EXTRACT;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_NUM_FLOAT) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_NUM_FLOAT)
+    {
 
       /****
        *
        * float
        *
        ****/
-
-    } else if (curFieldType EQ FIELD_TYPE_NUM_HEX) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_NUM_HEX)
+    {
 
       /****
        *
@@ -665,21 +753,25 @@ int parseLine(char *line) {
 
       /* XXX need to add code to handle hex numbers beginning with 0x */
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(line[curLinePos])) {
+      if (isxdigit(line[curLinePos]))
+      {
         runLen++;
         curLinePos++;
-
-      } else if (isalpha(line[curLinePos]) | (line[curLinePos] EQ '@') |
-                 ((inQuotes) && (line[curLinePos] EQ ' ')) |
-                 (line[curLinePos] EQ '\\')) {
+      }
+      else if (isalpha(line[curLinePos]) | (line[curLinePos] EQ '@') |
+               ((inQuotes) && (line[curLinePos] EQ ' ')) |
+               (line[curLinePos] EQ '\\'))
+      {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
         runLen++;
         curLinePos++;
+      }
+      else if (line[curLinePos] EQ ':')
+      {
 
-      } else if (line[curLinePos] EQ ':') {
-
-        if (runLen EQ 4) { /* check to see if this is the start of an IPv6
+        if (runLen EQ 4)
+        { /* check to see if this is the start of an IPv6
                               address */
 
           /* convert field to IPv4 */
@@ -688,8 +780,9 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else if (runLen EQ 2) { /* check to see if this is the start of a MAC
+        }
+        else if (runLen EQ 2)
+        { /* check to see if this is the start of a MAC
                                      address */
 
           /* convert field to MAC Address */
@@ -698,18 +791,21 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* extract field */
           fieldTypeChar = 'x';
           curFieldType = FIELD_TYPE_EXTRACT;
         }
-
-      } else if (line[curLinePos] EQ '-') {
+      }
+      else if (line[curLinePos] EQ '-')
+      {
 
         if (runLen
-                EQ 2) { /* check to see if this is the start of a MAC address */
+                EQ 2)
+        { /* check to see if this is the start of a MAC address */
 
           /* convert field to MAC Address */
           curFieldType = FIELD_TYPE_MACADDR;
@@ -717,8 +813,9 @@ int parseLine(char *line) {
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
-
-        } else {
+        }
+        else
+        {
 
           /* extract field */
           fieldTypeChar = 'x';
@@ -726,22 +823,27 @@ int parseLine(char *line) {
         }
 
 #ifdef HAVE_ISBLANK
-      } else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
-                 (line[curLinePos] EQ '/') | (line[curLinePos] EQ '.') |
-                 (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos]))) {
+      }
+      else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
+               (line[curLinePos] EQ '/') | (line[curLinePos] EQ '.') |
+               (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      {
 #else
-      } else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
-                 (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '/') |
-                 (line[curLinePos] EQ '.') | (iscntrl(line[curLinePos])) |
-                 !(isprint(line[curLinePos]))) {
+      }
+      else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
+               (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '/') |
+               (line[curLinePos] EQ '.') | (iscntrl(line[curLinePos])) |
+               !(isprint(line[curLinePos])))
+      {
 #endif
 
         /* extract field */
         fieldTypeChar = 'x';
         curFieldType = FIELD_TYPE_EXTRACT;
       }
-
-    } else if (curFieldType EQ FIELD_TYPE_STATIC) {
+    }
+    else if (curFieldType EQ FIELD_TYPE_STATIC)
+    {
 
       /****
        *
@@ -752,8 +854,9 @@ int parseLine(char *line) {
       /* this is a placeholder for figuring out how to handle multiple spaces */
 
       curFieldType = FIELD_TYPE_UNDEF;
-
-    } else {
+    }
+    else
+    {
 
       /****
        *
@@ -761,31 +864,42 @@ int parseLine(char *line) {
        *
        ****/
 
-      if (isdigit(line[curLinePos])) {
+      if (isdigit(line[curLinePos]))
+      {
         curFieldType = FIELD_TYPE_NUM_INT;
         runLen = 1;
         startOfField = curLinePos++;
-      } else if (isxdigit(line[curLinePos])) {
+      }
+      else if (isxdigit(line[curLinePos]))
+      {
         curFieldType = FIELD_TYPE_NUM_HEX;
         runLen = 1;
         startOfField = curLinePos++;
-      } else if (isalpha(line[curLinePos]) |
-                 ((inQuotes) && (line[curLinePos] EQ '/')) |
-                 (line[curLinePos] EQ '@') | (line[curLinePos] EQ '%') |
-                 (line[curLinePos] EQ '$') | (line[curLinePos] EQ '\\')) {
+      }
+      else if (isalpha(line[curLinePos]) |
+               ((inQuotes) && (line[curLinePos] EQ '/')) |
+               (line[curLinePos] EQ '@') | (line[curLinePos] EQ '%') |
+               (line[curLinePos] EQ '$') | (line[curLinePos] EQ '\\'))
+      {
         curFieldType = FIELD_TYPE_CHAR;
         runLen = 1;
         startOfField = curLinePos++;
-
-      } else if ((line[curLinePos] EQ '\"') | (line[curLinePos] EQ '\'')) {
-        if (inQuotes) {
+      }
+      else if ((line[curLinePos] EQ '\"') | (line[curLinePos] EQ '\''))
+      {
+        if (inQuotes)
+        {
           /* something is really broke */
           runLen++;
           curLinePos++;
           inQuotes = FALSE;
-        } else {
-          if (!config->greedy) {
-            if (templatePos > (MAX_FIELD_LEN - 2)) {
+        }
+        else
+        {
+          if (!config->greedy)
+          {
+            if (templatePos > (MAX_FIELD_LEN - 2))
+            {
               fprintf(stderr, "ERR - Template is too long\n");
               return (fieldPos - 1);
             }
@@ -795,9 +909,12 @@ int parseLine(char *line) {
             inQuotes = TRUE;
             runLen = 0;
             startOfField = ++curLinePos;
-          } else {
+          }
+          else
+          {
             /* printable but not alpha+num */
-            if (templatePos > (MAX_FIELD_LEN - 2)) {
+            if (templatePos > (MAX_FIELD_LEN - 2))
+            {
               fprintf(stderr, "ERR - Template is too long\n");
               return (fieldPos - 1);
             }
@@ -812,18 +929,25 @@ int parseLine(char *line) {
             startOfField = curLinePos++;
           }
         }
-      } else if ((iscntrl(line[curLinePos])) | !(isprint(line[curLinePos]))) {
+      }
+      else if ((iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      {
         /* not a valid log character, ignore it for now */
         curLinePos++;
 #ifdef HAVE_ISBLANK
-      } else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
-                 (isprint(line[curLinePos]))) {
+      }
+      else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
+               (isprint(line[curLinePos])))
+      {
 #else
-      } else if ((ispunct(line[curLinePos])) | (isprint(line[curLinePos])) |
-                 (line[curLinePos] EQ ' ') | (line[curLinePos] EQ '\t')) {
+      }
+      else if ((ispunct(line[curLinePos])) | (isprint(line[curLinePos])) |
+               (line[curLinePos] EQ ' ') | (line[curLinePos] EQ '\t'))
+      {
 #endif
         /* printable but not alpha+num */
-        if (templatePos > (MAX_FIELD_LEN - 2)) {
+        if (templatePos > (MAX_FIELD_LEN - 2))
+        {
           fprintf(stderr, "ERR - Template is too long\n");
           return (fieldPos - 1);
         }
@@ -836,7 +960,9 @@ int parseLine(char *line) {
         curFieldType = FIELD_TYPE_STATIC;
         runLen = 1;
         startOfField = curLinePos++;
-      } else {
+      }
+      else
+      {
         /* ignore it */
         curLinePos++;
       }
@@ -856,8 +982,10 @@ int parseLine(char *line) {
  *
  ****/
 
-int getParsedField(char *oBuf, int oBufLen, const unsigned int fieldNum) {
-  if ((fieldNum >= MAX_FIELD_POS) || (fields[fieldNum] EQ NULL)) {
+int getParsedField(char *oBuf, int oBufLen, const unsigned int fieldNum)
+{
+  if ((fieldNum >= MAX_FIELD_POS) || (fields[fieldNum] EQ NULL))
+  {
     fprintf(stderr, "ERR - Requested field does not exist [%d]\n", fieldNum);
     oBuf[0] = 0;
     return (FAILED);

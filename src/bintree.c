@@ -60,12 +60,14 @@ extern Config_t *config;
  *
  ****/
 
-inline void destroyBinTree( struct binTree_s *node ) {
-  if( node != 0 ) {
-    destroyBinTree( node->left );
-    destroyBinTree( node->right );
-    XFREE( node->value );
-    XFREE( node );
+inline void destroyBinTree(struct binTree_s *node)
+{
+  if (node != 0)
+  {
+    destroyBinTree(node->left);
+    destroyBinTree(node->right);
+    XFREE(node->value);
+    XFREE(node);
   }
 }
 
@@ -75,17 +77,20 @@ inline void destroyBinTree( struct binTree_s *node ) {
  *
  ****/
 
-inline void insertBinTree( struct binTree_s **node, char *value ) {
-  if ( *node EQ 0 ) {
-    *node = (struct binTree_s*)XMALLOC( sizeof( struct binTree_s ) );
-    (*node)->value = (char *)XMALLOC( strlen( value ) + 1 );
-    XSTRNCPY( (*node)->value, value, strlen( value ) );
-    (*node)->left = NULL;    
-    (*node)->right = NULL;  
-  } else if ( strcmp( value, (*node)->value ) < 0 )
-    insertBinTree( &(*node)->left, value );
-  else if ( strcmp( value, (*node)->value ) > 0 )
-    insertBinTree( &(*node)->right, value );
+inline void insertBinTree(struct binTree_s **node, char *value)
+{
+  if (*node EQ 0)
+  {
+    *node = (struct binTree_s *)XMALLOC(sizeof(struct binTree_s));
+    (*node)->value = (char *)XMALLOC(strlen(value) + 1);
+    XSTRNCPY((*node)->value, value, strlen(value));
+    (*node)->left = NULL;
+    (*node)->right = NULL;
+  }
+  else if (strcmp(value, (*node)->value) < 0)
+    insertBinTree(&(*node)->left, value);
+  else if (strcmp(value, (*node)->value) > 0)
+    insertBinTree(&(*node)->right, value);
 }
 
 /****
@@ -94,14 +99,17 @@ inline void insertBinTree( struct binTree_s **node, char *value ) {
  *
  ****/
 
-inline struct binTree_s *searchBinTree( struct binTree_s *node, char *value ) {
-  if( node != 0 ) {
-    if( strcmp( value, node->value ) EQ 0 )
+inline struct binTree_s *searchBinTree(struct binTree_s *node, char *value)
+{
+  if (node != 0)
+  {
+    if (strcmp(value, node->value) EQ 0)
       return node;
-    else if (strcmp( value, node->value ) < 0 )
-      return searchBinTree( node->left, value );
+    else if (strcmp(value, node->value) < 0)
+      return searchBinTree(node->left, value);
     else
-      return searchBinTree( node->right, value );
-  } else
+      return searchBinTree(node->right, value);
+  }
+  else
     return 0;
 }

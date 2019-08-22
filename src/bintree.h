@@ -30,13 +30,13 @@
  ****/
 
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+#include <config.h>
 #endif
 
 #include <sysdep.h>
 
 #ifndef __SYSDEP_H__
-# error something is messed up
+#error something is messed up
 #endif
 
 #include <common.h>
@@ -48,7 +48,8 @@
  *
  ****/
 
-struct binTree_s {
+struct binTree_s
+{
   char *value;
   struct binTree_s *left;
   struct binTree_s *right;
@@ -60,9 +61,8 @@ struct binTree_s {
  *
  ****/
 
-void destroyBinTree( struct binTree_s *node );
-void insertBinTree( struct binTree_s **node, char *value );
-struct binTree_s *searchBinTree( struct binTree_s *node, char *value );
+void destroyBinTree(struct binTree_s *node);
+void insertBinTree(struct binTree_s **node, char *value);
+struct binTree_s *searchBinTree(struct binTree_s *node, char *value);
 
 #endif /* end of BINTREE_DOT_H */
-

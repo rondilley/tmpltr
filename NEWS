@@ -24,3 +24,7 @@ Version 0.7 (January 19, 2014):
 
 * Added display of lines based on template matching
 
+Version 0.8 (December 29, 2018):
+
+* Added backend code to support log chains
+* Fixed minor bugs

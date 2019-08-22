@@ -30,13 +30,13 @@
  ****/
 
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+#include <config.h>
 #endif
 
 #include <sysdep.h>
 
 #ifndef __SYSDEP_H__
-# error something is messed up
+#error something is messed up
 #endif
 
 #include <common.h>
@@ -89,10 +89,9 @@
  *
  ****/
 
-void initParser( void );
-void deInitParser( void );
-int parseLine( char *line );
-int getParsedField( char *oBuf, int oBufLen, const unsigned int fieldNum );
+void initParser(void);
+void deInitParser(void);
+int parseLine(char *line);
+int getParsedField(char *oBuf, int oBufLen, const unsigned int fieldNum);
 
 #endif /* end of PARSER_DOT_H */
-

@@ -24,3 +24,12 @@
 
 	* Added ability to search for and display lines that match templates
 
+2018-12-29  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added backend code to support log chains
+	* Fixed minor bugs
+
+2019-08-21  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Updated hash code and fixed off-by-one issue for hash keys
+	

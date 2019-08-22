@@ -38,13 +38,13 @@
  ****/
 
 #ifdef HAVE_CONFIG_H
-# include <config.h>
+#include <config.h>
 #endif
 
 #include <sysdep.h>
 
 #ifndef __SYSDEP_H__
-# error something is messed up
+#error something is messed up
 #endif
 
 #include <common.h>
@@ -67,13 +67,15 @@
  *
  ****/
 
-struct Fields_s {
+struct Fields_s
+{
   int count;
   struct Fields_s *next;
   struct binTree_s *head;
 };
 
-typedef struct {
+typedef struct
+{
   char lBuf[LINEBUF_SIZE];
   size_t count;
   struct Fields_s *head;
@@ -85,11 +87,10 @@ typedef struct {
  *
  ****/
 
-int printTemplate( const struct hashRec_s *hashRec );
-int processFile( const char *fName );
-int showTemplates( void );
-int loadTemplateFile( const char *fName );
-char *clusterTemplate( char *template, metaData_t *md, char *oBuf, int bufSize );
+int printTemplate(const struct hashRec_s *hashRec);
+int processFile(const char *fName);
+int showTemplates(void);
+int loadTemplateFile(const char *fName);
+char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize);
 
 #endif /* TMPLTR_DOT_H */
-
