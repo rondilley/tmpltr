@@ -115,6 +115,7 @@ int parseLine(char *line)
   int tmpNum = 0;
   int inQuotes = FALSE;
   char fieldTypeChar;
+  char curChar = line[0];
 
   if (fields[fieldPos] EQ NULL)
   {
@@ -126,7 +127,7 @@ int parseLine(char *line)
   }
   fieldPos++;
 
-  while (line[curLinePos] != '\0')
+  while (curChar != '\0')
   {
 
     if (runLen >= MAX_FIELD_LEN)
@@ -156,7 +157,7 @@ int parseLine(char *line)
       fields[fieldPos][0] = fieldTypeChar;
       XMEMCPY(fields[fieldPos] + 1, line + startOfField, runLen);
 
-#ifdef DEBUG
+      #ifdef DEBUG
       if (config->debug >= 5)
       {
         switch (fieldTypeChar)
@@ -188,7 +189,7 @@ int parseLine(char *line)
           break;
         }
       }
-#endif
+      #endif
 
       /* update template */
       if (templatePos > (MAX_FIELD_LEN - 3))
@@ -213,7 +214,7 @@ int parseLine(char *line)
        *
        ****/
 
-      if (isalnum(line[curLinePos]))
+      if (isalnum(curChar))
       {
 
         /****
@@ -225,20 +226,28 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if ((line[curLinePos] EQ '.') |
-               ((inQuotes) && (line[curLinePos] EQ ',')) |
-               (line[curLinePos] EQ '-') |
-               ((inQuotes) && (line[curLinePos] EQ ':')) |
-               ((inQuotes) && (line[curLinePos] EQ ';')) |
-               ((inQuotes) && (line[curLinePos] EQ '+')) |
-               ((inQuotes) && (line[curLinePos] EQ '!')) |
-               ((inQuotes) && (line[curLinePos] EQ '/')) |
-               (line[curLinePos] EQ '#') | (line[curLinePos] EQ '$') |
-               ((inQuotes) && (line[curLinePos] EQ ' ')) |
-               ((inQuotes) && (line[curLinePos] EQ '(')) |
-               ((inQuotes) && (line[curLinePos] EQ ')')) |
-               (line[curLinePos] EQ '~') | (line[curLinePos] EQ '@') |
-               (line[curLinePos] EQ '\\') | (line[curLinePos] EQ '_'))
+      else if ((curChar EQ '.') |
+               (curChar EQ '-') |
+               (curChar EQ '#') |
+               (curChar EQ '$') |
+               (curChar EQ '~') |
+               (curChar EQ '@') |
+               (curChar EQ '%') |
+               (curChar EQ '_') |
+               (curChar EQ '\\'))
+      {
+        runLen++;
+        curLinePos++;
+      }
+      else if ((inQuotes) && ((curChar EQ ',') |
+               (curChar EQ ':') |
+               (curChar EQ ';') |
+               (curChar EQ '+') |
+               (curChar EQ '!') |
+               (curChar EQ '/') |
+               (curChar EQ ' ') |
+               (curChar EQ '(') |
+               (curChar EQ ')')))
       {
 
         /****
@@ -250,19 +259,7 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (line[curLinePos] EQ '%')
-      {
-
-        /****
-         *
-         * add some printable characters to the string
-         *
-         ****/
-
-        runLen++;
-        curLinePos++;
-      }
-      else if ((line[curLinePos] EQ '\"') | (line[curLinePos] EQ '\''))
+      else if ((curChar EQ '\"') | (curChar EQ '\''))
       {
 
         /****
@@ -291,10 +288,10 @@ int parseLine(char *line)
           fields[fieldPos][0] = 's';
           XMEMCPY(fields[fieldPos] + 1, line + startOfField, runLen);
 
-#ifdef DEBUG
+          #ifdef DEBUG
           if (config->debug >= 5)
             printf("DEBUG - Extracting string [%s]\n", fields[fieldPos]);
-#endif
+          #endif
 
           /* update template */
           if (templatePos > (MAX_FIELD_LEN - 4))
@@ -304,7 +301,7 @@ int parseLine(char *line)
           }
           fields[0][templatePos++] = '%';
           fields[0][templatePos++] = 's';
-          fields[0][templatePos++] = line[curLinePos];
+          fields[0][templatePos++] = curChar;
           fields[0][templatePos] = 0;
 
           fieldPos++;
@@ -324,8 +321,8 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if ((line[curLinePos] EQ ':') | (line[curLinePos] EQ ' ') |
-               (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '='))
+      else if ((curChar EQ ':') | (curChar EQ ' ') |
+               (curChar EQ '\t') | (curChar EQ '='))
       {
 
         /****
@@ -353,7 +350,7 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
       }
-      else if (ispunct(line[curLinePos]))
+      else if (ispunct(curChar))
       {
 
         /****
@@ -375,7 +372,7 @@ int parseLine(char *line)
         fieldTypeChar = 's';
         curFieldType = FIELD_TYPE_EXTRACT;
       }
-      else if ((iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      else if ((iscntrl(curChar)) | !(isprint(curChar)))
       {
 
         /****
@@ -398,11 +395,11 @@ int parseLine(char *line)
        *
        ****/
 
-      if (isalnum(line[curLinePos]) | (line[curLinePos] EQ '/') |
-          (line[curLinePos] EQ '@') |
-          ((inQuotes) && (line[curLinePos] EQ ' ')) |
-          (line[curLinePos] EQ '\\') | (line[curLinePos] EQ ' ') |
-          (line[curLinePos] EQ '-') | (line[curLinePos] EQ ':'))
+      if (isalnum(curChar) | (curChar EQ '/') |
+          (curChar EQ '@') |
+          ((inQuotes) && (curChar EQ ' ')) |
+          (curChar EQ '\\') | (curChar EQ ' ') |
+          (curChar EQ '-') | (curChar EQ ':'))
       {
 
         /* convery char to string */
@@ -410,18 +407,18 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
 
-#ifdef HAVE_ISBLANK
+      #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(line[curLinePos])) | (iscntrl(line[curLinePos])) |
-               !(isprint(line[curLinePos])) | (isblank(line[curLinePos])))
+      else if ((ispunct(curChar)) | (iscntrl(curChar)) |
+               !(isprint(curChar)) | (isblank(curChar)))
       {
-#else
+      #else
       }
-      else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
-               (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])) |
-               (line[curLinePos] EQ '\t'))
+      else if ((ispunct(curChar)) | (curChar EQ ' ') |
+               (iscntrl(curChar)) | !(isprint(curChar)) |
+               (curChar EQ '\t'))
       {
-#endif
+      #endif
 
         /* extract field */
         fieldTypeChar = 'c';
@@ -438,14 +435,14 @@ int parseLine(char *line)
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isdigit(line[curLinePos]) && (octetLen < 3))
+      if (isdigit(curChar) && (octetLen < 3))
       {
 
         runLen++;
         curLinePos++;
         octetLen++;
       }
-      else if ((octet < 3) && (line[curLinePos] EQ '.'))
+      else if ((octet < 3) && (curChar EQ '.'))
       {
 
         if ((octetLen > 0) && (octetLen <= 3) &&
@@ -499,13 +496,13 @@ int parseLine(char *line)
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(line[curLinePos]) && (octetLen < 4))
+      if (isxdigit(curChar) && (octetLen < 4))
       {
         runLen++;
         curLinePos++;
         octetLen++;
       }
-      else if ((octet < 8) && (line[curLinePos] EQ ':'))
+      else if ((octet < 8) && (curChar EQ ':'))
       {
 
         if ((octetLen > 0) && (octetLen <= 4))
@@ -557,14 +554,14 @@ int parseLine(char *line)
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(line[curLinePos]) && (octetLen < 2))
+      if (isxdigit(curChar) && (octetLen < 2))
       {
         runLen++;
         curLinePos++;
         octetLen++;
       }
       else if ((octet < 5) &&
-               ((line[curLinePos] EQ ':') || line[curLinePos] EQ '-'))
+               ((curChar EQ ':') || curChar EQ '-'))
       {
 
         if (octetLen EQ 2)
@@ -616,13 +613,13 @@ int parseLine(char *line)
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isdigit(line[curLinePos]))
+      if (isdigit(curChar))
       {
 
         runLen++;
         curLinePos++;
       }
-      else if (isxdigit(line[curLinePos]))
+      else if (isxdigit(curChar))
       {
 
         /* convert field to hex */
@@ -630,16 +627,16 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (isalpha(line[curLinePos]) | (line[curLinePos] EQ '@') |
-               ((inQuotes) && (line[curLinePos] EQ ' ')) |
-               (line[curLinePos] EQ '\\'))
+      else if (isalpha(curChar) | (curChar EQ '@') |
+               ((inQuotes) && (curChar EQ ' ')) |
+               (curChar EQ '\\'))
       {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
         runLen++;
         curLinePos++;
       }
-      else if (line[curLinePos] EQ '.')
+      else if (curChar EQ '.')
       {
 
         if ((runLen <= 3) &
@@ -662,7 +659,7 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
       }
-      else if (line[curLinePos] EQ ':')
+      else if (curChar EQ ':')
       {
 
         if (runLen EQ 2)
@@ -693,7 +690,7 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
       }
-      else if (line[curLinePos] EQ '-')
+      else if (curChar EQ '-')
       {
 
         if (runLen EQ 2)
@@ -714,19 +711,19 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
 
-#ifdef HAVE_ISBLANK
+      #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
-               (line[curLinePos] EQ '/') | (iscntrl(line[curLinePos])) |
-               !(isprint(line[curLinePos])))
+      else if ((ispunct(curChar)) | (isblank(curChar)) |
+               (curChar EQ '/') | (iscntrl(curChar)) |
+               !(isprint(curChar)))
       {
-#else
+      #else
       }
-      else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
-               (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '/') |
-               (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      else if ((ispunct(curChar)) | (curChar EQ ' ') |
+               (curChar EQ '\t') | (curChar EQ '/') |
+               (iscntrl(curChar)) | !(isprint(curChar)))
       {
-#endif
+      #endif
 
         /* extract field */
         fieldTypeChar = 'd';
@@ -753,21 +750,21 @@ int parseLine(char *line)
 
       /* XXX need to add code to handle hex numbers beginning with 0x */
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(line[curLinePos]))
+      if (isxdigit(curChar))
       {
         runLen++;
         curLinePos++;
       }
-      else if (isalpha(line[curLinePos]) | (line[curLinePos] EQ '@') |
-               ((inQuotes) && (line[curLinePos] EQ ' ')) |
-               (line[curLinePos] EQ '\\'))
+      else if (isalpha(curChar) | (curChar EQ '@') |
+               ((inQuotes) && (curChar EQ ' ')) |
+               (curChar EQ '\\'))
       {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
         runLen++;
         curLinePos++;
       }
-      else if (line[curLinePos] EQ ':')
+      else if (curChar EQ ':')
       {
 
         if (runLen EQ 4)
@@ -800,7 +797,7 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
       }
-      else if (line[curLinePos] EQ '-')
+      else if (curChar EQ '-')
       {
 
         if (runLen
@@ -822,20 +819,20 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
 
-#ifdef HAVE_ISBLANK
+      #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
-               (line[curLinePos] EQ '/') | (line[curLinePos] EQ '.') |
-               (iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      else if ((ispunct(curChar)) | (isblank(curChar)) |
+               (curChar EQ '/') | (curChar EQ '.') |
+               (iscntrl(curChar)) | !(isprint(curChar)))
       {
-#else
+      #else
       }
-      else if ((ispunct(line[curLinePos])) | (line[curLinePos] EQ ' ') |
-               (line[curLinePos] EQ '\t') | (line[curLinePos] EQ '/') |
-               (line[curLinePos] EQ '.') | (iscntrl(line[curLinePos])) |
-               !(isprint(line[curLinePos])))
+      else if ((ispunct(curChar)) | (curChar EQ ' ') |
+               (curChar EQ '\t') | (curChar EQ '/') |
+               (curChar EQ '.') | (iscntrl(curChar)) |
+               !(isprint(curChar)))
       {
-#endif
+      #endif
 
         /* extract field */
         fieldTypeChar = 'x';
@@ -864,28 +861,28 @@ int parseLine(char *line)
        *
        ****/
 
-      if (isdigit(line[curLinePos]))
+      if (isdigit(curChar))
       {
         curFieldType = FIELD_TYPE_NUM_INT;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (isxdigit(line[curLinePos]))
+      else if (isxdigit(curChar))
       {
         curFieldType = FIELD_TYPE_NUM_HEX;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (isalpha(line[curLinePos]) |
-               ((inQuotes) && (line[curLinePos] EQ '/')) |
-               (line[curLinePos] EQ '@') | (line[curLinePos] EQ '%') |
-               (line[curLinePos] EQ '$') | (line[curLinePos] EQ '\\'))
+      else if (isalpha(curChar) |
+               ((inQuotes) && (curChar EQ '/')) |
+               (curChar EQ '@') | (curChar EQ '%') |
+               (curChar EQ '$') | (curChar EQ '\\'))
       {
         curFieldType = FIELD_TYPE_CHAR;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if ((line[curLinePos] EQ '\"') | (line[curLinePos] EQ '\''))
+      else if ((curChar EQ '\"') | (curChar EQ '\''))
       {
         if (inQuotes)
         {
@@ -903,7 +900,7 @@ int parseLine(char *line)
               fprintf(stderr, "ERR - Template is too long\n");
               return (fieldPos - 1);
             }
-            fields[0][templatePos++] = line[curLinePos];
+            fields[0][templatePos++] = curChar;
             fields[0][templatePos] = '\0';
             curFieldType = FIELD_TYPE_STRING;
             inQuotes = TRUE;
@@ -918,45 +915,45 @@ int parseLine(char *line)
               fprintf(stderr, "ERR - Template is too long\n");
               return (fieldPos - 1);
             }
-            fields[0][templatePos++] = line[curLinePos];
+            fields[0][templatePos++] = curChar;
             fields[0][templatePos] = '\0';
-#ifdef DEBUG
+            #ifdef DEBUG
             if (config->debug >= 10)
               printf("DEBUG - Updated template [%s]\n", fields[0]);
-#endif
+            #endif
             curFieldType = FIELD_TYPE_STATIC;
             runLen = 1;
             startOfField = curLinePos++;
           }
         }
       }
-      else if ((iscntrl(line[curLinePos])) | !(isprint(line[curLinePos])))
+      else if ((iscntrl(curChar)) | !(isprint(curChar)))
       {
         /* not a valid log character, ignore it for now */
         curLinePos++;
-#ifdef HAVE_ISBLANK
+      #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(line[curLinePos])) | (isblank(line[curLinePos])) |
-               (isprint(line[curLinePos])))
+      else if ((ispunct(curChar)) | (isblank(curChar)) |
+               (isprint(curChar)))
       {
-#else
+      #else
       }
-      else if ((ispunct(line[curLinePos])) | (isprint(line[curLinePos])) |
-               (line[curLinePos] EQ ' ') | (line[curLinePos] EQ '\t'))
+      else if ((ispunct(curChar)) | (isprint(curChar)) |
+               (curChar EQ ' ') | (curChar EQ '\t'))
       {
-#endif
+      #endif
         /* printable but not alpha+num */
         if (templatePos > (MAX_FIELD_LEN - 2))
         {
           fprintf(stderr, "ERR - Template is too long\n");
           return (fieldPos - 1);
         }
-        fields[0][templatePos++] = line[curLinePos];
+        fields[0][templatePos++] = curChar;
         fields[0][templatePos] = '\0';
-#ifdef DEBUG
+        #ifdef DEBUG
         if (config->debug >= 10)
           printf("DEBUG - Updated template [%s]\n", fields[0]);
-#endif
+        #endif
         curFieldType = FIELD_TYPE_STATIC;
         runLen = 1;
         startOfField = curLinePos++;
@@ -967,6 +964,7 @@ int parseLine(char *line)
         curLinePos++;
       }
     }
+    curChar = line[curLinePos];
   }
 
   /* just in case the line was 0 length */
