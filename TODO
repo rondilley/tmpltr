@@ -3,7 +3,6 @@ Templater (tmpltr) TODO list
 
 Short-term:
 -----------
-* Add additional tokens for known common patterns like dates, etc.
 * Add support for multiple threats/processes to split the load when speed is important
 
 Long-term:

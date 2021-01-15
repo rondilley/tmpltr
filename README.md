@@ -1,11 +1,10 @@
-=== Templater (tmpltr)
+# Templater (tmpltr)
 
 by Ron Dilley <ron.dilley@uberadmin.com>
 
-For the latest information on tmpltr, please see:
-http://www.uberadmin.com/Projects/tmpltr/
+You can find the latest information on tmpltr [here](http://www.uberadmin.com/Projects/tmpltr/ "Log Templater")
 
-== What is Templater (tmpltr)?
+## What is Templater (tmpltr)?
 
 Templater is a small and fast log processor that provides
 simple artificial ignorance capabilities.  You use the tool
@@ -23,9 +22,9 @@ of mine in 2003 who later built a tool called never before
 seen (NBS*) which also provides artificial ignorance for
 arbitrary text data as well as text structures.
 
-* http://www.ranum.com/security/computer_security/code/nbs.tar
+[Marcus Ranum's NBS](http://www.ranum.com/security/computer_security/code/nbs.tar "Never Before Seen")
 
-== Why use it?
+## Why use it?
 
 I built this tool to solve a log analysis problem that I have
 suffered through while responding to many security breaches.
@@ -34,7 +33,7 @@ Invariably, I need to find a needle in a haystack of log data.
 If you need to find a pattern that has not occurred previously,
 then this is the tool for you.
 
-== Implementation
+## Implementation
 
 Templater has a simple command lines interface.  In it's
 simplest form, pass a text file as an argument and the output
@@ -48,8 +47,7 @@ the unique template.
 To get a list of all the options, you can execute the
 command with the -h or --help switch.
 
-----
-tmpltr v0.9 [Jan 14 2021 - 16:56:30]
+```tmpltr v0.9 [Jan 14 2021 - 16:56:30]
 
 syntax: tmpltr [options] filename [filename ...]
  -c|--cluster           show invariable fields in output
@@ -65,10 +63,10 @@ syntax: tmpltr [options] filename [filename ...]
  -v|--version           display version information
  -w|--write {file}      save templates to file
  filename               one or more files to process, use '-' to read from stdin
+```
 
 The debug option is most useful when the tool is compiled
 with the --ENABLE-DEBUG switch.
-----
 
 A typical run of tmpltr is to pass the target log file as an
 argument and send the output through 'sort -n' to produce
@@ -78,8 +76,7 @@ frequency of occurent from least to most prevalent.
 I normally go through the list in this order to speed up
 catching the anonlylous patterns.
 
-----
-% tmpltr /var/log/secure.log | sort -n
+```% tmpltr /var/log/secure.log | sort -n
 Opening [/var/log/secure.log] for read
            1 %x %d %s %s %s[%d]:     %s : %s=%s ; %s=/%s/%s/%s/%s/%s ; %s=%s ; %s=./%s/%s/%s/%s/%s /||Dec 17 13:05:49 Rons-MacBook-Pro sudo[7974]:     root : TTY=unknown ; PWD=/private/tmp/PKInstallSandbox.WSZSYc/Scripts/com.apple.pkg.Safari6.1.1Lion.wqQJEF ; USER=rdilley ; COMMAND=./Tools/AlertAll.app/Contents/MacOS/AlertAll /
            1 %x %d %s %s %s[%d]: %s %s %s %s %s %s>%s||Dec 16 16:30:01 Rons-MacBook-Pro newsyslog[5373]: logfile turned over due to size>1000K
@@ -103,12 +100,11 @@ Opening [/var/log/secure.log] for read
          252 %x %d %s %s %s[%d]: %s %s(): %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Done cleanup3
         1197 %x %d %s --- %s %s %s %d %s ---||Dec 16 16:31:44: --- last message repeated 1 time ---
         3119 %x %d %s %s %s[%d]: %s %s %s '%s' %s %s '%s' [%d] %s %s %s %s '%s' [%d]||Dec 16 16:30:44 Rons-MacBook-Pro com.apple.SecurityServer[24]: Succeeded authorizing right 'system.preferences' by client '/System/Library/PrivateFrameworks/Admin.framework/Versions/A/Resources/writeconfig' [3274] for authorization created by '/Applications/System Preferences.app' [3268]
-----
+```
 
 If the standard templating mode is obscuring too much information, you can switch to clustering mode (-c).  This reduces the parsing speed, but allows the templates to retain all of the non-variable strings.  I normally strip off the trailing example line when running in this mode just to keep the line length more managable.  Below is an example of the same log processed with the clustering (-c) parsing option.
 
-----
-% tmpltr -c /var/log/secure.log | sort -n
+```% tmpltr -c /var/log/secure.log | sort -n
 Opening [/var/log/secure.log] for read
            1 Dec 16 16:30:01 Rons-MacBook-Pro newsyslog[5373]: logfile turned over due to size>1000K
            1 Dec 16 20:01:32 Rons-MacBook-Pro su[5799]: rdilley to root on /dev/ttys001
@@ -132,7 +128,7 @@ Opening [/var/log/secure.log] for read
          252 Dec %d %s Rons-MacBook-Pro %s[%d]: in %s(): %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Done cleanup3
         1197 Dec %d %s --- last message repeated %d %s ---||Dec 16 16:31:44: --- last message repeated 1 time ---
         3119 Dec %d %s Rons-MacBook-Pro com.apple.SecurityServer[24]: Succeeded authorizing right '%s' by client '%s' [%d] for authorization created by '%s' [%d]||Dec 16 16:30:44 Rons-MacBook-Pro com.apple.SecurityServer[24]: Succeeded authorizing right 'system.preferences' by client '/System/Library/PrivateFrameworks/Admin.framework/Versions/A/Resources/writeconfig' [3274] for authorization created by '/Applications/System Preferences.app' [3268]
-----
+```
 
 You can use the same syntax but also store copies of all
 of the unique templates by using the '-w {fname}' switch.
@@ -141,29 +137,35 @@ over written with a <CR> delimited list of the templates.
 
 The currently supported field types are as follows:
 
-----
-%c = character
-%d = number
-%f = float
-%x = hex number
-%s = string
-%i = IPv4 address (number-dot syntax)
-%I = IPv6
-%m = MAC address (IEEE 802 syntax)
-%t = time (2020-12-17 00:14:59[.000])
-----
+| Tables        | Are           | Cool  |
+| ------------- |:-------------:| -----:|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
+
+| placeholder | meaning |
+| -----------:| ------- |
+|%c | character |
+|%d | number |
+|%f | float |
+|%x | hex number |
+|%s | string |
+|%i | IPv4 address (number-dot syntax) |
+|%I | IPv6 |
+|%m | MAC address (IEEE 802 syntax) |
+|%t | time (2020-12-17 00:14:59[.000]) |
 
 The template file can be used with the '-t {fname}' switch
 to provide artificial ignorance capabilities.
 
-----
+```
 % tmpltr -w ignore.templates /var/log/kernel.log | sort -n
-----
+```
 
 After the above run of the tool, a file named ignore.templates
 is created in the current directory as shown below:
 
-----
+```
 $ cat ignore.templates
 
 %x %d %s %s %s[%d]: %s(%s) == %d
@@ -258,7 +260,7 @@ $ cat ignore.templates
 %x %d %s %s %s[%d]: %s: %s: %s %s %s
 %x %d %s %s %s[%d]: %s %s %s %s %s (%x) %d %s %s
 %x %d %s %s %s[%d]: %s %s: %x.%s %s (%s)
-----
+```
 
 You can now pass this file back into tmpltr and all
 log lines that match an existing template pattern will
@@ -273,9 +275,9 @@ choice before the detected event into tmpltr and save
 the pattern file, then run tmpltr against the log data for
 the period around when the detected event happened.
 
-----
+```
 $ ./tmpltr -t ignore.templates /var/log/system.log
-----
+```
 
 A couple of things to note about the '-w' and '-t' switches:
 
@@ -305,7 +307,7 @@ those double quotes.  You can use the greedy (-g) switch to
 ignore the double quotes and everything between them will be
 parsed the same was as all other patterns in the line.
 
-== Security Implications
+## Security Implications
 
 Assume that there are errors in the tmpltr source that
 would allow a specially crafted logs to allow an attacker
@@ -313,7 +315,7 @@ to exploit tmpltr to gain access to the computer that it is
 running on!!!  Don't trust this software and install and use
 it at your own risk.
 
-== Bugs
+## Bugs
 
 I am not a programmer by any stretch of the imagination.  I
 have attempted to remove the obvious bugs and other

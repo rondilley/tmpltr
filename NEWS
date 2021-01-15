@@ -28,3 +28,8 @@ Version 0.8 (December 29, 2018):
 
 * Added backend code to support log chains
 * Fixed minor bugs
+
+version 0.9 (January 14, 2021):
+
+* added optimizations and improved performance
+* removed log chaining stubs
