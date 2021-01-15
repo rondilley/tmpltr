@@ -47,7 +47,8 @@ the unique template.
 To get a list of all the options, you can execute the
 command with the -h or --help switch.
 
-```tmpltr v0.10 [Jan 14 2021 - 16:56:30]
+```
+tmpltr v0.10 [Jan 14 2021 - 16:56:30]
 
 syntax: tmpltr [options] filename [filename ...]
  -c|--cluster           show invariable fields in output
@@ -76,7 +77,8 @@ frequency of occurent from least to most prevalent.
 I normally go through the list in this order to speed up
 catching the anonlylous patterns.
 
-```% tmpltr /var/log/secure.log | sort -n
+```
+% tmpltr /var/log/secure.log | sort -n
 Opening [/var/log/secure.log] for read
            1 %x %d %s %s %s[%d]:     %s : %s=%s ; %s=/%s/%s/%s/%s/%s ; %s=%s ; %s=./%s/%s/%s/%s/%s /||Dec 17 13:05:49 Rons-MacBook-Pro sudo[7974]:     root : TTY=unknown ; PWD=/private/tmp/PKInstallSandbox.WSZSYc/Scripts/com.apple.pkg.Safari6.1.1Lion.wqQJEF ; USER=rdilley ; COMMAND=./Tools/AlertAll.app/Contents/MacOS/AlertAll /
            1 %x %d %s %s %s[%d]: %s %s %s %s %s %s>%s||Dec 16 16:30:01 Rons-MacBook-Pro newsyslog[5373]: logfile turned over due to size>1000K
@@ -136,12 +138,6 @@ When you do this, the file references with the switch is
 over written with a <CR> delimited list of the templates.
 
 The currently supported field types are as follows:
-
-| Tables        | Are           | Cool  |
-| ------------- |:-------------:| -----:|
-| col 3 is      | right-aligned | $1600 |
-| col 2 is      | centered      |   $12 |
-| zebra stripes | are neat      |    $1 |
 
 | placeholder | meaning |
 | -----------:| ------- |
