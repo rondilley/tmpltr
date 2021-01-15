@@ -389,23 +389,7 @@ int processFile(const char *fName)
                   XMEMSET(*curFieldPtr, 0, sizeof(struct Fields_s));
                 }
 
-                if (config->chain)
-                {
-                  if ((*curFieldPtr)->count > 1)
-                  { /* variable field */
-
-                    /* only chain based on certain field types */
-                    /* XXX need to expant field types that can be chained */
-                    if ((inBuf[0] EQ 'i') || (inBuf[0] EQ 'I') || (inBuf[0] EQ 'm'))
-                    {
-
-#ifdef DEBUG
-                      if (config->debug >= 3)
-                        printf("DEBUG - Searching chains for variable field [%s]\n", inBuf);
-#endif
-                    }
-                  }
-                }
+                /* XXX removing chain stubs and moving to a separate tool */
 
                 if ((*curFieldPtr)->count <= config->clusterDepth)
                 {
