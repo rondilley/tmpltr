@@ -15,8 +15,8 @@ current or target logs and all normal patterns are automatically
 ignored.
 
 The parser is fast and capable of processing millions of
-lines per minute.  For weblogs and firewall logs, I average
-9M lines per minute on a 2GHz x86 machine running *NIX.
+lines per minute.  For weblogs and firewall logs, it averages
+27M lines per minute on a 3GHz x86 machine running *NIX.
 
 The template strategy was originally proposed by a friend
 of mine in 2003 who later built a tool called never before
