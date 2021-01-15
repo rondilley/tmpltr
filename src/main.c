@@ -93,7 +93,6 @@ int main(int argc, char *argv[])
 #ifdef HAVE_GETOPT_LONG
     int option_index = 0;
     static struct option long_options[] = {
-        {"chain", no_argument, 0, 'C'},
         {"cluster", no_argument, 0, 'c'},
         {"greedy", no_argument, 0, 'g'},
         {"version", no_argument, 0, 'v'},
@@ -109,7 +108,7 @@ int main(int argc, char *argv[])
         {0, no_argument, 0, 0}};
     c = getopt_long(argc, argv, "vd:hn:t:w:cCgm:M:l:L:", long_options, &option_index);
 #else
-    c = getopt(argc, argv, "vd:htn::w:cCgm:M:l:L:");
+    c = getopt(argc, argv, "vd:htn::w:cgm:M:l:L:");
 #endif
 
     if (c EQ - 1)
@@ -126,12 +125,6 @@ int main(int argc, char *argv[])
     case 'c':
       /* enable argument clustering */
       config->cluster = TRUE;
-      break;
-
-    case 'C':
-      /* enable log chaining */
-      config->cluster = TRUE;
-      config->chain = TRUE;
       break;
 
     case 'd':
@@ -300,7 +293,6 @@ PRIVATE void print_help(void)
   fprintf(stderr, "syntax: %s [options] filename [filename ...]\n", PACKAGE);
 
 #ifdef HAVE_GETOPT_LONG
-  fprintf(stderr, " -C|--chain             show related log lines\n");
   fprintf(stderr, " -c|--cluster           show invariable fields in output\n");
   fprintf(stderr, " -d|--debug (0-9)       enable debugging info\n");
   fprintf(stderr, " -g|--greedy            ignore quotes\n");
@@ -315,7 +307,6 @@ PRIVATE void print_help(void)
   fprintf(stderr, " -w|--write {file}      save templates to file\n");
   fprintf(stderr, " filename               one or more files to process, use '-' to read from stdin\n");
 #else
-  fprintf(stderr, " -C            show related log lines\n");
   fprintf(stderr, " -c            show invariable fields in output\n");
   fprintf(stderr, " -d {lvl}      enable debugging info\n");
   fprintf(stderr, " -g            ignore quotes\n");

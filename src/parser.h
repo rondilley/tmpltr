@@ -40,7 +40,6 @@
 #endif
 
 #include <common.h>
-#include "chains.h"
 #include "util.h"
 #include "mem.h"
 
