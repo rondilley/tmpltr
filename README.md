@@ -47,7 +47,7 @@ the unique template.
 To get a list of all the options, you can execute the
 command with the -h or --help switch.
 
-```tmpltr v0.9 [Jan 14 2021 - 16:56:30]
+```tmpltr v0.10 [Jan 14 2021 - 16:56:30]
 
 syntax: tmpltr [options] filename [filename ...]
  -c|--cluster           show invariable fields in output
