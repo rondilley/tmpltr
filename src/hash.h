@@ -2,7 +2,7 @@
  *
  * Description: Hash Function Headers
  *
- * Copyright (c) 2009-2018, Ron Dilley
+ * Copyright (c) 2009-2020, Ron Dilley
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -49,7 +49,8 @@
  *
  ****/
 
-struct hashRec_s {
+struct hashRec_s
+{
   char *keyString;
   int keyLen;
   void *data;
@@ -61,7 +62,8 @@ struct hashRec_s {
   struct hashRec_s *next;
 };
 
-struct hash_s {
+struct hash_s
+{
   uint32_t size;
   uint32_t totalRecords;
   uint16_t maxDepth;
@@ -79,13 +81,14 @@ uint32_t calcHash(uint32_t hashSize, const char *keyString);
 void freeHash(struct hash_s *hash);
 int addHashRec(struct hash_s *hash, uint32_t key, char *keyString, void *data,
                time_t lastSeen);
-int addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen,
+struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen,
                      void *data);
+int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec);
 struct hash_s *initHash(uint32_t hashSize);
 uint32_t searchHash(struct hash_s *hash, const char *keyString);
 void updateData(struct hash_s *hash, const void *keyString, const void *data);
 void dumpHash(struct hash_s *hash);
-struct hashRec_s *getHashRecord(struct hash_s *hash, const void *keyString, int keyLen);
+struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int keyLen);
 void *getHashData(struct hash_s *hash, const void *keyString);
 struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString,
                                   int keyLen);

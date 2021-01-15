@@ -100,6 +100,7 @@ typedef struct {
   int mode;
   int facility;
   int priority;
+  int alarm_count;
   time_t current_time;
   pid_t cur_pid;
   FILE *outFile_st;

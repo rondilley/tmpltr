@@ -317,52 +317,45 @@ int processFile(const char *fName)
           tmpMd->count = 1;
           XSTRNCPY(tmpMd->lBuf, inBuf, LINEBUF_SIZE);
 
-          /* process arguments if clustering is enabled */
-          if (config->cluster)
+          /* stuff the new record into the hash before processing fields */
+          if ((tmpRec = addUniqueHashRec(templateHash, oBuf, strlen(oBuf) + 1, tmpMd)) EQ NULL)
           {
-            curFieldPtr = &tmpMd->head;
-            for (i = 1; i < ret; i++)
+            fprintf(stderr, "ERR - Unable to add hash record\n");
+          }
+          else
+          {
+            /* process arguments if clustering is enabled */
+            if (config->cluster)
             {
-              getParsedField(inBuf, sizeof(inBuf), i);
-
-              if (config->chain)
+              curFieldPtr = &tmpMd->head;
+              for (i = 1; i < ret; i++)
               {
+                getParsedField(inBuf, sizeof(inBuf), i);
 
-                /* we don't know if the field is variable */
-                /* only chain based on certain field types */
-                /* XXX need to expand field types that can be chained */
-                if ((inBuf[0] EQ 'i') | (inBuf[0] EQ 'I') | (inBuf[0] EQ 'm'))
+                /* XXX removing chain stubs and moving to a separate tool */
+#ifdef DEBUG
+                if (config->debug >= 4)
+                  printf("DEBUG - Storing argument [%s]\n", inBuf);
+#endif
+
+                if (*curFieldPtr EQ NULL)
                 {
-
-#ifdef DEBUG
-                  if (config->debug >= 3)
-                    printf("DEBUG - Searching chains for field [%s]\n", inBuf);
-#endif
+                  *curFieldPtr = (struct Fields_s *)XMALLOC(sizeof(struct Fields_s));
+                  XMEMSET(*curFieldPtr, 0, sizeof(struct Fields_s));
                 }
-              }
-
+                insertBinTree(&(*curFieldPtr)->head, inBuf);
+                (*curFieldPtr)->count = 1;
 #ifdef DEBUG
-              if (config->debug >= 4)
-                printf("DEBUG - Storing argument [%s]\n", inBuf);
+                if (config->debug)
+                  argCount++;
 #endif
-
-              if (*curFieldPtr EQ NULL)
-              {
-                *curFieldPtr = (struct Fields_s *)XMALLOC(sizeof(struct Fields_s));
-                XMEMSET(*curFieldPtr, 0, sizeof(struct Fields_s));
+                curFieldPtr = &(*curFieldPtr)->next;
               }
-              insertBinTree(&(*curFieldPtr)->head, inBuf);
-              (*curFieldPtr)->count = 1;
-#ifdef DEBUG
-              if (config->debug)
-                argCount++;
-#endif
-              curFieldPtr = &(*curFieldPtr)->next;
             }
           }
-
-          /* stuff the new record into the hash */
-          addUniqueHashRec(templateHash, oBuf, strlen(oBuf) + 1, tmpMd);
+          /* grow the hash if it is too large */
+          if (templateHash->totalRecords > templateHash->size)
+            templateHash = dyGrowHash(templateHash);
         }
         else
         {
@@ -431,7 +424,6 @@ int processFile(const char *fName)
             }
           }
         }
-        templateHash = dyGrowHash(templateHash);
       }
       lineCount++;
     }
