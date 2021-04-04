@@ -32,4 +32,8 @@
 2019-08-21  Ron Dilley <ron.dilley@uberadmin.com>
 
 	* Updated hash code and fixed off-by-one issue for hash keys
+
+2021-04-04  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Ported to FreeBSD 12.2
 	

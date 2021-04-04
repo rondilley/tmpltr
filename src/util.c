@@ -77,6 +77,10 @@ CODE prioritynames[] =
         {"warn", LOG_WARNING}, /* DEPRECATED */
         {"warning", LOG_WARNING},
         {NULL, -1}};
+#else
+#ifdef LINUX
+extern CODE prioritynames[];
+#endif
 #endif
 
 /****
@@ -86,9 +90,6 @@ CODE prioritynames[] =
  ****/
 
 extern Config_t *config;
-#ifndef SOLARIS
-extern CODE prioritynames[];
-#endif
 extern char **environ;
 
 /****
@@ -214,7 +215,9 @@ int is_dir_safe(const char *dir)
 #elif OPENBSD
     if (fstat(dirfd(fd), &f) EQ FAILED)
     {
-
+#elif FREEBSD
+    if (fstat(dirfd(fd), &f) EQ FAILED)
+    {        
 #else
     if (fstat(fd->dd_fd, &f) EQ FAILED)
     {
@@ -253,6 +256,9 @@ int is_dir_safe(const char *dir)
 #elif OPENBSD
   if (fchdir(dirfd(start)) EQ FAILED)
   {
+#elif FREEBSD
+  if (fstat(dirfd(fd), &f) EQ FAILED)
+  {     
 #else
   if (fchdir(start->dd_fd) EQ FAILED)
   {

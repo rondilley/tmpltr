@@ -38,6 +38,10 @@
 
 #ifdef HAVE_DIRENT_H
 # include <dirent.h>
+#else
+# ifdef HAVE_SYS_DIR_H
+#  include <sys/dir.h>
+# endif
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -155,10 +159,6 @@
 
 #ifdef HAVE_SYS_BITYPES_H
 # include <sys/bitypes.h>
-#endif
-
-#ifdef HAVE_SYS_DIR_H
-# include <sys/dir.h>
 #endif
 
 #ifdef HAVE_SYS_IOCTL_H

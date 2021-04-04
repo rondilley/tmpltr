@@ -31,5 +31,9 @@ Version 0.8 (December 29, 2018):
 
 version 0.9 (January 14, 2021):
 
-* added optimizations and improved performance
-* removed log chaining stubs
+* Added optimizations and improved performance
+* Removed log chaining stubs
+
+version 0.11 (April 4, 2021):
+
+* Ported to FreeBSD 12.2
