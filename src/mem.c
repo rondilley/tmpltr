@@ -144,7 +144,7 @@ void *xmalloc_(const int size, const char *filename, const int linenumber)
   bzero(d_result, sizeof(struct Mem_s));
 
 #ifdef SHOW_MEM_DEBUG
-  fprintf(stderr, "0x%08x malloc() called from %s:%d (%d bytes)\n", (int)result,
+  fprintf(stderr, "%p malloc() called from %s:%d (%d bytes)\n", result,
           filename, linenumber, size);
 #endif
 
@@ -237,9 +237,8 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
     {
       /* attempting to copy too much data into dest */
       fprintf(stderr,
-              "memcpy called with size (%d) larger than dest buffer 0x%08x "
-              "(%d) at %s:%d\n",
-              (int)d_ptr, size, dest_size, filename, linenumber);
+              "memcpy called with size (%d) larger than dest buffer %p (%d) at %s:%d\n",
+              size, d_ptr, dest_size, filename, linenumber);
       XFREE_ALL();
       exit(EXIT_FAILURE);
     }
@@ -250,9 +249,8 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
       {
         /* attempting to copy too much data from source */
         fprintf(stderr,
-                "memcpy called with size (%d) larger than source buffer 0x%08x "
-                "(%d) at %s:%d\n",
-                (int)s_ptr, size, source_size, filename, linenumber);
+                "memcpy called with size (%d) larger than source buffer %p (%d) at %s:%d\n",
+                size, s_ptr, source_size, filename, linenumber);
         XFREE_ALL();
         exit(EXIT_FAILURE);
       }
@@ -262,8 +260,8 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
       /* could not find source buffer */
 #ifdef SHOW_MEM_DEBUG
       fprintf(stderr,
-              "0x%08x could not find source buffer at %s:%d called from %s%d\n",
-              (int)s_ptr, __FILE__, __LINE__, filename, linenumber);
+              "%p could not find source buffer at %s:%d called from %s%d\n",
+              s_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
     }
   }
@@ -272,8 +270,8 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
     /* could not find dest buffer */
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr,
-            "0x%08x could not find dest buffer at %s:%d called from %s:%d\n",
-            (int)d_ptr, __FILE__, __LINE__, filename, linenumber);
+            "%p could not find dest buffer at %s:%d called from %s:%d\n",
+            d_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
   }
 #endif
@@ -307,8 +305,7 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
   else
   {
     /* source and dest are the same, freak out */
-    fprintf(stderr, "memcpy() called with source EQ dest at %s:%d\n", filename,
-            linenumber);
+    fprintf(stderr, "memcpy() called with source EQ dest at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
@@ -316,8 +313,7 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
   }
 
 #ifdef SHOW_MEM_DEBUG
-  fprintf(stderr, "0x%08x memcpy() called from %s:%d (%d bytes)\n",
-          (unsigned int)result, filename, linenumber, size);
+  fprintf(stderr, "%p memcpy() called from %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
   return result;
@@ -383,9 +379,8 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
     {
       /* attempting to copy too much data into dest */
       fprintf(stderr,
-              "memcpy called with size (%d) larger than dest buffer 0x%08x "
-              "(%d) at %s:%d\n",
-              (int)d_ptr, size, dest_size, filename, linenumber);
+              "memcpy called with size (%d) larger than dest buffer %p (%d) at %s:%d\n",
+              size, d_ptr, dest_size, filename, linenumber);
       XFREE_ALL();
       exit(1);
     }
@@ -396,9 +391,8 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
       {
         /* attempting to copy too much data from source */
         fprintf(stderr,
-                "memcpy called with size (%d) larger than source buffer 0x%08x "
-                "(%d) at %s:%d\n",
-                (int)s_ptr, size, source_size, filename, linenumber);
+                "memcpy called with size (%d) larger than source buffer %p (%d) at %s:%d\n",
+                size, s_ptr, source_size, filename, linenumber);
         XFREE_ALL();
         exit(1);
       }
@@ -408,8 +402,8 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
       /* could not find source buffer */
 #ifdef SHOW_MEM_DEBUG
       fprintf(stderr,
-              "0x%08x could not find source buffer at %s:%d called from %s%d\n",
-              (int)s_ptr, __FILE__, __LINE__, filename, linenumber);
+              "%p could not find source buffer at %s:%d called from %s%d\n",
+              s_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
     }
   }
@@ -418,8 +412,8 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
     /* could not find dest buffer */
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr,
-            "0x%08x could not find dest buffer at %s:%d called from %s:%d\n",
-            (int)d_ptr, __FILE__, __LINE__, filename, linenumber);
+            "%p could not find dest buffer at %s:%d called from %s:%d\n",
+            d_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
   }
 #endif
@@ -462,8 +456,7 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   }
 
 #ifdef SHOW_MEM_DEBUG
-  fprintf(stderr, "0x%08x memcpy() called from %s:%d (%d bytes)\n",
-          (unsigned int)result, filename, linenumber, size);
+  fprintf(stderr, "%p memcpy() called from %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
   return result;
@@ -498,9 +491,8 @@ void *xmemset_(void *ptr, const char value, const int size,
     result = memset(ptr, value, size);
   }
 
-#ifdef DEBUG_MEM
-  fprintf(stderr, "0x%x memset %s:%d (%d bytes)\n", result, filename,
-          linenumber, size);
+#ifdef MEM_DEBUG
+  fprintf(stderr, "%p memset %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
   return result;
@@ -527,9 +519,8 @@ int xmemcmp_(const void *s1, const void *s2, size_t n, const char *filename,
 
   result = memcmp(s1, s2, n);
 
-#ifdef DEBUG_MEM
-  fprintf(stderr, "0x%x memcmp against 0x%x %s:%d (%d bytes)\n", s1, s2,
-          filename, linenumber, n);
+#ifdef MEM_DEBUG
+  fprintf(stderr, "%p memcmp against %p %s:%d (%ld bytes)\n", s1, s2, filename, linenumber, n);
 #endif
 
   return result;
@@ -542,12 +533,14 @@ int xmemcmp_(const void *s1, const void *s2, size_t n, const char *filename,
  *
  ****/
 
-void *xrealloc_(void *ptr, int size, const char *filename,
-                const int linenumber)
+void *xrealloc_(void *ptr, int size, const char *filename, const int linenumber)
 {
   void *result;
 #ifdef MEM_DEBUG
   PRIVATE struct Mem_s *d_result;
+  PRIVATE struct Mem_s *d_ptr;
+  PRIVATE int found = FALSE;
+  PRIVATE int d_size = 0;
 #endif
 
   if (ptr EQ NULL)
@@ -555,27 +548,62 @@ void *xrealloc_(void *ptr, int size, const char *filename,
   else
     result = realloc(ptr, size);
 
-#ifdef DEBUG_MEM
-  fprintf(stderr, "0x%x realloc %s:%d (%d bytes)\n", (int)result, filename,
-          linenumber, size);
+#ifdef MEM_DEBUG
+  fprintf(stderr, "%p realloc %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
   if (result EQ NULL)
   {
-    fprintf(stderr, "out of memory (%d at %s:%d)!\n", size, filename,
-            linenumber);
-#ifdef DEBUG_MEM
+    fprintf(stderr, "out of memory (%d at %s:%d)!\n", size, filename, linenumber);
+#ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
     exit(EXIT_FAILURE);
   }
 
 #ifdef MEM_DEBUG
+  d_ptr = head;
+  while (d_ptr != NULL)
+  {
+    if (d_ptr->buf_ptr EQ ptr)
+    {
+      /* found debug object */
+      found = TRUE;
+      if (d_ptr->prev != NULL)
+      {
+        d_ptr->prev->next = d_ptr->next;
+      }
+      else
+      {
+        head = (void *)d_ptr->next;
+      }
+      if (d_ptr->next != NULL)
+      {
+        d_ptr->next->prev = d_ptr->prev;
+      }
+      else
+      {
+        tail = d_ptr->prev;
+      }
+      d_size = d_ptr->buf_size;
+      free(d_ptr);
+      d_ptr = NULL;
+    }
+    else
+    {
+      d_ptr = d_ptr->next;
+    }
+  }
+
+  if (!found)
+  {
+    fprintf(stderr, "realloc() called with %p ptr but not found in debug object list at %s:%d\n", ptr, filename, linenumber);
+  }
+
   d_result = malloc(sizeof(struct Mem_s));
   if (d_result EQ NULL)
   {
-    fprintf(stderr, "out of memory (%lu at %s:%d)!\n", sizeof(struct Mem_s),
-            filename, linenumber);
+    fprintf(stderr, "out of memory (%lu at %s:%d)!\n", sizeof(struct Mem_s), filename, linenumber);
     XFREE_ALL();
     exit(EXIT_FAILURE);
   }
@@ -583,8 +611,7 @@ void *xrealloc_(void *ptr, int size, const char *filename,
   bzero(d_result, sizeof(struct Mem_s));
 
 #ifdef SHOW_MEM_DEBUG
-  fprintf(stderr, "0x%08x malloc() called from %s:%d (%d bytes)\n", (int)result,
-          filename, linenumber, size);
+  fprintf(stderr, "%p realloc() called from %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
   /* link into the buffer chain */
@@ -667,25 +694,20 @@ void xfree_(void *ptr, const char *filename, const int linenumber)
 
   if (!found)
   {
-    fprintf(stderr,
-            "free() called with 0x%x ptr but not found in debug object list at "
-            "%s:%d\n",
-            (int)ptr, filename, linenumber);
-    return;
+    fprintf(stderr, "free() called with %p ptr but not found in debug object list at %s:%d\n", ptr, filename, linenumber);
   }
 #endif
 
 #ifdef SHOW_MEM_DEBUG
 #ifdef MEM_DEBUG
-  fprintf(stderr, "0x%08x free() called from %s:%d (%d bytes)\n", (int)ptr,
-          filename, linenumber, size);
+  fprintf(stderr, "%p free() called from %s:%d (%d bytes)\n", ptr, filename, linenumber, size);
 #else
-  fprintf(stderr, "0x%08x free() called from %s:%d\n", (int)ptr, filename,
-          linenumber);
+  fprintf(stderr, "%p free() called from %s:%d\n", ptr, filename, linenumber);
 #endif
 #endif
 
   free(ptr);
+  ptr = NULL;
 }
 
 /****
@@ -716,10 +738,10 @@ void xfree_all_(const char *filename, const int linenumber)
     if (d_ptr->buf_ptr != NULL)
     {
 #ifdef SHOW_MEM_DEBUG
-      fprintf(stderr, "0x%08x free %s:%d (%d bytes)\n", (int)d_ptr->buf_ptr,
-              __FILE__, __LINE__, d_ptr->buf_size);
+      fprintf(stderr, "%p free %s:%d (%d bytes)\n", d_ptr->buf_ptr, filename, linenumber, d_ptr->buf_size);
 #endif
       free(d_ptr->buf_ptr);
+      d_ptr->buf_ptr = NULL;
     }
     free(d_ptr);
   }
@@ -740,9 +762,8 @@ char *xstrdup_(const char *str, const char *filename, const int linenumber)
 
   res = strdup(str);
 
-#ifdef DEBUG_MEM
-  fprintf(stderr, "0x%x malloc %s:%d (%d bytes, strdup)\n", (int)res, filename,
-          linenumber, strlen(str) + 1);
+#ifdef MEM_DEBUG
+  fprintf(stderr, "%p malloc %s:%d (%ld) bytes, strdup\n", res, filename, linenumber, strlen(str) + 1);
 #endif
 
   return res;
@@ -754,8 +775,7 @@ char *xstrdup_(const char *str, const char *filename, const int linenumber)
  *
  ****/
 
-void xgrow_(void **old, int elementSize, int *oldCount, int newCount,
-            char *filename, const int linenumber)
+void xgrow_(void **old, int elementSize, int *oldCount, int newCount, char *filename, const int linenumber)
 {
   void *tmp;
   int size;
@@ -767,15 +787,13 @@ void xgrow_(void **old, int elementSize, int *oldCount, int newCount,
   {
     tmp = malloc(size);
 
-#ifdef DEBUG_MEM
-    fprintf(stderr, "0x%x malloc %s:%d (grow)\n", (int)tmp, filename,
-            linenumber);
+#ifdef MEM_DEBUG
+    fprintf(stderr, "%p malloc %s:%d (grow)\n", tmp, filename, linenumber);
 #endif
 
     if (tmp EQ NULL)
     {
-      fprintf(stderr, "out of memory (%d at %s:%d)!\n", size, filename,
-              linenumber);
+      fprintf(stderr, "out of memory (%d at %s:%d)!\n", size, filename, linenumber);
       quit = TRUE;
       exit(1);
     }
@@ -787,9 +805,8 @@ void xgrow_(void **old, int elementSize, int *oldCount, int newCount,
 
   if (*old != NULL)
   {
-#ifdef DEBUG_MEM
-    fprintf(stderr, "0x%x free %s:%d (grow)\n", (int)*old, filename,
-            linenumber);
+#ifdef MEM_DEBUG
+    fprintf(stderr, "%p free %s:%d (grow)\n", *old, filename, linenumber);
 #endif
     free(*old);
   }
@@ -803,8 +820,7 @@ void xgrow_(void **old, int elementSize, int *oldCount, int newCount,
  *
  ****/
 
-char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
-               const int linenumber)
+char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int linenumber)
 {
   void *result;
   PRIVATE int size;
@@ -868,9 +884,8 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
     {
       /* attempting to copy too much data into dest */
       fprintf(stderr,
-              "strcpy called with size (%d) larger than dest buffer 0x%08x "
-              "(%d) at %s:%d\n",
-              (int)d_ptr, size, dest_size, filename, linenumber);
+              "strcpy called with size (%d) larger than dest buffer %p (%d) at %s:%d\n",
+              size, d_ptr, dest_size, filename, linenumber);
       XFREE_ALL();
       exit(1);
     }
@@ -881,9 +896,8 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
       {
         /* attempting to copy too much data from source */
         fprintf(stderr,
-                "strcpy called with size (%d) larger than source buffer 0x%08x "
-                "(%d) at %s:%d\n",
-                (int)s_ptr, size, source_size, filename, linenumber);
+                "strcpy called with size (%d) larger than source buffer %p (%d) at %s:%d\n",
+                size, s_ptr, source_size, filename, linenumber);
         XFREE_ALL();
         exit(1);
       }
@@ -893,8 +907,8 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
       /* could not find source buffer */
 #ifdef SHOW_MEM_DEBUG
       fprintf(stderr,
-              "0x%08x could not find source buffer at %s:%d called from %s%d\n",
-              (int)s_ptr, __FILE__, __LINE__, filename, linenumber);
+              "%p could not find source buffer at %s:%d called from %s%d\n",
+              s_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
     }
   }
@@ -903,8 +917,8 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
     /* could not find dest buffer */
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr,
-            "0x%08x could not find dest buffer at %s:%d called from %s:%d\n",
-            (int)d_ptr, __FILE__, __LINE__, filename, linenumber);
+            "%p could not find dest buffer at %s:%d called from %s:%d\n",
+            d_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
   }
 #endif
@@ -938,8 +952,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
   else
   {
     /* source and dest are the same, freak out */
-    fprintf(stderr, "strcpy() called with source EQ dest at %s:%d\n", filename,
-            linenumber);
+    fprintf(stderr, "strcpy() called with source EQ dest at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
@@ -948,8 +961,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
   d_ptr[size - 1] = 0;
 
 #ifdef SHOW_MEM_DEBUG
-  fprintf(stderr, "0x%08x strcpy() called from %s:%d (%d bytes)\n",
-          (unsigned int)result, filename, linenumber, size);
+  fprintf(stderr, "%p strcpy() called from %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
   return result;
@@ -961,8 +973,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename,
  *
  ****/
 
-char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
-                const char *filename, const int linenumber)
+char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *filename, const int linenumber)
 {
   char *result;
   PRIVATE int size;
@@ -975,8 +986,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   /* check for null source pointer */
   if (s_ptr EQ NULL)
   {
-    fprintf(stderr, "strncpy called with NULL source pointer at %s:%d\n",
-            filename, linenumber);
+    fprintf(stderr, "strncpy called with NULL source pointer at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
@@ -986,8 +996,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   /* check for null dest pointer */
   if (d_ptr EQ NULL)
   {
-    fprintf(stderr, "strncpy called with NULL dest pointer at %s:%d\n",
-            filename, linenumber);
+    fprintf(stderr, "strncpy called with NULL dest pointer at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
@@ -998,8 +1007,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   if (len EQ 0)
   {
 #ifdef SHOW_MEM_DEBUG
-    fprintf(stderr, "strncpy called with zero copy length at %s:%d\n", filename,
-            linenumber);
+    fprintf(stderr, "strncpy called with zero copy length at %s:%d\n", filename, linenumber);
 #endif
     d_ptr[0] = 0;
     return d_ptr;
@@ -1009,8 +1017,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   if ((size = (strlen(s_ptr) + 1)) EQ 0)
   {
 #ifdef SHOW_MEM_DEBUG
-    fprintf(stderr, "strncpy called with zero length source pointer at %s:%d\n",
-            filename, linenumber);
+    fprintf(stderr, "strncpy called with zero length source pointer at %s:%d\n", filename, linenumber);
 #endif
     d_ptr[0] = 0;
     return d_ptr;
@@ -1020,9 +1027,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   if (size >= len)
   {
 #ifdef SHOW_MEM_DEBUG
-    fprintf(stderr,
-            "strncpy called with source string >= length arg at %s:%d\n",
-            filename, linenumber);
+    fprintf(stderr, "strncpy called with source string >= length arg at %s:%d\n", filename, linenumber);
 #endif
   }
 
@@ -1051,9 +1056,8 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
     {
       /* attempting to copy too much data into dest */
       fprintf(stderr,
-              "strncpy called with size (%lu) larger than dest buffer 0x%08x "
-              "(%d) at %s:%d\n",
-              len, (unsigned int)d_ptr, dest_size, filename, linenumber);
+              "strncpy called with size (%lu) larger than dest buffer %p (%d) at %s:%d\n",
+              len, d_ptr, dest_size, filename, linenumber);
       XFREE_ALL();
       exit(1);
     }
@@ -1064,9 +1068,8 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
       {
         /* attempting to copy too much data from source */
         fprintf(stderr,
-                "strncpy called with size (%lu) larger than source buffer "
-                "0x%08x (%d) at %s:%d\n",
-                len, (unsigned int)s_ptr, source_size, filename, linenumber);
+                "strncpy called with size (%lu) larger than source buffer %p (%d) at %s:%d\n",
+                len, s_ptr, source_size, filename, linenumber);
         XFREE_ALL();
         exit(1);
       }
@@ -1076,8 +1079,8 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
       /* could not find source buffer */
 #ifdef SHOW_MEM_DEBUG
       fprintf(stderr,
-              "0x%08x could not find source buffer at %s:%d called from %s%d\n",
-              (int)s_ptr, __FILE__, __LINE__, filename, linenumber);
+              "%p could not find source buffer at %s:%d called from %s:%d\n",
+              s_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
     }
   }
@@ -1086,8 +1089,8 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
     /* could not find dest buffer */
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr,
-            "0x%08x could not find dest buffer at %s:%d called from %s:%d\n",
-            (int)d_ptr, __FILE__, __LINE__, filename, linenumber);
+            "%p could not find dest buffer at %s:%d called from %s:%d\n",
+            d_ptr, __FILE__, __LINE__, filename, linenumber);
 #endif
   }
 #endif
@@ -1162,8 +1165,8 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   }
 
 #ifdef SHOW_MEM_DEBUG
-  fprintf(stderr, "0x%08x strncpy() called from %s:%d (%d bytes)\n",
-          (unsigned int)result, filename, linenumber, size);
+  fprintf(stderr, "%p strncpy() called from %s:%d (%d bytes)\n",
+          result, filename, linenumber, size);
 #endif
 
   return result;

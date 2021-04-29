@@ -58,8 +58,12 @@ struct hashRec_s
   time_t createTime;
   uint32_t accessCount;
   uint16_t modifyCount;
-  struct hashRec_s *prev;
-  struct hashRec_s *next;
+};
+
+struct hashRecList_s
+{
+  uint16_t count;
+  struct hashRec_s **records;
 };
 
 struct hash_s
@@ -68,7 +72,7 @@ struct hash_s
   uint32_t totalRecords;
   uint16_t maxDepth;
   uint8_t primeOff;
-  struct hashRec_s **records;
+  struct hashRecList_s **records;
 };
 
 /****
@@ -78,35 +82,28 @@ struct hash_s
  ****/
 
 uint32_t calcHash(uint32_t hashSize, const char *keyString);
-void freeHash(struct hash_s *hash);
-int addHashRec(struct hash_s *hash, uint32_t key, char *keyString, void *data,
-               time_t lastSeen);
-struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen,
-                     void *data);
-int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec);
 struct hash_s *initHash(uint32_t hashSize);
-uint32_t searchHash(struct hash_s *hash, const char *keyString);
-void updateData(struct hash_s *hash, const void *keyString, const void *data);
-void dumpHash(struct hash_s *hash);
+void freeHash(struct hash_s *hash);
+
+struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen, void *data);
+int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec);
+
 struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int keyLen);
-void *getHashData(struct hash_s *hash, const void *keyString);
-struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString,
-                                  int keyLen);
-struct hashRec_s *snoopHashRecWithKey(struct hash_s *hash,
-                                      const char *keyString, int keyLen,
-                                      uint32_t key);
-void *getDataByKey(struct hash_s *hash, uint32_t key, void *keyString);
+struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString, int keyLen);
+void *getHashData(struct hash_s *hash, const char *keyString, int keyLen);
+void *snoopHashData(struct hash_s *hash, const char *keyString, int keyLen);
+
+void *deleteHashRecord(struct hash_s *hash, const char *keyString, int keyLen);
+
 struct hash_s *dyGrowHash(struct hash_s *oldHash);
 struct hash_s *dyShrinkHash(struct hash_s *oldHash);
-void *purgeOldHashData(struct hash_s *hash, time_t age);
-void *popHash(struct hash_s *hash);
-char *hexConvert(const char *keyString, int keyLen, char *buf,
-                 const int bufLen);
-char *utfConvert(const char *keyString, int keyLen, char *buf,
-                 const int bufLen);
+
+int traverseHash(const struct hash_s *hash, int (*fn)(const struct hashRec_s *hashRec));
+
+void **purgeOldHashRecords(struct hash_s *hash, time_t age, void **dataList);
+
+char *hexConvert(const char *keyString, int keyLen, char *buf, const int bufLen);
+char *utfConvert(const char *keyString, int keyLen, char *buf, const int bufLen);
 uint32_t getHashSize(struct hash_s *hash);
-int traverseHash(const struct hash_s *hash,
-                 int (*fn)(const struct hashRec_s *hashRec));
-void *deleteHashRecord(struct hash_s *hash, const char *keyString, int keyLen);
 
 #endif /* end of HASH_DOT_H */

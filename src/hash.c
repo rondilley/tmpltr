@@ -67,6 +67,8 @@ extern Config_t *config;
  *
  ****/
 
+/* XXX moving this inside of functions for performance */
+
 uint32_t calcHash(uint32_t hashSize, const char *keyString)
 {
   int32_t val = 0;
@@ -99,31 +101,95 @@ uint32_t calcHash(uint32_t hashSize, const char *keyString)
 
 /****
  *
+ * initialize the hash
+ *
+ ****/
+
+struct hash_s *initHash(uint32_t hashSize)
+{
+  struct hash_s *tmpHash;
+  int i;
+
+  if ((tmpHash = (struct hash_s *)XMALLOC(sizeof(struct hash_s))) EQ NULL)
+  {
+    fprintf(stderr, "ERR - Unable to allocate hash\n");
+    return NULL;
+  }
+  XMEMSET(tmpHash, 0, sizeof(struct hash_s));
+
+  /* pick a good hash size */
+  for (i = 0; ((hashSize > hashPrimes[i]) && (hashPrimes[i] > 0)); i++)
+    ;
+
+  if (hashPrimes[i] EQ 0)
+  {
+    /* size too large */
+    fprintf(stderr, "ERR - Hash size too large\n");
+    XFREE(tmpHash);
+    return NULL;
+  }
+
+  tmpHash->primeOff = i;
+  tmpHash->size = hashPrimes[i];
+
+  if ((tmpHash->records = (struct hashRecList_s **)XMALLOC(
+           sizeof(struct hashRecList_s *) * tmpHash->size)) EQ NULL)
+  {
+    fprintf(stderr, "ERR - Unable to allocate hash record list\n");
+    XFREE(tmpHash);
+    return NULL;
+  }
+  XMEMSET(tmpHash->records, 0, sizeof(struct hashRecList_s *) * tmpHash->size);
+
+#ifdef DEBUG
+  if (config->debug >= 4)
+    printf("DEBUG - Hash initialized [%u]\n", tmpHash->size);
+#endif
+
+  return tmpHash;
+}
+
+/****
+ *
  * empty the hash table
  *
  ****/
 
 void freeHash(struct hash_s *hash)
 {
-  struct hashRec_s *tmpHashRec;
-  struct hashRec_s *curHashRec;
-  size_t key;
+  size_t i, key;
 
-  for (key = 0; key < hash->size; key++)
+  if (hash != NULL)
   {
-    curHashRec = hash->records[key];
-    while (curHashRec != NULL)
+    for (key = 0; key < hash->size; key++)
     {
-      tmpHashRec = curHashRec;
-      curHashRec = curHashRec->next;
-      if (tmpHashRec->data != NULL)
-        XFREE(tmpHashRec->data);
-      XFREE(tmpHashRec->keyString);
-      XFREE(tmpHashRec);
+      if (hash->records[key] != NULL)
+      {
+        for (i = 0; i < hash->records[key]->count; i++)
+        {
+          if (hash->records[key]->records[i] != NULL)
+          {
+            XFREE(hash->records[key]->records[i]->keyString);
+            hash->records[key]->records[i]->keyString = NULL;
+            XFREE(hash->records[key]->records[i]);
+            hash->records[key]->records[i] = NULL;
+          }
+        }
+        if (hash->records[key]->records != NULL) {
+          XFREE(hash->records[key]->records);
+          hash->records[key]->records = NULL;
+        }
+        XFREE(hash->records[key]);
+        hash->records[key] = NULL;
+      }
     }
+    if (hash->records != NULL) {
+      XFREE(hash->records);
+      hash->records = NULL;
+    }
+    XFREE(hash);
+    hash = NULL;
   }
-  XFREE(hash->records);
-  XFREE(hash);
 }
 
 /****
@@ -132,11 +198,9 @@ void freeHash(struct hash_s *hash)
  *
  ****/
 
-int traverseHash(const struct hash_s *hash,
-                 int (*fn)(const struct hashRec_s *hashRec))
+int traverseHash(const struct hash_s *hash, int (*fn)(const struct hashRec_s *hashRec))
 {
-  struct hashRec_s *curHashRec;
-  size_t key;
+  size_t i, key;
 
 #ifdef DEBUG
   if (config->debug >= 3)
@@ -145,13 +209,16 @@ int traverseHash(const struct hash_s *hash,
 
   for (key = 0; key < hash->size; key++)
   {
-    curHashRec = hash->records[key];
-    while (curHashRec != NULL)
+    if (hash->records[key] != NULL)
     {
-      /* external callback */
-      if (fn(curHashRec))
-        return (FAILED);
-      curHashRec = curHashRec->next;
+      for (i = 0; i < hash->records[key]->count; i++)
+      {
+        if (hash->records[key]->records[i] != NULL)
+        {
+          if (fn(hash->records[key]->records[i]))
+            return (FAILED);
+        }
+      }
     }
   }
 
@@ -160,115 +227,21 @@ int traverseHash(const struct hash_s *hash,
 
 /****
  *
- * add a record to the hash
+ * add a unique record to the hash
  *
  ****/
 
-int addHashRec(struct hash_s *hash, uint32_t key, char *keyString, void *data,
-               time_t lastSeen)
+struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen, void *data)
 {
-  struct hashRec_s *tmpHashRec;
-  struct hashRec_s *curHashRec;
-  int tmpDepth = 0;
-
-#ifdef DEBUG
-  if (config->debug >= 3)
-    printf("DEBUG - Adding hash [%d] (%s)\n", key, keyString);
-#endif
-
-  if (hash->records[key] EQ NULL)
-  {
-    /* nope, add it in the current slot */
-    if ((hash->records[key] =
-             (struct hashRec_s *)XMALLOC(sizeof(struct hashRec_s))) EQ NULL)
-    {
-      fprintf(stderr, "ERR - Unable to allocate space for hash\n");
-      return FAILED;
-    }
-    XMEMSET((struct hashRec_s *)hash->records[key], 0,
-            sizeof(struct hashRec_s));
-    if ((hash->records[key]->keyString = (char *)XMALLOC(strlen(keyString) + 1))
-            EQ NULL)
-    {
-      fprintf(stderr, "ERR - Unable to allocate space for hash label\n");
-      XFREE(hash->records[key]);
-      return FAILED;
-    }
-    XSTRCPY(hash->records[key]->keyString, keyString);
-    hash->records[key]->data = data;
-    hash->records[key]->lastSeen = hash->records[key]->createTime = lastSeen;
-    tmpDepth++;
-  }
-  else
-  {
-    /* yup, traverse the linked list and stick it at the end */
-
-    /* XXX we should make this dynamically optimizing, so the most accessed is
-     * at the top of the list */
-
-    /* advance to the end of the chain */
-    curHashRec = hash->records[key];
-    while (curHashRec != NULL)
-    {
-      if (curHashRec->next != NULL)
-      {
-        curHashRec = curHashRec->next;
-        tmpDepth++;
-      }
-      else
-      {
-        /* at the end of the chain */
-        if ((curHashRec->next = (struct hashRec_s *)XMALLOC(
-                 sizeof(struct hashRec_s))) EQ NULL)
-        {
-          fprintf(stderr, "ERR - Unable to allocate space for hash\n");
-          return FAILED;
-        }
-        XMEMSET((struct hashRec_s *)curHashRec->next, 0,
-                sizeof(struct hashRec_s));
-        if ((curHashRec->next->keyString =
-                 (char *)XMALLOC(strlen(keyString) + 1)) EQ NULL)
-        {
-          fprintf(stderr, "ERR - Unable to allocate space for hash label\n");
-          XFREE(curHashRec->next);
-          curHashRec->next = NULL;
-          return FAILED;
-        }
-        XSTRCPY(curHashRec->next->keyString, keyString);
-        curHashRec->next->data = data;
-        curHashRec->next->lastSeen = curHashRec->next->createTime = lastSeen;
-        curHashRec->next->prev = curHashRec;
-        curHashRec = NULL;
-      }
-    }
-  }
-
-  if (hash->maxDepth < tmpDepth)
-    hash->maxDepth = tmpDepth;
-
-  hash->totalRecords++;
-
-  return TRUE;
-}
-
-/****
- *
- * add a record to the hash
- *
- ****/
-
-struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen,
-                     void *data)
-{
-  struct hashRec_s *tmpHashRec;
-  struct hashRec_s *curHashRec;
-  int tmpDepth = 0;
   uint32_t key;
   int32_t val = 0;
   const char *ptr;
   char oBuf[4096];
   char nBuf[4096];
-  int i, tmp, ret;
+  int i, tmp, ret, cmpLen, low, high;
+  register int mid;
+  struct hashRec_s **tmpHashArrayPtr;
+  struct hashRec_s *tmpHashRecPtr;
 
   if (keyLen EQ 0)
     keyLen = strlen(keyString) + 1;
@@ -298,101 +271,134 @@ struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, i
 
   if (hash->records[key] EQ NULL)
   {
-    /* nope, add it in the current slot */
-    if ((hash->records[key] =
-             (struct hashRec_s *)XMALLOC(sizeof(struct hashRec_s))) EQ NULL)
+    /* add new list entry to hash pointer buffer */
+    if ((hash->records[key] = (struct hashRecList_s *)XMALLOC(sizeof(struct hashRecList_s))) EQ NULL)
     {
-      fprintf(stderr, "ERR - Unable to allocate space for hash\n");
+      fprintf(stderr, "ERR - Unable to allocate space for hash list record\n");
       return NULL;
     }
-    XMEMSET((struct hashRec_s *)hash->records[key], 0,
-            sizeof(struct hashRec_s));
-    if ((hash->records[key]->keyString = (char *)XMALLOC(keyLen)) EQ NULL)
+    /* add pointer buffer */
+    hash->records[key]->count = 1;
+    if ((hash->records[key]->records = (struct hashRec_s **)XMALLOC(sizeof(struct hashRec_s *) * hash->records[key]->count)) EQ NULL)
     {
-      fprintf(stderr, "ERR - Unable to allocate space for hash label [%s]\n",
-              hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)));
+      fprintf(stderr, "ERR - Unable to allocate space for hash record list\n");
+      hash->records[key]->count--;
       XFREE(hash->records[key]);
       hash->records[key] = NULL;
       return NULL;
     }
-    XMEMCPY((void *)hash->records[key]->keyString, (void *)keyString, keyLen);
-    hash->records[key]->keyLen = keyLen;
+    /* add record to pointer buffer */
+    if ((hash->records[key]->records[0] = (struct hashRec_s *)XMALLOC(sizeof(struct hashRec_s))) EQ NULL)
+    {
+      fprintf(stderr, "ERR - Unable to allocate space for hash record\n");
+      XFREE(hash->records[key]->records);
+      XFREE(hash->records[key]);
+      hash->records[key] = NULL;
+      return NULL;
+    }
+    XMEMSET((struct hashRec_s *)hash->records[key]->records[0], 0,
+            sizeof(struct hashRec_s));
+    if ((hash->records[key]->records[0]->keyString = (char *)XMALLOC(keyLen)) EQ NULL)
+    {
+      fprintf(stderr, "ERR - Unable to allocate space for hash label\n");
+      XFREE(hash->records[key]);
+      hash->records[key] = NULL;
+      return NULL;
+    }
+    XMEMCPY((void *)hash->records[key]->records[0]->keyString, (void *)keyString, keyLen);
+    hash->records[key]->records[0]->keyLen = keyLen;
     if (data != NULL)
-      hash->records[key]->data = data;
-    hash->records[key]->lastSeen = hash->records[key]->createTime = config->current_time;
-    tmpHashRec = hash->records[key];
+      hash->records[key]->records[0]->data = data;
+    hash->records[key]->records[0]->lastSeen = hash->records[key]->records[0]->createTime = config->current_time;
   }
   else
   {
-    /* XXX optimize the linked list */
+    /* search for keyString and insert in sorted hash list if not found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
 
-    /* look for duplicates and insert at the end if none found */
-    curHashRec = hash->records[key];
-    while (curHashRec != NULL)
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = keyLen;
+
+#ifdef DEBUG
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
+#endif
+
+    do
     {
-      if (curHashRec->keyLen EQ keyLen)
-      {
-#ifdef DEBUG
-        if (config->debug >= 4)
-          printf("DEBUG - keyLen Match\n");
-#endif
-        if (memcmp(curHashRec->keyString, keyString, keyLen) EQ 0)
-        {
-          /* duplicate, ignore */
-#ifdef DEBUG
-          if (config->debug >= 1)
-            printf(
-                "DEBUG - Ignoring duplicate hash\n");
-#endif
-          return NULL;
-        }
-      }
-      if (curHashRec->next EQ NULL)
-      {
-        if ((curHashRec->next = (struct hashRec_s *)XMALLOC(
-                 sizeof(struct hashRec_s))) EQ NULL)
-        {
-          fprintf(stderr, "ERR - Unable to allocate space for hash\n");
-          return NULL;
-        }
-        XMEMSET((struct hashRec_s *)curHashRec->next, 0,
-                sizeof(struct hashRec_s));
-        if ((curHashRec->next->keyString = (char *)XMALLOC(keyLen))
-                EQ NULL)
-        {
-          fprintf(stderr,
-                  "ERR - Unable to allocate space for hash label\n");
-          XFREE(curHashRec->next);
-          curHashRec->next = NULL;
-          return NULL;
-        }
-        XMEMCPY((void *)curHashRec->next->keyString, (void *)keyString,
-                keyLen);
-        curHashRec->next->keyLen = keyLen;
-        curHashRec->next->data = data;
-        curHashRec->next->lastSeen = curHashRec->next->createTime =
-            config->current_time;
-        curHashRec->next->prev = curHashRec;
-        tmpHashRec = curHashRec;
-        curHashRec = NULL;
-        tmpDepth++;
-      }
+      if ((ret = XMEMCMP(keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
       else
       {
-        curHashRec = curHashRec->next;
-        tmpDepth++;
+        if (keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
+          /* existing record found */
+#ifdef DEBUG
+          if (config->debug >= 4)
+            printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n", (char *)keyString, key, mid);
+#endif
+          return NULL;
+        }
       }
+      mid = low + ((high - low) / 2);
+    } while (low < high);
+
+    /* grow the hash list buffer */
+    if ((tmpHashArrayPtr = (struct hashRec_s **)XREALLOC(hash->records[key]->records, sizeof(struct hashRec_s *) * (hash->records[key]->count + 1))) EQ NULL)
+    {
+      /* return without adding record, keep existing list */
+      fprintf(stderr, "ERR - Unable to allocate space for hash record list\n");
+      return NULL;
     }
+    hash->records[key]->records = tmpHashArrayPtr;
+
+    /* create hash record */
+    if ((tmpHashRecPtr = (struct hashRec_s *)XMALLOC(sizeof(struct hashRec_s))) EQ NULL)
+    {
+      /* XXX need better cleanup than this */
+      fprintf(stderr, "ERR - Unable to allocate space for hash record\n");
+      return NULL;
+    }
+    XMEMSET((struct hashRec_s *)tmpHashRecPtr, 0, sizeof(struct hashRec_s));
+    if ((tmpHashRecPtr->keyString = (char *)XMALLOC(keyLen)) EQ NULL)
+    {
+      /* XXX need better cleanup than this */
+      /* remove the partial record from the list */
+      fprintf(stderr, "ERR - Unable to allocate space for hash label\n");
+      return NULL;
+    }
+    XMEMCPY((void *)tmpHashRecPtr->keyString, (void *)keyString, keyLen);
+    tmpHashRecPtr->keyLen = keyLen;
+    tmpHashRecPtr->data = data;
+    tmpHashRecPtr->lastSeen = tmpHashRecPtr->createTime = config->current_time;
+
+    if (mid < hash->records[key]->count)
+    {
+      hash->records[key]->records[hash->records[key]->count] = NULL;
+      memmove(&hash->records[key]->records[mid + 1], &hash->records[key]->records[mid], sizeof(struct hashRec_s *) * (hash->records[key]->count - mid));
+      hash->records[key]->records[mid] = tmpHashRecPtr;
+      hash->records[key]->count++;
+    }
+    else
+      hash->records[key]->records[hash->records[key]->count++] = tmpHashRecPtr;
   }
 
 #ifdef DEBUG
   if (config->debug >= 4)
-    printf("DEBUG - Added hash [%d] (%s) at depth [%d]\n", key,
-           hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), tmpDepth);
+    printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key,
+           hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), hash->records[key]->count);
 #endif
-
-  if (hash->maxDepth < tmpDepth)
-    hash->maxDepth = tmpDepth;
 
   hash->totalRecords++;
 
@@ -401,28 +407,25 @@ struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, i
     printf("DEBUG - Record Count: %d\n", hash->totalRecords);
 #endif
 
-  return tmpHashRec;
+  return tmpHashRecPtr;
 }
 
 /****
  *
  * insert an existing record into the hash
- * XXX used when growing the hash
  *
  ****/
 
-/* XXX should return hashRec_s pointer instead of int */
 int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec)
 {
-  struct hashRec_s *tmpHashRec;
-  struct hashRec_s *curHashRec;
-  int tmpDepth = 0;
   uint32_t key;
   int32_t val = 0;
   const char *ptr;
   char oBuf[4096];
   char nBuf[4096];
-  int i, tmp, ret;
+  int i, tmp, ret, cmpLen, low, high;
+  register int mid;
+  struct hashRec_s **tmpHashArrayPtr;
 
   /* generate the lookup hash */
   for (i = 0; i < hashRec->keyLen; i++)
@@ -449,58 +452,89 @@ int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec)
 
   if (hash->records[key] EQ NULL)
   {
-    /* first record in list */
-    hashRec->prev = hashRec->next = NULL;
-    hash->records[key] = hashRec;
+    /* add new list entry to hash pointer buffer */
+    if ((hash->records[key] = (struct hashRecList_s *)XMALLOC(sizeof(struct hashRecList_s))) EQ NULL)
+    {
+      fprintf(stderr, "ERR - Unable to allocate space for hash list record\n");
+      return FAILED;
+    }
+    /* add pointer buffer */
+    hash->records[key]->count = 1;
+    if ((hash->records[key]->records = (struct hashRec_s **)XMALLOC(sizeof(struct hashRec_s *) * hash->records[key]->count)) EQ NULL)
+    {
+      fprintf(stderr, "ERR - Unable to allocate space for hash record list\n");
+      hash->records[key]->count--;
+      XFREE(hash->records[key]);
+      hash->records[key] = NULL;
+      return FAILED;
+    }
+    hash->records[key]->records[0] = hashRec;
   }
   else
   {
-    /* XXX optimize the linked list */
+    /* search for keyString and insert in sorted hash list if not found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
 
-    /* look for duplicates and insert at the end if none found */
-    curHashRec = hash->records[key];
-    while (curHashRec != NULL)
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < hashRec->keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = hashRec->keyLen;
+
+#ifdef DEBUG
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
+#endif
+
+    do
     {
-      if (curHashRec->keyLen EQ hashRec->keyLen)
-      {
-#ifdef DEBUG
-        if (config->debug >= 4)
-          printf("DEBUG - keyLen Match\n");
-#endif
-        if ((ret = memcmp(curHashRec->keyString, hashRec->keyString, hashRec->keyLen)) EQ 0)
-        {
-          /* duplicate, ignore */
-#ifdef DEBUG
-          if (config->debug >= 1)
-            printf("DEBUG - Ignoring duplicate hash\n");
-#endif
-          return FAILED;
-        }
-      }
-      if (curHashRec->next EQ NULL)
-      {
-        hashRec->prev = curHashRec;
-        hashRec->next = NULL;
-        curHashRec->next = hashRec;
-        curHashRec = NULL;
-        tmpDepth++;
-      }
+      if ((ret = XMEMCMP(hashRec->keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
       else
       {
-        curHashRec = curHashRec->next;
-        tmpDepth++;
+        if (hashRec->keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (hashRec->keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
+          /* existing record found */
+          fprintf(stderr, "ERR - Found duplicate hash record [%s] at [%d] in record list [%d]\n", hashRec->keyString, key, mid);
+          return FALSE;
+        }
       }
+      mid = low + ((high - low) / 2);
+    } while (low < high);
+
+    /* grow the hash list buffer */
+    if ((tmpHashArrayPtr = (struct hashRec_s **)XREALLOC(hash->records[key]->records, sizeof(struct hashRec_s *) * (hash->records[key]->count + 1))) EQ NULL)
+    {
+      /* return without adding record, keep existing list */
+      fprintf(stderr, "ERR - Unable to allocate space for hash record list\n");
+      return FAILED;
     }
+    hash->records[key]->records = tmpHashArrayPtr;
+
+    if (mid < hash->records[key]->count)
+    {
+      hash->records[key]->records[hash->records[key]->count] = NULL;
+      memmove(&hash->records[key]->records[mid + 1], &hash->records[key]->records[mid], sizeof(struct hashRec_s *) * (hash->records[key]->count - mid));
+      hash->records[key]->records[mid] = hashRec;
+      hash->records[key]->count++;
+    }
+    else
+      hash->records[key]->records[hash->records[key]->count++] = hashRec;
   }
 
 #ifdef DEBUG
   if (config->debug >= 4)
-    printf("DEBUG - Added hash [%d] (%s) at depth [%d]\n", key,
-           hexConvert(hashRec->keyString, hashRec->keyLen, nBuf, sizeof(nBuf)), tmpDepth);
+    printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key,
+           hexConvert(hashRec->keyString, hashRec->keyLen, nBuf, sizeof(nBuf)), hash->records[key]->count);
 #endif
-
-  if (hash->maxDepth < tmpDepth)
-    hash->maxDepth = tmpDepth;
 
   hash->totalRecords++;
 
@@ -514,93 +548,19 @@ int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec)
 
 /****
  *
- * initialize the hash
+ * get hash record pointer
  *
  ****/
 
-struct hash_s *initHash(uint32_t hashSize)
+struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int keyLen)
 {
-  struct hash_s *tmpHash;
-  int i = 0;
-
-  /* nope, alloc my own */
-  if ((tmpHash = (struct hash_s *)XMALLOC(sizeof(struct hash_s))) EQ NULL)
-  {
-    fprintf(stderr, "ERR - Unable to allocate hash\n");
-    return NULL;
-  }
-  XMEMSET(tmpHash, 0, sizeof(struct hash_s));
-
-  /* pick a good hash size */
-  if (hashSize EQ 0)
-  {
-    tmpHash->primeOff = 0;
-    tmpHash->size = hashPrimes[0];
-  }
-  else
-  {
-    while (hashPrimes[i++] != 0)
-    {
-      if (hashSize <= hashPrimes[i])
-      {
-        tmpHash->primeOff = i;
-        tmpHash->size = hashPrimes[i];
-#ifdef DEBUG
-        if (config->debug >= 4)
-          printf("DEBUG - Hash initialized [%u]\n", tmpHash->size);
-#endif
-
-        /* XXX clean this up, repetative */
-        if ((tmpHash->records = (struct hashRec_s **)XMALLOC(
-                 sizeof(struct hashRec_s *) * tmpHash->size)) EQ NULL)
-        {
-          fprintf(stderr, "ERR - Unable to allocate hash record list\n");
-          XFREE(tmpHash);
-          return NULL;
-        }
-        XMEMSET(tmpHash->records, 0,
-                sizeof(struct hashRec_s *) * tmpHash->size);
-        return tmpHash;
-      }
-    }
-    fprintf(stderr, "ERR - Hash size too large\n");
-    XFREE(tmpHash->records);
-    XFREE(tmpHash);
-    return NULL;
-  }
-
-  if ((tmpHash->records = (struct hashRec_s **)XMALLOC(
-           sizeof(struct hashRec_s *) * tmpHash->size)) EQ NULL)
-  {
-    fprintf(stderr, "ERR - Unable to allocate hash record list\n");
-    XFREE(tmpHash);
-    return NULL;
-  }
-  XMEMSET(tmpHash->records, 0, sizeof(struct hashRec_s *) * tmpHash->size);
-
-#ifdef DEBUG
-  if (config->debug >= 4)
-    printf("DEBUG - Hash initialized [%u]\n", tmpHash->size);
-#endif
-
-  return tmpHash;
-}
-
-/****
- *
- * find a hash
- *
- ****/
-
-uint32_t searchHash(struct hash_s *hash, const char *keyString)
-{
-  struct hashRec_s *tmpHashRec = NULL;
-  //  uint32_t key = calcHash(hash->size, keyString);
   uint32_t key;
-  int depth = 0;
-  int keyLen = strlen(keyString) + 1;
-  int i, tmp;
   int32_t val = 0;
+  int i, tmp, ret, cmpLen, low, high;
+  register int mid;
+
+  if (keyLen EQ 0)
+    keyLen = strlen(keyString) + 1;
 
   /* generate the lookup hash */
   for (i = 0; i < keyLen; i++)
@@ -616,63 +576,148 @@ uint32_t searchHash(struct hash_s *hash, const char *keyString)
 
 #ifdef DEBUG
   if (config->debug >= 3)
-    printf("DEBUG - Searching for (%s) in hash table at [%d]\n",
-           (char *)keyString, key);
+    printf("DEBUG - Getting record from hash table\n");
 #endif
 
-  /* check to see if the hash slot is allocated */
-  if (hash->records[key] EQ NULL)
+  if (hash->records[key] != NULL)
   {
-    /* empty hash slot */
+    /* search for keyString and hash record if found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
+
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = keyLen;
+
 #ifdef DEBUG
-    if (config->debug >= 5)
-      printf("DEBUG - (%s) not found in hash table\n", (char *)keyString);
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
 #endif
-    return hash->size + 1;
-  }
 
-  /* XXX switch to a single while loop */
-  tmpHashRec = hash->records[key];
-  while (tmpHashRec != NULL)
-  {
-    if (tmpHashRec->keyLen EQ keyLen)
+    do
     {
-      if (strcmp((char *)tmpHashRec->keyString, (char *)keyString) EQ 0)
+      if ((ret = XMEMCMP(keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
+      else
       {
+        if (keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
 #ifdef DEBUG
-        if (config->debug >= 5)
-          printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n",
-                 (char *)keyString, key, depth);
+          if (config->debug >= 4)
+            printf("DEBUG - Found (%s) in hash table at [%d] in record list [%d]\n",
+                   (char *)keyString, key, mid);
 #endif
-        tmpHashRec->lastSeen = config->current_time;
-        tmpHashRec->accessCount++;
-        return key;
+          hash->records[key]->records[mid]->lastSeen = config->current_time;
+          return hash->records[key]->records[mid];
+        }
       }
-    }
-    tmpHashRec = tmpHashRec->next;
+      mid = low + ((high - low) / 2);
+    } while (low < high);
   }
 
-#ifdef DEBUG
-  if (config->debug >= 4)
-    printf("DEBUG - (%s) not found in hash table\n", (char *)keyString);
-#endif
-
-  return hash->size + 1;
+  return NULL;
 }
 
 /****
  *
- * get hash record pointer
+ * snoop hash record pointer
  *
  ****/
 
-struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int keyLen)
+struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString, int keyLen)
 {
-  int depth = 0;
   uint32_t key;
   int32_t val = 0;
-  int i, tmp;
-  struct hashRec_s *tmpHashRec;
+  int i, tmp, ret, cmpLen, low, high;
+  register int mid;
+
+  if (keyLen EQ 0)
+    keyLen = strlen(keyString) + 1;
+
+  /* generate the lookup hash */
+  for (i = 0; i < keyLen; i++)
+  {
+    val = (val << 4) + (keyString[i] & 0xff);
+    if ((tmp = (val & 0xf0000000)))
+    {
+      val = val ^ (tmp >> 24);
+      val = val ^ tmp;
+    }
+  }
+  key = val % hash->size;
+
+#ifdef DEBUG
+  if (config->debug >= 3)
+    printf("DEBUG - Snooping record from hash table\n");
+#endif
+
+  if (hash->records[key] != NULL)
+  {
+    /* search for keyString and hash record if found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
+
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = keyLen;
+
+#ifdef DEBUG
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
+#endif
+
+    do
+    {
+      if ((ret = XMEMCMP(keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
+      else
+      {
+        if (keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
+#ifdef DEBUG
+          if (config->debug >= 4)
+            printf("DEBUG - Found (%s) in hash table at [%d] in record list [%d]\n", (char *)keyString, key, mid);
+#endif
+          return hash->records[key]->records[mid];
+        }
+      }
+      mid = low + ((high - low) / 2);
+    } while (low < high);
+  }
+
+  return NULL;
+}
+
+/****
+ *
+ * get data in hash record
+ *
+ ****/
+
+void *getHashData(struct hash_s *hash, const char *keyString, int keyLen)
+{
+  uint32_t key;
+  int32_t val = 0;
+  int i, tmp, ret, cmpLen, low, high;
+  register int mid;
 
   if (keyLen EQ 0)
     keyLen = strlen(keyString) + 1;
@@ -694,27 +739,48 @@ struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int 
     printf("DEBUG - Getting data from hash table\n");
 #endif
 
-  /* XXX switch to a single while loop */
-  tmpHashRec = hash->records[key];
-  while (tmpHashRec != NULL)
+  if (hash->records[key] != NULL)
   {
-    if (tmpHashRec->keyLen EQ keyLen)
+    /* search for keyString and hash record if found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
+
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = keyLen;
+
+#ifdef DEBUG
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
+#endif
+
+    do
     {
-      if (memcmp(tmpHashRec->keyString, keyString, keyLen) EQ 0)
+      if ((ret = XMEMCMP(keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
+      else
       {
+        if (keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
 #ifdef DEBUG
-        if (config->debug >= 4)
-          printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n",
-                 (char *)keyString, key, depth);
+          if (config->debug >= 4)
+            printf("DEBUG - Found (%s) in hash table at [%d] in record list [%d]\n", (char *)keyString, key, mid);
 #endif
-
-        tmpHashRec->lastSeen = config->current_time;
-        tmpHashRec->accessCount++;
-        return tmpHashRec;
+          hash->records[key]->records[mid]->lastSeen = config->current_time;
+          return hash->records[key]->records[mid]->data;
+        }
       }
-    }
-    depth++;
-    tmpHashRec = tmpHashRec->next;
+      mid = low + ((high - low) / 2);
+    } while (low < high);
   }
 
   return NULL;
@@ -722,85 +788,23 @@ struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int 
 
 /****
  *
- * snoop hash record pointer with precomputed key
+ * snoop hash record data
  *
  ****/
 
-inline struct hashRec_s *snoopHashRecWithKey(struct hash_s *hash,
-                                             const char *keyString, int keyLen,
-                                             uint32_t key)
-{
-  struct hashRec_s *tmpHashRec;
-  const char *ptr;
-  int depth = 0;
-#ifdef DEBUG
-  char oBuf[4096];
-  char nBuf[4096];
-#endif
-
-#ifdef DEBUG
-  if (config->debug >= 3)
-    printf("DEBUG - Searching for [%s]\n",
-           hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)));
-#endif
-
-  // if ( keyLen EQ 0 )
-  //  keyLen = strlen( keyString );
-
-  /* XXX switch to a single while loop */
-
-  tmpHashRec = hash->records[key];
-  while (tmpHashRec != NULL)
-  {
-    if (bcmp(tmpHashRec->keyString, keyString, keyLen) EQ 0)
-    {
-#ifdef DEBUG
-      if (config->debug >= 4)
-        printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d] [%s]\n",
-               hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), key, depth,
-               hexConvert(tmpHashRec->keyString, tmpHashRec->keyLen, oBuf,
-                          sizeof(oBuf)));
-#endif
-      return tmpHashRec;
-    }
-    tmpHashRec = tmpHashRec->next;
-    depth++;
-  }
-
-  return NULL;
-}
-
-/****
- *
- * snoop hash record pointer
- *
- ****/
-
-struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString,
-                                  int keyLen)
+void *snoopHashData(struct hash_s *hash, const char *keyString, int keyLen)
 {
   uint32_t key;
-  int depth = 0;
-  struct hashRec_s *tmpHashRec;
-  uint32_t val = 0;
-  const char *ptr;
-  char oBuf[4096];
-  char nBuf[4096];
-  int i = 0;
-
-#ifdef DEBUG
-  if (config->debug >= 3)
-    printf("DEBUG - Searching for [%s]\n",
-           hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)));
-#endif
+  int32_t val = 0;
+  int i, tmp, ret, cmpLen, low, high;
+  register int mid;
 
   if (keyLen EQ 0)
-    keyLen = strlen(keyString);
+    keyLen = strlen(keyString) + 1;
 
   /* generate the lookup hash */
   for (i = 0; i < keyLen; i++)
   {
-    int tmp;
     val = (val << 4) + (keyString[i] & 0xff);
     if ((tmp = (val & 0xf0000000)))
     {
@@ -810,24 +814,52 @@ struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString,
   }
   key = val % hash->size;
 
-  /* XXX switch to a single while loop */
-
-  tmpHashRec = hash->records[key];
-  while (tmpHashRec != NULL)
-  {
-    if (bcmp(tmpHashRec->keyString, keyString, keyLen) EQ 0)
-    {
 #ifdef DEBUG
-      if (config->debug >= 4)
-        printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d] [%s]\n",
-               hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), key, depth,
-               hexConvert(tmpHashRec->keyString, tmpHashRec->keyLen, oBuf,
-                          sizeof(oBuf)));
+  if (config->debug >= 3)
+    printf("DEBUG - Snooping data from hash table\n");
 #endif
-      return tmpHashRec;
-    }
-    depth++;
-    tmpHashRec = tmpHashRec->next;
+
+  if (hash->records[key] != NULL)
+  {
+    /* search for keyString and hash record if found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
+
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = keyLen;
+
+#ifdef DEBUG
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
+#endif
+
+    do
+    {
+      if ((ret = XMEMCMP(keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
+      else
+      {
+        if (keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
+#ifdef DEBUG
+          if (config->debug >= 4)
+            printf("DEBUG - Found (%s) in hash table at [%d] in record list [%d]\n", (char *)keyString, key, mid);
+#endif
+          return hash->records[key]->records[mid]->data;
+        }
+      }
+      mid = low + ((high - low) / 2);
+    } while (low < high);
   }
 
   return NULL;
@@ -835,98 +867,108 @@ struct hashRec_s *snoopHashRecord(struct hash_s *hash, const char *keyString,
 
 /****
  *
- * get data in hash record
+ * remove hash record
  *
  ****/
 
-void *getHashData(struct hash_s *hash, const void *keyString)
+void *deleteHashRecord(struct hash_s *hash, const char *keyString, int keyLen)
 {
-  uint32_t key = calcHash(hash->size, keyString);
-  struct hashRec_s *tmpHashRec;
+  uint32_t key;
+  int32_t val = 0;
+  int i, tmp, ret, low, high, cmpLen;
+  register int mid;
+  void *tmpDataPtr;
 
-  return getDataByKey(hash, key, (void *)keyString);
-}
+  if (keyLen EQ 0)
+    keyLen = strlen(keyString) + 1;
 
-void *getDataByKey(struct hash_s *hash, uint32_t key, void *keyString)
-{
-  int depth = 0;
-  struct hashRec_s *tmpHashRec;
+  /* generate the lookup hash */
+  for (i = 0; i < keyLen; i++)
+  {
+    val = (val << 4) + (keyString[i] & 0xff);
+    if ((tmp = (val & 0xf0000000)))
+    {
+      val = val ^ (tmp >> 24);
+      val = val ^ tmp;
+    }
+  }
+  key = val % hash->size;
 
 #ifdef DEBUG
   if (config->debug >= 3)
-    printf("DEBUG - Getting data from hash table\n");
+    printf("DEBUG - Searching for record to delete from the hash table\n");
 #endif
 
-  tmpHashRec = hash->records[key];
-  while (tmpHashRec != NULL)
+  if (hash->records[key] != NULL)
   {
-    if (strcmp(tmpHashRec->keyString, (char *)keyString) EQ 0)
-    {
+    /* search for keyString and hash record if found */
+    low = 0;
+    high = hash->records[key]->count;
+    mid = high / 2;
+
+    /* use the shortest string */
+    if (hash->records[key]->records[mid]->keyLen < keyLen)
+      cmpLen = hash->records[key]->records[mid]->keyLen;
+    else
+      cmpLen = keyLen;
+
 #ifdef DEBUG
-      if (config->debug >= 4)
-        printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n",
-               (char *)keyString, key, depth);
+    if (config->debug >= 1)
+      printf("DEBUG - snoop hashrec L: %d M: %d H: %d\n", low, mid, high);
 #endif
 
-      tmpHashRec->lastSeen = config->current_time;
-      tmpHashRec->accessCount++;
-      return tmpHashRec->data;
-    }
-    depth++;
-    tmpHashRec = tmpHashRec->next;
-  }
-
-  return NULL;
-}
-
-/****
- *
- * dump the hash
- *
- ****/
-
-void dumpHash(struct hash_s *hash)
-{
-  uint32_t key = 0;
-  int count = 0;
-  struct hashRec_s *tmpHashRec;
-
-  for (key = 0; key < hash->size; key++)
-  {
-    tmpHashRec = hash->records[key];
-    while (tmpHashRec != NULL)
+    do
     {
-      if (tmpHashRec->keyString != NULL)
+      if ((ret = XMEMCMP(keyString, hash->records[key]->records[mid]->keyString, cmpLen)) > 0)
+        low = mid + 1;
+      else if (ret < 0)
+        high = mid;
+      else
       {
-        // fprintf( stderr, "%d: %s\n", key, tmpHashRec->keyString );
-        count++;
+        if (keyLen > hash->records[key]->records[mid]->keyLen)
+          low = mid + 1;
+        else if (keyLen < hash->records[key]->records[mid]->keyLen)
+          high = mid;
+        else
+        {
+#ifdef DEBUG
+          if (config->debug >= 4)
+            printf("DEBUG - Found (%s) in hash table at [%d] in record list [%d]\n", (char *)keyString, key, mid);
+#endif
+          tmpDataPtr = hash->records[key]->records[mid]->data;
+          XFREE(hash->records[key]->records[mid]->keyString);
+          XFREE(hash->records[key]->records[mid]);
+
+          if (hash->records[key]->count EQ 1)
+          {
+            /* last record in list */
+            XFREE(hash->records[key]->records);
+            XFREE(hash->records[key]);
+            hash->records[key] = NULL;
+            return tmpDataPtr;
+          }
+          else if (mid < hash->records[key]->count)
+          {
+            /* move mem up to fill the hole */
+            /* XXX need to add a wrapper in mem.c for memmove */
+            memmove(&hash->records[key]->records[mid], &hash->records[key]->records[mid + 1], sizeof(struct hashRec_s *) * (hash->records[key]->count - (mid + 1)));
+          }
+          hash->records[key]->count--;
+          /* shrink the buffer */
+          if ((hash->records[key]->records = (struct hashRec_s **)XREALLOC(hash->records[key]->records, sizeof(struct hashRec_s *) * (hash->records[key]->count))) EQ NULL)
+          {
+            /* XXX need better cleanup than this */
+            fprintf(stderr, "ERR - Unable to allocate space for hash record list\n");
+            return NULL;
+          }
+          /* return the data */
+          return tmpDataPtr;
+        }
       }
-      tmpHashRec = tmpHashRec->next;
-    }
+      mid = low + ((high - low) / 2);
+    } while (low < high);
   }
 
-  // fprintf( stderr, "%d total items\n", count );
-}
-
-/****
- *
- * grow the hash
- *
- ****/
-
-struct hash_s *growHash(struct hash_s *oldHash, size_t newHashSize)
-{
-  return NULL;
-}
-
-/****
- *
- * shrink the hash
- *
- ****/
-
-struct hash_s *shrinkHash(struct hash_s *oldHash, size_t newHashSize)
-{
   return NULL;
 }
 
@@ -939,8 +981,6 @@ struct hash_s *shrinkHash(struct hash_s *oldHash, size_t newHashSize)
 struct hash_s *dyGrowHash(struct hash_s *oldHash)
 {
   struct hash_s *tmpHash;
-  struct hashRec_s *curHashRec;
-  struct hashRec_s *tmpHashRec;
   int i;
   uint32_t tmpKey;
 
@@ -970,13 +1010,19 @@ struct hash_s *dyGrowHash(struct hash_s *oldHash)
 
     for (tmpKey = 0; tmpKey < oldHash->size; tmpKey++)
     {
-      curHashRec = oldHash->records[tmpKey];
-
-      while (curHashRec != NULL)
+      if (oldHash->records[tmpKey] != NULL)
       {
-        tmpHashRec = curHashRec->next;
-        insertUniqueHashRec(tmpHash, curHashRec);
-        curHashRec = tmpHashRec;
+        for (i = 0; i < oldHash->records[tmpKey]->count; i++)
+        {
+          if (insertUniqueHashRec(tmpHash, oldHash->records[tmpKey]->records[i]) EQ FAILED)
+          {
+            fprintf(stderr, "ERR - Failed to insert hash record while growing\n");
+            /* XXX need to do properly handle this error */
+          }
+        }
+        /* free old hash record list buffer */
+        XFREE(oldHash->records[tmpKey]->records);
+        XFREE(oldHash->records[tmpKey]);
       }
     }
 
@@ -993,8 +1039,11 @@ struct hash_s *dyGrowHash(struct hash_s *oldHash)
               "ERR - New hash is not the same size as the old hash [%d->%d]\n",
               oldHash->totalRecords, tmpHash->totalRecords);
     }
+
+    /* free the rest of the old hash buffers */
     XFREE(oldHash->records);
     XFREE(oldHash);
+
 #ifdef DEBUG
     if (config->debug >= 5)
       printf("DEBUG - HASH: Grew\n");
@@ -1007,7 +1056,7 @@ struct hash_s *dyGrowHash(struct hash_s *oldHash)
 
 /****
  *
- * dynamic hash shring
+ * dynamic hash shrink
  *
  ****/
 
@@ -1020,29 +1069,66 @@ struct hash_s *dyShrinkHash(struct hash_s *oldHash)
   if ((oldHash->totalRecords / oldHash->size) < 0.3)
   {
     /* the hash should be shrunk */
-    if (oldHash->primeOff EQ 0)
-      return oldHash;
 
+#ifdef DEBUG
+    if (config->debug >= 3)
+      printf("DEBUG - R: %d T: %d\n", oldHash->totalRecords, oldHash->size);
+#endif
+
+    if (oldHash->primeOff EQ 0)
+    {
+      fprintf(stderr, "ERR - Hash at minimum size already\n");
+      return oldHash;
+    }
+#ifdef DEBUG
+    if (config->debug >= 4)
+      printf("DEBUG - HASH: Shrinking\n");
+#endif
     if ((tmpHash = initHash(hashPrimes[oldHash->primeOff - 1])) EQ NULL)
     {
       fprintf(stderr, "ERR - Unable to allocate new hash\n");
       return oldHash;
     }
 
-    for (i = 0; i < oldHash->size; i++)
+    for (tmpKey = 0; tmpKey < oldHash->size; tmpKey++)
     {
-      if (oldHash->records[i] != NULL)
+      if (oldHash->records[tmpKey] != NULL)
       {
-        /* move hash records */
-        tmpKey = calcHash(tmpHash->size, oldHash->records[i]->keyString);
-        tmpHash->records[tmpKey] = oldHash->records[i];
-        oldHash->records[i] = NULL;
+        for (i = 0; i < oldHash->records[tmpKey]->count; i++)
+        {
+          if (insertUniqueHashRec(tmpHash, oldHash->records[tmpKey]->records[i]) EQ FAILED)
+          {
+            fprintf(stderr, "ERR - Failed to insert hash record while shrinking\n");
+            /* XXX need to do properly handle this error */
+          }
+        }
+        /* free old hash record list buffer */
+        XFREE(oldHash->records[tmpKey]->records);
       }
     }
 
-    tmpHash->totalRecords = oldHash->totalRecords;
-    tmpHash->maxDepth = oldHash->maxDepth;
-    freeHash(oldHash);
+#ifdef DEBUG
+    if (config->debug >= 5)
+      printf("DEBUG - Old [RC: %d T: %d] New [RC: %d T: %d]\n",
+             oldHash->totalRecords, oldHash->size, tmpHash->totalRecords,
+             tmpHash->size);
+#endif
+
+    if (tmpHash->totalRecords != oldHash->totalRecords)
+    {
+      fprintf(stderr,
+              "ERR - New hash is not the same size as the old hash [%d->%d]\n",
+              oldHash->totalRecords, tmpHash->totalRecords);
+    }
+
+    /* free the rest of the old hash buffers */
+    XFREE(oldHash->records);
+    XFREE(oldHash);
+
+#ifdef DEBUG
+    if (config->debug >= 5)
+      printf("DEBUG - HASH: Grew\n");
+#endif
     return tmpHash;
   }
 
@@ -1051,187 +1137,79 @@ struct hash_s *dyShrinkHash(struct hash_s *oldHash)
 
 /****
  *
- * remove hash record
+ * get rid of old hash records
  *
  ****/
 
-void *deleteHashRecord(struct hash_s *hash, const char *keyString, int keyLen)
+void **purgeOldHashRecords(struct hash_s *hash, time_t age, void **dataList)
 {
-  uint32_t key;
-  int depth = 0;
-  struct hashRec_s *tmpHashRec;
-  uint32_t val = 0;
-  const char *ptr;
-  char oBuf[4096];
-  char nBuf[4096];
-  int i = 0;
-  void *data;
+  uint32_t i, key;
+  size_t count = 0;
+
+  if (dataList EQ NULL)
+  {
+    if ((dataList = (void **)XMALLOC(sizeof(void *) * (count + 1))) EQ NULL)
+    {
+      fprintf(stderr, "ERR - Unable to allocate memory for purged data list\n");
+      return NULL;
+    }
+  }
+  dataList[count] = NULL;
 
 #ifdef DEBUG
   if (config->debug >= 3)
-    printf("DEBUG - Searching for [%s]\n",
-           hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)));
+    printf("DEBUG - Purging hash records older than [%ld]\n", age);
 #endif
 
-  if (keyLen EQ 0)
-    keyLen = strlen(keyString);
-
-  /* generate the lookup hash */
-  for (i = 0; i < keyLen; i++)
+  for (key = 0; key < hash->size; key++)
   {
-    int tmp;
-    val = (val << 4) + (keyString[i] & 0xff);
-    if ((tmp = (val & 0xf0000000)))
+    if (hash->records[key] != NULL)
     {
-      val = val ^ (tmp >> 24);
-      val = val ^ tmp;
-    }
-  }
-  key = val % hash->size;
-
-  /* XXX switch to a single while loop */
-
-  tmpHashRec = hash->records[key];
-  while (tmpHashRec != NULL)
-  {
-    if (XMEMCMP(tmpHashRec->keyString, keyString, keyLen) EQ 0)
-    {
-#ifdef DEBUG
-      if (config->debug >= 4)
-        printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d] [%s]\n",
-               hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), key, depth,
-               hexConvert(tmpHashRec->keyString, tmpHashRec->keyLen, oBuf,
-                          sizeof(oBuf)));
-#endif
-
-#ifdef DEBUG
-      if (config->debug >= 3)
-        printf("DEBUG - Removing hash record\n");
-#endif
-      if (tmpHashRec->prev != NULL)
-        tmpHashRec->prev->next = tmpHashRec->next;
-      else
-        hash->records[key] = tmpHashRec->next;
-
-      if (tmpHashRec->next != NULL)
-        tmpHashRec->next->prev = tmpHashRec->prev;
-
-      data = tmpHashRec->data;
-      XFREE(tmpHashRec->keyString);
-      XFREE(tmpHashRec);
-      hash->totalRecords--;
-
-      return data;
-    }
-    depth++;
-    tmpHashRec = tmpHashRec->next;
-  }
-
-  return NULL;
-}
-
-/****
- *
- * get an old record
- *
- ****/
-
-/* XXX really inefficient, should generate a list of old records and return a
- * linked list */
-
-void *purgeOldHashData(struct hash_s *hash, time_t age)
-{
-  int i;
-  struct hashRec_s *tmpHashRec;
-
-#ifdef DEBUG
-  if (config->debug >= 3)
-    printf("DEBUG - Purging hash records older than [%u]\n", (unsigned int)age);
-#endif
-
-  for (i = 0; i < hash->size; i++)
-  {
-    tmpHashRec = hash->records[i];
-    while (tmpHashRec != NULL)
-    {
-      if (tmpHashRec->lastSeen EQ 0)
+      for (i = 0; i < hash->records[key]->count; i++)
       {
-        fprintf(stderr, "ERR - hash rec with bad time\n");
-      }
-      else if (tmpHashRec->lastSeen < age)
-      {
-#ifdef DEBUG
-        if (config->debug >= 4)
-          printf("DEBUG - Removing old hash record\n");
-#endif
-        /* hash is old, remove it */
-        if (tmpHashRec->prev != NULL)
-          tmpHashRec->prev->next = tmpHashRec->next;
-        else
-          hash->records[i] = NULL;
-
-        if (tmpHashRec->next != NULL)
+        if (hash->records[key]->records[i] != NULL)
         {
-          tmpHashRec->next->prev = tmpHashRec->prev;
+          if (hash->records[key]->records[i]->lastSeen < age)
+          {
+            /* old record, remove it */
+            count++;
+            if ((dataList = (void **)XREALLOC(dataList, count)) EQ NULL)
+            {
+              fprintf(stderr, "ERR - Unable to grow memory for purged data list\n");
+              return NULL;
+            }
+            dataList[count - 1] = hash->records[key]->records[i]->data;
+            dataList[count] = NULL;
+            XFREE(hash->records[key]->records[i]->keyString);
+            XFREE(hash->records[key]->records[i]);
+
+            if (hash->records[key]->count EQ 1)
+            {
+              /* last record in list */
+              XFREE(hash->records[key]->records);
+              XFREE(hash->records[key]);
+              hash->records[key] = NULL;
+            }
+            else if (i < hash->records[key]->count)
+            {
+              /* move mem up to fill the hole */
+              /* XXX need to add a wrapper in mem.c for memmove */
+              memmove(&hash->records[key]->records[i], &hash->records[key]->records[i + 1], sizeof(struct hashRec_s *) * (hash->records[key]->count - (i + 1)));
+            }
+            hash->records[key]->count--;
+            /* shrink the buffer */
+            if ((hash->records[key]->records = (struct hashRec_s **)XREALLOC(hash->records[key]->records, sizeof(struct hashRec_s *) * (hash->records[key]->count))) EQ NULL)
+            {
+              /* XXX need better cleanup than this */
+              fprintf(stderr, "ERR - Unable to allocate space for hash record list\n");
+              return NULL;
+            }
+          }
         }
-        hash->totalRecords--;
-        /* if there is data, return for cleanup */
-        if (tmpHashRec->data != NULL)
-          return tmpHashRec->data;
       }
-      tmpHashRec = tmpHashRec->next;
     }
   }
-
-  /* no old records */
-  return NULL;
-}
-
-/****
- *
- * pop data out of hash
- *
- ****/
-
-/* XXX inefficient, should generate a list of records to pop and return a linked
- * list */
-
-void *popHash(struct hash_s *hash)
-{
-  int i;
-  struct hashRec_s *tmpHashRec;
-
-#ifdef DEBUG
-  printf("DEBUG - POPing hash record\n");
-#endif
-
-  for (i = 0; i < hash->size; i++)
-  {
-    tmpHashRec = hash->records[i];
-    while (tmpHashRec != NULL)
-    {
-#ifdef DEBUG
-      printf("DEBUG - Popping hash record\n");
-#endif
-      if (tmpHashRec->prev != NULL)
-        tmpHashRec->prev->next = tmpHashRec->next;
-      else
-        hash->records[i] = NULL;
-
-      if (tmpHashRec->next != NULL)
-      {
-        tmpHashRec->next->prev = tmpHashRec->prev;
-      }
-      hash->totalRecords--;
-      /* if there is data, return for cleanup */
-      if (tmpHashRec->data != NULL)
-        return tmpHashRec->data;
-    }
-    tmpHashRec = tmpHashRec->next;
-  }
-
-  /* no old records */
-  return NULL;
+  return (dataList);
 }
 
 /****
@@ -1255,8 +1233,9 @@ char *hexConvert(const char *keyString, int keyLen, char *buf,
 
 /****
  *
- * print key string in hex (just in case it is not ascii)
- *
+ * deal with UTF strings
+ * XXX this is a terrible way to handle this
+ * 
  ****/
 
 char *utfConvert(const char *keyString, int keyLen, char *buf,
