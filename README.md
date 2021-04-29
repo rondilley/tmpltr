@@ -48,7 +48,7 @@ To get a list of all the options, you can execute the
 command with the -h or --help switch.
 
 ```
-tmpltr v0.10 [Jan 14 2021 - 16:56:30]
+tmpltr v0.12 [Apr 29 2021 - 12:31:37]
 
 syntax: tmpltr [options] filename [filename ...]
  -c|--cluster           show invariable fields in output
@@ -77,59 +77,163 @@ frequency of occurent from least to most prevalent.
 I normally go through the list in this order to speed up
 catching the anonlylous patterns.
 
-```
-% tmpltr /var/log/secure.log | sort -n
-Opening [/var/log/secure.log] for read
-           1 %x %d %s %s %s[%d]:     %s : %s=%s ; %s=/%s/%s/%s/%s/%s ; %s=%s ; %s=./%s/%s/%s/%s/%s /||Dec 17 13:05:49 Rons-MacBook-Pro sudo[7974]:     root : TTY=unknown ; PWD=/private/tmp/PKInstallSandbox.WSZSYc/Scripts/com.apple.pkg.Safari6.1.1Lion.wqQJEF ; USER=rdilley ; COMMAND=./Tools/AlertAll.app/Contents/MacOS/AlertAll /
-           1 %x %d %s %s %s[%d]: %s %s %s %s %s %s>%s||Dec 16 16:30:01 Rons-MacBook-Pro newsyslog[5373]: logfile turned over due to size>1000K
-           1 %x %d %s %s %s[%d]: %s %s %s %s /%s/%s||Dec 16 20:01:32 Rons-MacBook-Pro su[5799]: rdilley to root on /dev/ttys001
-           1 %x %d %s %s %s[%d]: %s(?:%s) %s %s=-%d||Dec 17 02:02:36 Rons-MacBook-Pro com.apple.SecurityServer[24]: setup(?:obsolete) failed rcode=-2147418111
-           2 %x %d %s %s %s[%d]: %s %s %s %s '%s' %s %s '%s' [%d] %s %s %s %s '%s' [%d]||Dec 28 15:10:13 Rons-MacBook-Pro com.apple.SecurityServer[24]: Failed to authorize right 'system.install.app-store-software' by client '/System/Library/PrivateFrameworks/PackageKit.framework/Versions/A/Resources/installd' [12669] for authorization created by '/System/Library/CoreServices/Software Update.app' [12661]
-           5 %x %d %s %s %s[%d]: %s %s %s||Dec 17 15:25:21 Rons-MacBook-Pro com.apple.SecurityServer[24]: Killing auth hosts
-           8 %x %d %s %s %s[%d]: %s %s %s %s %s %s %x %s||Dec 17 17:18:04 Rons-MacBook-Pro loginwindow[58]: resume called when there was already a timer
-          10 %x %d %s %s %s[%d]: %s %d %s||Dec 17 15:02:23 Rons-MacBook-Pro com.apple.SecurityServer[24]: Session 100012 created
-          50 %x %d %s %s %s[%d]: %s %s(): %s %d %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Kerberos 5 refuses you
-          50 %x %d %s %s %s[%d]: %s %s(): %s %s()||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Done getpwnam()
-          50 %x %d %s %s %s[%d]: %s %s(): %s %s, %s: %d %d||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Got euid, egid: 502 20
-          50 %x %d %s %s %s[%d]: %s %s(): %s: %s %s %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): pam_sm_setcred: krb5 user rdilley doesn't have a principal
-          51 %x %d %s %s %s[%d]: %s %s(): %s %s %s %s %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Failed to determine Kerberos principal name.
-          51 %x %d %s %s %s[%d]: %s %s(): %s %s %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in od_principal_for_user(): No authentication authority returned
-          53 %x %d %s %s %s[%d]: %s %s(): %s %d %s %s %s:%s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in od_record_attribute_create_cfstring(): returned 2 attributes for dsAttrTypeStandard:AuthenticationAuthority
-          53 %x %d %s %s %s[%d]: %s %s(): %s - %s %s %s %s %s %d.||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_acct_mgmt(): OpenDirectory - Membership cache TTL set to 1800.
-         100 %x %d %s %s %s[%d]: %s %s(): %s %s() & %s()||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Done setegid() & seteuid()
-         103 %x %d %s %s %s[%d]: %s %s(): %s: %d||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in od_principal_for_user(): failed: 7
-         200 %x %d %s %s %s[%d]: %s %s(): %s %s: %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Got user: rdilley
-         252 %x %d %s %s %s[%d]: %s %s(): %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Done cleanup3
-        1197 %x %d %s --- %s %s %s %d %s ---||Dec 16 16:31:44: --- last message repeated 1 time ---
-        3119 %x %d %s %s %s[%d]: %s %s %s '%s' %s %s '%s' [%d] %s %s %s %s '%s' [%d]||Dec 16 16:30:44 Rons-MacBook-Pro com.apple.SecurityServer[24]: Succeeded authorizing right 'system.preferences' by client '/System/Library/PrivateFrameworks/Admin.framework/Versions/A/Resources/writeconfig' [3274] for authorization created by '/Applications/System Preferences.app' [3268]
+```% tmpltr /var/log/syslog | sort -n
+Opening [/var/log/syslog] for read
+           1 %s %d %s %s [%d]: %c_%s: %s '%s > %d' %s||Apr 29 12:50:34 ubuntu [3008013]: g_object_ref: assertion 'old_val > 0' failed
+           1 %s %d %s %s %s[%d]: %s `%s' %s||Apr 29 07:35:35 ubuntu anacron[2996986]: Job `cron.daily' started
+           1 %s %d %s %s %s[%d]: (%s) %s (%s)||Apr 29 08:00:02 ubuntu crontab[3000587]: (root) LIST (nobody)
+           1 %s %d %s %s %s[%d]: %s %s %s %s: %d %s %s %s||Apr 29 11:50:41 ubuntu fwupdmgr[3006998]: Successfully downloaded new metadata: 0 local devices supported
+           1 %s %d %s %s %s[%d]: %s %s %s `%s' %s %d %s||Apr 29 07:30:35 ubuntu anacron[2996986]: Will run job `cron.daily' in 5 min.
+           1 %s %d %s %s %s[%d]: %s `%s' %s (%s %s: %d) (%s %s)||Apr 29 07:35:36 ubuntu anacron[2996986]: Job `cron.daily' terminated (exit status: 1) (mailing output)
+           1 %s %d %s %s %s[%d]: %s %s %s %s `%s' %s %s||Apr 29 07:35:35 ubuntu anacron[2997066]: Updated timestamp for job `cron.daily' to 2021-04-29
+           1 %s %d %s %s %s[%d]: (%s) %s (%s -%s/%s/%s/%s || ( %x / && %s --%s /%s/%s ))||Apr 29 06:25:01 ubuntu CRON[2994686]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily ))
+           1 %s %d %s %s %s[%d]: (%s) %s (%s -%x /%s/%s/%s || %s=%d /%s/%s -%x -%c)||Apr 29 03:10:01 ubuntu CRON[2987654]: (root) CMD (test -e /run/systemd/system || SERVICE_MODE=1 /sbin/e2scrub_all -A -r)
+           1 %s %d %s %s %s[%d]: %s %s %x %s %s||Apr 29 07:30:35 ubuntu anacron[2996986]: Jobs will be executed sequentially
+           1 %s %d %s %s %s[%d]: %x %s %s %s %s %s'%s %s||Apr 29 08:08:44 ubuntu gvfsd[2014500]: A connection to the bus can't be made
+           1 %s %d %s %s %s: %s %s %s %s||Apr 29 07:35:36 ubuntu cracklib: no dictionary update necessary.
+           2 %s %d %s %s %s[%d]: %s %s||Apr 29 08:08:44 ubuntu indicator-appli[2014597]: Name Lost
+           2 %s %d %s %s %s[%d]: %s %s %s %s %d %s %s %s %s %f||Apr 29 14:18:46 ubuntu systemd[2238]: Started VTE child process 3011238 launched by gnome-terminal-server process 2695.
+           2 %s %d %s %s %s[%d]: %s %s; %s/%s %s %s||Apr 29 08:08:44 ubuntu indicator-datet[2014612]: indicator-datetime exiting; failed/lost bus ownership
+           2 %s %d %s %s %s[%d]: %s: %s %s'%s %s %s %s %s %s||Apr 29 08:08:44 ubuntu indicator-power[2014598]: exiting: service couldn't acquire or lost ownership of busname
+           2 %s %d %s %s %s[%d]: %s: %s %s'%s, %s %s %s %s, %s||Apr 29 08:08:44 ubuntu indicator-sessi[2014618]: exiting: service couldn't acquire, or lost ownership of, busname
+           3 %s %d %s %s %s[%d]: %s:%d: %s: %s %s %s %s||Apr 29 01:33:32 ubuntu snapd[791]: autorefresh.go:479: auto-refresh: all snaps are up-to-date
+           3 %s %d %s %s %s[%d]: %s %s %s: ||Apr 29 08:42:57 ubuntu xfce4-notifyd[3002212]: cannot open display: 
+           3 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s: %s||Apr 29 08:08:44 ubuntu indicator-sound[2014629]: Name lost or unable to acquire bus: com.canonical.indicator.sound
+           3 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s, %s||Apr 29 09:31:32 ubuntu tumblerd[3003112]: Name org.freedesktop.thumbnails.Cache1 lost on the message dbus, exiting.
+           3 %s %d %s %s %s/%s[%d]: %x: %s||Apr 29 01:08:00 ubuntu postfix/qmgr[2145]: 119904600DA: removed
+           3 %s %d %s %s %s/%s[%d]: %x: %s=%d %s=<%s>||Apr 29 01:08:00 ubuntu postfix/pickup[2015577]: 119904600DA: uid=0 from=<root>
+           3 %s %d %s %s %s/%s[%d]: %x: %s=<%s>||Apr 29 01:08:00 ubuntu postfix/cleanup[2984439]: 119904600DA: message-id=<20210429080800.119904600DA@ubuntu.localdomain>
+           3 %s %d %s %s %s/%s[%d]: %x: %s=<%s>, %s=%d, %s=%d (%s %s)||Apr 29 01:08:00 ubuntu postfix/qmgr[2145]: 119904600DA: from=<root@ubuntu-dev.uberadmin.com>, size=19652, nrcpt=1 (queue active)
+           4 %s %d %s %s %s[%d]: %s: %s %s %s '%s'.||Apr 29 03:00:19 ubuntu systemd[1]: fwupd-refresh.service: Failed with result 'exit-code'.
+           4 %s %d %s %s %s[%d]: %s %s %s://%s/%s/%s||Apr 29 03:00:19 ubuntu fwupdmgr[2987489]: Fetching metadata https://cdn.fwupd.org/downloads/firmware.xml.gz
+           4 %s %d %s %s %s[%d]: %s: %s %s %s, %s=%s, %s=%d/%s||Apr 29 03:00:19 ubuntu systemd[1]: fwupd-refresh.service: Main process exited, code=exited, status=1/FAILURE
+           4 %s %d %s %s %s: %s %s||Apr 29 06:00:25 ubuntu PackageKit: daemon start
+           5 %s %d %s %s %s[%d]: %s: %s %s %d (%s) %s %s %s||Apr 29 08:08:44 ubuntu systemd[2014467]: dbus.service: Killing process 2014538 (gdbus) with signal SIGKILL.
+           7 %s %d %s %s %s[%d]: %s %f %s %s %s||Apr 29 07:30:35 ubuntu anacron[2996986]: Anacron 2.3 started on 2021-04-29
+           7 %s %d %s %s %s[%d]: %s %s (%d %s %s)||Apr 29 07:35:36 ubuntu anacron[2996986]: Normal exit (1 job run)
+           7 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s %s %s, %s %s %s %s %s %s %s||Apr 29 08:26:57 ubuntu pulseaudio[3001795]: ALSA woke us up to write new data to the device, but there was actually nothing to write.
+           8 %s %d %s %s %s[%d]: %s %s %d %s: [ %s %s %s %s() %s: %s %s %s %s]||Apr 29 08:08:44 ubuntu indicator-sound[2014629]: message repeated 3 times: [ Error while sending AddMatch() message: The connection is closed]
+           9 %s %d %s %s %s[%d]: %c_%s: %s '%s > %d' %s||Apr 29 08:08:44 ubuntu indicator-sound[2014629]: g_object_ref: assertion 'old_val > 0' failed
+           9 %s %d %s %s %s[%d]: %s[%d]: %s %s %s '%s'||Apr 29 08:26:58 ubuntu at-spi-bus-launcher[3001881]: dbus-daemon[3001881]: Successfully activated service 'org.a11y.atspi.Registry'
+           9 %s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s %s %s||Apr 29 08:26:57 ubuntu dbus-daemon[3001807]: [session uid=128 pid=3001807] AppArmor D-Bus mediation is enabled
+           9 %s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s '%x.%s'||Apr 29 08:26:58 ubuntu dbus-daemon[3001807]: [session uid=128 pid=3001807] Successfully activated service 'ca.desrt.dconf'
+           9 %s %d %s %s %s[%d]: %s: %s '%s (%s)' %s||Apr 29 08:26:58 ubuntu indicator-keybo[3001919]: gtk_icon_theme_get_for_screen: assertion 'GDK_IS_SCREEN (screen)' failed
+           9 %s %d %s %s %s[%d]: %s %s %s %s %s (%s %s).||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on GnuPG cryptographic agent (ssh-agent emulation).
+           9 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s - %s||Apr 29 08:26:58 ubuntu at-spi-bus-launcher[3001909]: SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+           9 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s (%s).||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on GnuPG cryptographic agent and passphrase cache (restricted).
+           9 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s %s||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on REST API socket for snapd user session agent.
+           9 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s (%s %s %s %s).||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on GnuPG cryptographic agent and passphrase cache (access for web browsers).
+          10 %s %d %s %s %s[%d]: %s %s %s %s (%s %s).||Apr 29 08:08:44 ubuntu systemd[2014467]: Closed GnuPG cryptographic agent (ssh-agent emulation).
+          10 %s %d %s %s %s[%d]: %s %s %s -%s %s %s||Apr 29 08:26:58 ubuntu org.freedesktop.thumbnails.Cache1[3001889]: Registered thumbnailer evince-thumbnailer -s %s %u %o
+          10 %s %d %s %s %s[%d]: %s %s %s --%s %s %s %s||Apr 29 08:26:58 ubuntu org.freedesktop.thumbnails.Cache1[3001889]: Registered thumbnailer gnome-thumbnail-font --size %s %u %o
+          10 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s (%s).||Apr 29 08:08:44 ubuntu systemd[2014467]: Closed GnuPG cryptographic agent and passphrase cache (restricted).
+          10 %s %d %s %s %s[%d]: [%s] %s %s %s: /%s/%s/%s/%s/%d||Apr 29 00:23:13 ubuntu whoopsie[976]: [00:23:13] Found usable connection: /org/freedesktop/NetworkManager/ActiveConnection/1
+          10 %s %d %s %s %s[%d]: [%s] %s %s %s %s %s: /%s/%s/%s/%s/%d||Apr 29 00:23:13 ubuntu whoopsie[976]: [00:23:13] The default IPv4 route is: /org/freedesktop/NetworkManager/ActiveConnection/1
+          10 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s (%s %s %s %s).||Apr 29 08:08:44 ubuntu systemd[2014467]: Closed GnuPG cryptographic agent and passphrase cache (access for web browsers).
+          10 %s %d %s %s %s[%d]: [%s] %s %x %s %s %s: /%s/%s/%s/%s/%d||Apr 29 00:23:13 ubuntu whoopsie[976]: [00:23:13] Not a paid data plan: /org/freedesktop/NetworkManager/ActiveConnection/1
+          11 %s %d %s %s %s[%d]: %s %s:%s>'%s'||Apr 29 08:08:44 ubuntu tracker-miner-fs[2014475]: Received signal:15->'Terminated'
+          11 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s||Apr 29 03:00:19 ubuntu systemd[1]: Failed to start Refresh fwupd metadata and update motd.
+          11 %s %d %s %s %s[%d]: %s %s %s %s() %s: %s %s %s %s||Apr 29 08:08:44 ubuntu indicator-sound[2014629]: Error while sending AddMatch() message: The connection is closed
+          12 %s %d %s %s %s[%d]: %s %s %s %s: %s %s %s: %s %s||Apr 29 08:26:58 ubuntu indicator-keyboard-service[3001919]: Unable to init server: Could not connect: Connection refused
+          15 %s %d %s %s %s[%d]: (%s) %s (   %x / && %s --%s /%s/%s)||Apr 29 00:17:01 ubuntu CRON[2019319]: (root) CMD (   cd / && run-parts --report /etc/cron.hourly)
+          18 %s %d %s %s %s[%d]: %s %s %s %d %s %s %d %s %s '%d' %s %s %s %f||Apr 29 08:26:57 ubuntu rtkit-daemon[1571]: Successfully made thread 3001837 of process 3001795 owned by '128' RT at priority 5.
+          18 %s %d %s %s %s[%d]: %s %s & %s %s||Apr 29 08:26:58 ubuntu systemd[1]: Starting Time & Date Service...
+          18 %s %d %s %s %s[%d]: %s %s %s %s %s %d||Apr 29 08:26:57 ubuntu tracker-extract[3001796]: Setting priority nice level to 19
+          18 %s %d %s %s %s[%d]: %s %s %s %s %s %s %x %s||Apr 29 08:26:57 ubuntu pulseaudio[3001795]: Disabling timer-based scheduling because running inside a VM.
+          19 %s %d %s %s %s[%d]: %s||Apr 29 08:08:44 ubuntu tracker-miner-fs[2014475]: OK
+          19 %s %d %s %s %s[%d]: %s %s %s %s %s %f||Apr 29 08:08:44 ubuntu systemd[1]: Stopped User Manager for UID 128.
+          19 %s %d %s %s %s[%d]: %s %s %s %s %s %s %f||Apr 29 08:08:44 ubuntu systemd[1]: Removed slice User Slice of UID 128.
+          19 %s %d %s %s %s[%d]: %s %s %s %s /%s/%s/%f||Apr 29 08:08:44 ubuntu systemd[1]: Stopped User Runtime Directory /run/user/128.
+          19 %s %d %s %s %s[%d]: %s %s %s %s /%s/%s/%s||Apr 29 08:08:44 ubuntu systemd[1]: Stopping User Runtime Directory /run/user/128...
+          20 %s %d %s %s %s[%d]: <%s>  [%f] %s: %s %s %s %s %s||Apr 29 00:23:13 ubuntu NetworkManager[753]: <info>  [1619680993.1288] manager: NetworkManager state is now CONNECTED_SITE
+          20 %s %d %s %s %s[%d]: [%s] %s||Apr 29 00:23:13 ubuntu whoopsie[976]: [00:23:13] offline
+          29 %s %d %s %s %s[%d]: %s %s %s & %s %s||Apr 29 08:08:44 ubuntu systemd[2014467]: Stopping Indicator Date & Time Backend...
+          29 %s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on GnuPG cryptographic agent and passphrase cache.
+          29 %s %d %s %s %s[%d]: %s %s %x %s %s %s||Apr 29 08:08:34 ubuntu systemd[1]: Stopping Session c18 of user lightdm.
+          30 %s %d %s %s %s[%d]: %s %s /%s/%s/%s -%s %s %s||Apr 29 08:26:58 ubuntu org.freedesktop.thumbnails.Cache1[3001889]: Registered thumbnailer /usr/bin/gdk-pixbuf-thumbnailer -s %s %u %o
+          38 %s %d %s %s %s[%d]: %s %s: %s=:%f %s=/%s/%s/%s||Apr 29 08:08:44 ubuntu bluetoothd[745]: Endpoint unregistered: sender=:1.745 path=/MediaEndpoint/A2DPSink/sbc
+          89 %s %d %s %s %s[%d]: %s %s %s %s %s||Apr 29 02:30:40 ubuntu systemd[1]: Starting Message of the Day...
+          90 %s %d %s %s %s[%d]: [%s] %s %s %s '%s'||Apr 29 00:03:30 ubuntu dbus-daemon[752]: [system] Successfully activated service 'org.freedesktop.nm_dispatcher'
+         103 %s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s '%s'||Apr 29 08:26:57 ubuntu dbus-daemon[3001807]: [session uid=128 pid=3001807] Successfully activated service 'org.gtk.vfs.Daemon'
+         114 %s %d %s %s %s[%d]: %s %s %s %s - %s %s %s %s||Apr 29 08:08:44 ubuntu systemd[2014467]: Stopping Virtual filesystem service - Apple File Conduit monitor...
+         116 %s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s  => '%d'||Apr 29 00:03:30 ubuntu NetworkManager[753]: <info>  [1619679810.1128] dhcp4 (ens33): option requested_host_name  => '1'
+         116 %s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s          => '%i'||Apr 29 00:03:30 ubuntu NetworkManager[753]: <info>  [1619679810.1127] dhcp4 (ens33): option next_server          => '192.168.253.254'
+         175 %s %d %s %s %s[%d]: %s %s %s||Apr 29 06:00:25 ubuntu systemd[1]: Starting PackageKit Daemon...
+         225 %s %d %s %s %s[%d]: %s %s %s %s %s %s||Apr 29 00:03:30 ubuntu systemd[1]: Starting Network Manager Script Dispatcher Service...
+         283 %s %d %s %s %s[%d]: %s %s %s %s||Apr 29 00:00:10 ubuntu systemd[1]: Finished Rotate log files.
+         471 %s %d %s %s %s[%d]: %s: %s||Apr 29 00:00:10 ubuntu systemd[1]: logrotate.service: Succeeded.
+         754 %s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s => '%d'||Apr 29 00:03:30 ubuntu NetworkManager[753]: <info>  [1619679810.1127] dhcp4 (ens33): option requested_broadcast_address => '1'
 ```
 
 If the standard templating mode is obscuring too much information, you can switch to clustering mode (-c).  This reduces the parsing speed, but allows the templates to retain all of the non-variable strings.  I normally strip off the trailing example line when running in this mode just to keep the line length more managable.  Below is an example of the same log processed with the clustering (-c) parsing option.
 
 ```% tmpltr -c /var/log/secure.log | sort -n
-Opening [/var/log/secure.log] for read
-           1 Dec 16 16:30:01 Rons-MacBook-Pro newsyslog[5373]: logfile turned over due to size>1000K
-           1 Dec 16 20:01:32 Rons-MacBook-Pro su[5799]: rdilley to root on /dev/ttys001
-           1 Dec 17 02:02:36 Rons-MacBook-Pro com.apple.SecurityServer[24]: setup(?:obsolete) failed rcode=-2147418111
-           1 Dec 17 13:05:49 Rons-MacBook-Pro sudo[7974]:     root : TTY=unknown ; PWD=/private/tmp/PKInstallSandbox.WSZSYc/Scripts/com.apple.pkg.Safari6.1.1Lion.wqQJEF ; USER=rdilley ; COMMAND=./Tools/AlertAll.app/Contents/MacOS/AlertAll /
-           2 Dec 28 15:10:13 Rons-MacBook-Pro com.apple.SecurityServer[24]: Failed to authorize right '%s' by client '/System/Library/PrivateFrameworks/PackageKit.framework/Versions/A/Resources/installd' [12669] for authorization created by '/System/Library/CoreServices/Software Update.app' [12661]||Dec 28 15:10:13 Rons-MacBook-Pro com.apple.SecurityServer[24]: Failed to authorize right 'system.install.app-store-software' by client '/System/Library/PrivateFrameworks/PackageKit.framework/Versions/A/Resources/installd' [12669] for authorization created by '/System/Library/CoreServices/Software Update.app' [12661]
-           5 Dec %d %s Rons-MacBook-Pro com.apple.SecurityServer[24]: Killing auth hosts||Dec 17 15:25:21 Rons-MacBook-Pro com.apple.SecurityServer[24]: Killing auth hosts
-           8 Dec %d %s Rons-MacBook-Pro loginwindow[58]: resume called when there was already a timer||Dec 17 17:18:04 Rons-MacBook-Pro loginwindow[58]: resume called when there was already a timer
-          10 Dec %d %s Rons-MacBook-Pro com.apple.SecurityServer[24]: Session %d %s||Dec 17 15:02:23 Rons-MacBook-Pro com.apple.SecurityServer[24]: Session 100012 created
-          50 Dec %d %s Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Kerberos 5 refuses you||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Kerberos 5 refuses you
-          50 Dec %d %s Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Done getpwnam()||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Done getpwnam()
-          50 Dec %d %s Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Got euid, egid: 502 20||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Got euid, egid: 502 20
-          50 Dec %d %s Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): pam_sm_setcred: krb5 user rdilley doesn't have a principal||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): pam_sm_setcred: krb5 user rdilley doesn't have a principal
-          51 Dec %d %s Rons-MacBook-Pro %s[%d]: in %s(): %s %s %s %s %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Failed to determine Kerberos principal name.
-          51 Dec %d %s Rons-MacBook-Pro %s[%d]: in %s(): %s %s %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in od_principal_for_user(): No authentication authority returned
-          53 Dec %d %s Rons-MacBook-Pro %s[%d]: in od_record_attribute_create_cfstring(): returned 2 attributes for dsAttrTypeStandard:AuthenticationAuthority||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in od_record_attribute_create_cfstring(): returned 2 attributes for dsAttrTypeStandard:AuthenticationAuthority
-          53 Dec %d %s Rons-MacBook-Pro %s[%d]: in pam_sm_acct_mgmt(): OpenDirectory - Membership cache TTL set to 1800.||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_acct_mgmt(): OpenDirectory - Membership cache TTL set to 1800.
-         100 Dec %d %s Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Done %s() & %s()||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_setcred(): Done setegid() & seteuid()
-         103 Dec %d %s Rons-MacBook-Pro %s[%d]: in %s(): %s: %d||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in od_principal_for_user(): failed: 7
-         200 Dec %d %s Rons-MacBook-Pro loginwindow[58]: in %s(): Got %s: %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Got user: rdilley
-         252 Dec %d %s Rons-MacBook-Pro %s[%d]: in %s(): %s %s||Dec 16 16:35:18 Rons-MacBook-Pro loginwindow[58]: in pam_sm_authenticate(): Done cleanup3
-        1197 Dec %d %s --- last message repeated %d %s ---||Dec 16 16:31:44: --- last message repeated 1 time ---
-        3119 Dec %d %s Rons-MacBook-Pro com.apple.SecurityServer[24]: Succeeded authorizing right '%s' by client '%s' [%d] for authorization created by '%s' [%d]||Dec 16 16:30:44 Rons-MacBook-Pro com.apple.SecurityServer[24]: Succeeded authorizing right 'system.preferences' by client '/System/Library/PrivateFrameworks/Admin.framework/Versions/A/Resources/writeconfig' [3274] for authorization created by '/Applications/System Preferences.app' [3268]
+Opening [/var/log/syslog] for read
+           1 Apr 29 03:10:01 ubuntu CRON[2987654]: (root) CMD (test -e /run/systemd/system || SERVICE_MODE=1 /sbin/e2scrub_all -A -r)
+           1 Apr 29 06:25:01 ubuntu CRON[2994686]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily ))
+           1 Apr 29 07:30:35 ubuntu anacron[2996986]: Jobs will be executed sequentially
+           1 Apr 29 07:30:35 ubuntu anacron[2996986]: Will run job `cron.daily' in 5 min.
+           1 Apr 29 07:35:35 ubuntu anacron[2996986]: Job `cron.daily' started
+           1 Apr 29 07:35:35 ubuntu anacron[2997066]: Updated timestamp for job `cron.daily' to 2021-04-29
+           1 Apr 29 07:35:36 ubuntu anacron[2996986]: Job `cron.daily' terminated (exit status: 1) (mailing output)
+           1 Apr 29 07:35:36 ubuntu cracklib: no dictionary update necessary.
+           1 Apr 29 07:35:36 ubuntu postfix/local[2998370]: 7AD5A460101: to=<root@ubuntu-dev.uberadmin.com>, orig_to=<root>, relay=local, delay=0, delays=0/0/0/0, dsn=2.0.0, status=sent (delivered to mailbox)
+           1 Apr 29 08:00:02 ubuntu crontab[3000587]: (root) LIST (nobody)
+           1 Apr 29 08:08:44 ubuntu gvfsd[2014500]: A connection to the bus can't be made
+           1 Apr 29 11:50:41 ubuntu fwupdmgr[3006998]: Successfully downloaded new metadata: 0 local devices supported
+           1 Apr 29 12:50:34 ubuntu [3008013]: g_object_ref: assertion 'old_val > 0' failed
+           2 Apr 29 %s ubuntu indicator-appli[%d]: Name Lost||Apr 29 08:08:44 ubuntu indicator-appli[2014597]: Name Lost
+           2 Apr 29 %s ubuntu indicator-datet[%d]: indicator-datetime exiting; failed/lost bus ownership||Apr 29 08:08:44 ubuntu indicator-datet[2014612]: indicator-datetime exiting; failed/lost bus ownership
+           3 Apr 29 09:31:32 ubuntu tumblerd[3003112]: Name %s lost on the message dbus, exiting.||Apr 29 09:31:32 ubuntu tumblerd[3003112]: Name org.freedesktop.thumbnails.Cache1 lost on the message dbus, exiting.
+           3 Apr 29 %s ubuntu postfix/cleanup[%d]: %x: message-id=<%s>||Apr 29 01:08:00 ubuntu postfix/cleanup[2984439]: 119904600DA: message-id=<20210429080800.119904600DA@ubuntu.localdomain>
+           3 Apr 29 %s ubuntu postfix/pickup[%d]: %x: uid=0 from=<root>||Apr 29 01:08:00 ubuntu postfix/pickup[2015577]: 119904600DA: uid=0 from=<root>
+           3 Apr 29 %s ubuntu postfix/qmgr[2145]: %x: removed||Apr 29 01:08:00 ubuntu postfix/qmgr[2145]: 119904600DA: removed
+           3 Apr 29 %s ubuntu snapd[791]: autorefresh.go:479: auto-refresh: all snaps are up-to-date||Apr 29 01:33:32 ubuntu snapd[791]: autorefresh.go:479: auto-refresh: all snaps are up-to-date
+           3 Apr 29 %s ubuntu xfce4-notifyd[%d]: cannot open display: ||Apr 29 08:42:57 ubuntu xfce4-notifyd[3002212]: cannot open display: 
+           4 Apr 29 %s ubuntu fwupdmgr[%d]: Fetching %s https://cdn.fwupd.org/downloads/%s||Apr 29 03:00:19 ubuntu fwupdmgr[2987489]: Fetching metadata https://cdn.fwupd.org/downloads/firmware.xml.gz
+           4 Apr 29 %s ubuntu PackageKit: daemon %s||Apr 29 06:00:25 ubuntu PackageKit: daemon start
+           4 Apr 29 %s ubuntu systemd[%d]: %s: Failed with result 'exit-code'.||Apr 29 03:00:19 ubuntu systemd[1]: fwupd-refresh.service: Failed with result 'exit-code'.
+           4 Apr 29 %s ubuntu systemd[%d]: %s: Main process exited, code=exited, status=1/FAILURE||Apr 29 03:00:19 ubuntu systemd[1]: fwupd-refresh.service: Main process exited, code=exited, status=1/FAILURE
+           5 Apr 29 %s ubuntu systemd[%d]: dbus.service: Killing process %d (%s) with signal SIGKILL.||Apr 29 08:08:44 ubuntu systemd[2014467]: dbus.service: Killing process 2014538 (gdbus) with signal SIGKILL.
+           7 Apr 29 %s ubuntu anacron[%d]: Anacron %f 2.3 started on||Apr 29 07:30:35 ubuntu anacron[2996986]: Anacron 2.3 started on 2021-04-29
+           7 Apr 29 %s ubuntu anacron[%d]: Normal exit (%d %s run)||Apr 29 07:35:36 ubuntu anacron[2996986]: Normal exit (1 job run)
+           9 Apr 29 %s ubuntu dbus-daemon[%d]: [session uid=128 pid=%d] AppArmor D-Bus mediation is enabled||Apr 29 08:26:57 ubuntu dbus-daemon[3001807]: [session uid=128 pid=3001807] AppArmor D-Bus mediation is enabled
+           9 Apr 29 %s ubuntu indicator-sound[%d]: g_object_ref: assertion 'old_val > 0' failed||Apr 29 08:08:44 ubuntu indicator-sound[2014629]: g_object_ref: assertion 'old_val > 0' failed
+           9 Apr 29 %s ubuntu systemd[%d]: Listening on GnuPG cryptographic agent (ssh-agent emulation).||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on GnuPG cryptographic agent (ssh-agent emulation).
+           9 Apr 29 %s ubuntu systemd[%d]: Listening on REST API socket for snapd user session agent.||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on REST API socket for snapd user session agent.
+          10 Apr 29 %s ubuntu %s[%d]: Registered thumbnailer evince-thumbnailer -s %s %u %o||Apr 29 08:26:58 ubuntu org.freedesktop.thumbnails.Cache1[3001889]: Registered thumbnailer evince-thumbnailer -s %s %u %o
+          10 Apr 29 %s ubuntu systemd[%d]: Closed GnuPG cryptographic agent and passphrase cache (restricted).||Apr 29 08:08:44 ubuntu systemd[2014467]: Closed GnuPG cryptographic agent and passphrase cache (restricted).
+          10 Apr 29 %s ubuntu systemd[%d]: Closed GnuPG cryptographic agent (ssh-agent emulation).||Apr 29 08:08:44 ubuntu systemd[2014467]: Closed GnuPG cryptographic agent (ssh-agent emulation).
+          11 Apr 29 %s ubuntu %s[%d]: Error while sending AddMatch() message: The connection is closed||Apr 29 08:08:44 ubuntu indicator-sound[2014629]: Error while sending AddMatch() message: The connection is closed
+          11 Apr 29 %s ubuntu %s[%d]: Received signal:15->'Terminated'||Apr 29 08:08:44 ubuntu tracker-miner-fs[2014475]: Received signal:15->'Terminated'
+          11 Apr 29 %s ubuntu systemd[%d]: %s %s %s %s %s %s %s %s %s||Apr 29 03:00:19 ubuntu systemd[1]: Failed to start Refresh fwupd metadata and update motd.
+          12 Apr 29 %s ubuntu %s[%d]: Unable to init server: Could not connect: Connection refused||Apr 29 08:26:58 ubuntu indicator-keyboard-service[3001919]: Unable to init server: Could not connect: Connection refused
+          15 Apr 29 %s ubuntu CRON[%d]: (root) CMD (   cd / && run-parts --report /etc/cron.hourly)||Apr 29 00:17:01 ubuntu CRON[2019319]: (root) CMD (   cd / && run-parts --report /etc/cron.hourly)
+          18 Apr 29 %s ubuntu pulseaudio[%d]: Disabling timer-based scheduling because running inside a VM.||Apr 29 08:26:57 ubuntu pulseaudio[3001795]: Disabling timer-based scheduling because running inside a VM.
+          18 Apr 29 %s ubuntu %s[%d]: Setting priority nice level to 19||Apr 29 08:26:57 ubuntu tracker-extract[3001796]: Setting priority nice level to 19
+          18 Apr 29 %s ubuntu systemd[1]: %s Time & Date %s||Apr 29 08:26:58 ubuntu systemd[1]: Starting Time & Date Service...
+          19 Apr 29 %s ubuntu %s[%d]: OK||Apr 29 08:08:44 ubuntu tracker-miner-fs[2014475]: OK
+          19 Apr 29 %s ubuntu systemd[1]: %s slice User Slice of UID %f||Apr 29 08:08:44 ubuntu systemd[1]: Removed slice User Slice of UID 128.
+          19 Apr 29 %s ubuntu systemd[1]: %s User Manager for UID %f||Apr 29 08:08:44 ubuntu systemd[1]: Stopped User Manager for UID 128.
+          19 Apr 29 %s ubuntu systemd[1]: %s User Runtime Directory /run/user/128...||Apr 29 08:08:44 ubuntu systemd[1]: Stopping User Runtime Directory /run/user/128...
+          19 Apr 29 %s ubuntu systemd[1]: %s User Runtime Directory /run/user/%f||Apr 29 08:08:44 ubuntu systemd[1]: Stopped User Runtime Directory /run/user/128.
+          20 Apr 29 %s ubuntu whoopsie[976]: [%s] %s||Apr 29 00:23:13 ubuntu whoopsie[976]: [00:23:13] offline
+          29 Apr 29 %s ubuntu systemd[1]: %s Session %x of user lightdm.||Apr 29 08:08:34 ubuntu systemd[1]: Stopping Session c18 of user lightdm.
+          29 Apr 29 %s ubuntu systemd[%d]: %s Indicator Date & Time %s||Apr 29 08:08:44 ubuntu systemd[2014467]: Stopping Indicator Date & Time Backend...
+          29 Apr 29 %s ubuntu systemd[%d]: %s %s %s %s %s and %s %s||Apr 29 08:26:57 ubuntu systemd[3001787]: Listening on GnuPG cryptographic agent and passphrase cache.
+          30 Apr 29 %s ubuntu %s[%d]: Registered thumbnailer /usr/bin/%s -s %s %u %o||Apr 29 08:26:58 ubuntu org.freedesktop.thumbnails.Cache1[3001889]: Registered thumbnailer /usr/bin/gdk-pixbuf-thumbnailer -s %s %u %o
+          38 Apr 29 %s ubuntu bluetoothd[745]: Endpoint %s: sender=:%f %s=/path/MediaEndpoint/%s||Apr 29 08:08:44 ubuntu bluetoothd[745]: Endpoint unregistered: sender=:1.745 path=/MediaEndpoint/A2DPSink/sbc
+          45 Apr 29 %s ubuntu rtkit-daemon[1571]: Supervising %d threads of 2 processes of 2 users.||Apr 29 08:26:57 ubuntu rtkit-daemon[1571]: Supervising 4 threads of 2 processes of 2 users.
+          52 Apr 29 %s ubuntu systemd[%d]: %s %s %s %s %s %s %s||Apr 29 03:00:19 ubuntu systemd[1]: Starting Refresh fwupd metadata and update motd...
+          76 Apr 29 %s ubuntu systemd[%d]: %s Virtual filesystem service - %s %s %s||Apr 29 08:08:44 ubuntu systemd[2014467]: Stopping Virtual filesystem service - digital camera monitor...
+          89 Apr 29 %s ubuntu %s[%d]: %s %s %s %s %s||Apr 29 02:30:40 ubuntu systemd[1]: Starting Message of the Day...
+          90 Apr 29 %s ubuntu dbus-daemon[752]: [system] Successfully activated service '%s'||Apr 29 00:03:30 ubuntu dbus-daemon[752]: [system] Successfully activated service 'org.freedesktop.nm_dispatcher'
+         114 Apr 29 %s ubuntu systemd[%d]: %s Virtual filesystem service - %s %s %s %s||Apr 29 08:08:44 ubuntu systemd[2014467]: Stopping Virtual filesystem service - Apple File Conduit monitor...
+         116 Apr 29 %s ubuntu NetworkManager[753]: <info>  [%f] %s (dhcp4): ens33 option  => '%d'||Apr 29 00:03:30 ubuntu NetworkManager[753]: <info>  [1619679810.1128] dhcp4 (ens33): option requested_host_name  => '1'
+         175 Apr 29 %s ubuntu %s[%d]: %s %s %s||Apr 29 06:00:25 ubuntu systemd[1]: Starting PackageKit Daemon...
+         225 Apr 29 %s ubuntu systemd[%d]: %s %s %s %s %s %s||Apr 29 00:03:30 ubuntu systemd[1]: Starting Network Manager Script Dispatcher Service...
+         283 Apr 29 %s ubuntu systemd[%d]: %s %s %s %s||Apr 29 00:00:10 ubuntu systemd[1]: Finished Rotate log files.
+         471 Apr 29 %s ubuntu systemd[%d]: %s: Succeeded.||Apr 29 00:00:10 ubuntu systemd[1]: logrotate.service: Succeeded.
 ```
 
 You can use the same syntax but also store copies of all
@@ -155,107 +259,128 @@ The template file can be used with the '-t {fname}' switch
 to provide artificial ignorance capabilities.
 
 ```
-% tmpltr -w ignore.templates /var/log/kernel.log | sort -n
+% tmpltr -w ignore.templates /var/log/syslog | sort -n
 ```
 
 After the above run of the tool, a file named ignore.templates
 is created in the current directory as shown below:
 
-```
-$ cat ignore.templates
-
-%x %d %s %s %s[%d]: %s(%s) == %d
-%x %d %s %s %s[%d]: %s %d, %s %d, %s %d, %s %d, %s %d, %s %d, %s %d, %s %s %s %d %s %d %s %d %s %d
-%x %d %s %s %s[%d]: %s
-%x %d %s %s %s[%d]: %s %s %s %s %s %s %s
-%x %d %s %s %s[%d]: %s [%s]: %s %s %s %s (%s %s, %s %d)
-%x %d %s %s %s[%d]: %s: %s %s %s %s %s %d (%s %s %s %s).
-%x %d %s %s %s[%d]: %s: %s %s %d %s %s %s %s(%c)
-%x %d %s %s %s[%d]: %s: %d.%x %s %s %s %s '%s'.
-%x %d %s %s %s[%d]: %s %x
-%x %d %s %s %s[%d]: %s: %s %s %s %s %s = %d
-%x %d %s %s %s[%d]: %s::%s - %s, %s %s, %x %s, %s %s %s
-%x %d %s %s %s[%d]: [%s](%d)/(%d) %s %s %s
-%x %d %s %s %s[%d]: %s %s %s: /%s/%s/%s
-%x %d %s %s %s[%d]: [%s %s] 
-%x %d %s %s %s[%d]: %s: %s %s %s %s %s
-%x %d %s %s %s[%d]: %s %s %s %s
-%x %d %s %s %s[%d]: %s, %s %d
-%x %d %s %s %s[%d]: %s %s %s %s %s %s>%s
-%x %d %s %s %s[%d]: %s %d, %s %d, %s %d
-%x %d %s %s %s[%d]: %s: %s %s %x:%s
-%x %d %s %s %s[%d]: 
-%x %d %s %s %s[%d]: %s: %s %s %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d
-%x %d %s %s %s[%d]: %s %s %s %s %s (%d)
-%x %d %s %s %s[%d]: %s: %s %s %s %m
-%x %d %s %s %s[%d]: %s /%s/%s %s/.%s/%s/%x-%x-%x-%x-%x/%s] [%s %d] [%s %s] 
-%x %d %s %s %s[%d]: %s %s   %s %s %s: %m %s %s %s
-%x %d %s %s %s[%d]: %s: %s: %s: %s %s %s %s %s!
-%x %d %s %s %s[%d]: %s: %s %d %s %s %s (%x         %d [%s %d] [%s %d] [%s %s] [ [%s %d] [%s %s] 
-%x %d %s %s %s[%d]: %s: %s %s %s %s, %s #%d, %s %m
-%x %d %s %s %s[%d]: %s %x %s %d
-%x %d %s %s %s[%d]: %s %s(%d): %d []
-%x %d %s %s %s[%d]: %s: %s %s
-%x %d %s %s %s[%d]: [ %s %s %s, %s %d %s %d ]
-%x %d %s %s %s[%d]: %s: %s %d %s %s %s (%s %s)
-%x %d %s %s %s[%d]: %s %s %s (%s=%d %s=%d %s=%d)
-%x %d %s %s %s[%d]: %s<%s>::%s - %s - %s [%s=%d %s=%d %s=%d] %s %s [%s=%d %s=%d %s=%d]
-%x %d %s %s %s[%d]: %s: %s %s=%d
-%x %d %s %s %s[%d]: %s %d, %s %d (%d), %s %d (%d%c), %s %x, %s %x
-%x %d %s %s %s[%d]: %s %s %s %d
-%x %d %s %s %s[%d]: %s %s %s, %s
-%x %d %s %s %s[%d]: %s %s, %s %s, %s %s
-%x %d %s %s %s[%d]: %s: %s %s %s
-%x %d %s %s %s[%d]: %s %d
-%x %d %s %s %s[%d]: %s %s %s %d, %s %d, %s %d, %s %d
-%x %d %s %s %s[%d]: %s: %s %s %s %s
-%x %d %s %s %s[%d]: %s %s] [%s /%s/%s] [%s /%s/%s] [%s %d] [%s %s] 
-%x %d %s %s %s[%d]: %s %s(%d): %d [%c]
-%x %d %s %s %s[%d]: %s: %s %s %s %d %s
-%x %d %s %s %s[%d]: [ %s %s %s ]
-%x %d %s %s %s[%d]: %s: %s: %s: %s %s %s
-%x %d %s %s %s[%d]: %s %s %s %s (%s %d %s %s %s %s) %s %s %s %x %s %s %s %x %s %s (%d)
-%x %d %s %s %s[%d]: %s %s %s %s %s %s / %s (%s %d %s %s %s %s) %s %s %s %x %s %s %s %x %s %s (%d)
-%x %d %s %s %s[%d]: %s::%s - %s
-%x %d %s %s %s[%d]: %s %s %d, %s %d %s
-%x %d %s %s %s[%d]: %s: %s %d %s %s %s (%s)
-%x %d %s %s %s[%d]: %s: %s %d %s / %s %s %s %d %s 
-%x %d %s %s %s[%d]: %s %s: %s(%s): %c=%d[%s] %s %s
-%x %d %s %s %s[%d]: %s %s: ?
-%x %d %s %s %s[%d]: %s<%s>::%s - %s %s
-%x %d %s %s %s[%d]: %s %s   %s %s %s: %m %s %s
-%x %d %s --- %s %s %s %d %s ---
-%x %d %s %s %s[%d]: %s %d %s
-%x %d %s %s %s[%d]: %s (%s) %s %s %d %s %s %s, %s %x; %s %s %s
-%x %d %s %s %s[%d]: %s %s: %x.%s (%s)
-%x %d %s %s %s[%d]: %s %s   %s %s %s: %m  %s %s %s
-%x %d %s %s %s[%d]: %s: %s: %s: %s: %d %s: %d (%s %s)
-%x %d %s %s %s[%d]: %s: %s: %s: %s %s, %s %s  %s %s %s
-%x %d %s %s %s[%d]: %s [%s]: %s %s %s %s, %d-%s, %s, %s %s, %s [%x,%d,%x,%d,%x,%d]
-%x %d %s %s %s[%d]: %s::%s - %s %s %s, %s %d: %s %s %s
-%x %d %s %s %s[%d]: %s(%d)
-%x %d %s %s %s[%d]: %s %s %s: %d
-%x %d %s %s %s[%d]: %s(%d) %s %d %s
-%x %d %s %s %s[%d]: %s %s /%s/%s/%s, %s %d, %s %s %s, %s %d %s %d
-%x %d %s %s %s[%d]: %s [%s]: %s %s %s %s, %d-%s, %s, %s %s, %s [%x,%d,%d,%d,%x,%d]
-%x %d %s %s %s[%d]: %s %s: %d %s
-%x %d %s %s %s[%d]: %s: %s/%s %s %s %s
-%x %d %s %s %s[%d]: %s(%s)::%s - %s %s %s %s %s = %s %s = %d %s = %d
-%x %d %s %s %s[%d]: %s %d, %s %d (%d), %s %d (%d%c), %s %x, %s %d
-%x %d %s %s %s[%d]: %s %s(%d)
-%x %d %s %s %s[%d]: %s [%s]: %s %s %s %s (%s)
-%x %d %s %s %s[%d]: %s %s %d %s
-%x %d %s %s %s[%d]: %s %s: %d %s, %s %s: %d %s: %d %s %d %s/%c, %s %s: %d %s: %d %s %d %s/%c, 
-%x %d %s %s %s[%d]: %s %s %s %s %s (%s %d %s %s %s %s) %s %s %s %x %s %s %s %x %s %s (%d)
-%x %d %s %s %s[%d]: %s::_%s - %s %s %s %s %s %s %s %s - %s
-%x %d %s %s %s[%d]: %s [%s]: %s %s %s %s
-%x %d %s %s %s[%d]: %d [%s %d] [%s %d] [%s %s] [%s /%s/%s] [%s /%s/%s %s] [%s /%s/%s %s/.%s/%s/%x-%x-%x-%x-%x/%s] [%s %d] [%s %s] 
-%x %d %s %s %s[%d]: %s::%s %s %s=%s (%s %s %s) %s=%s
-%x %d %s %s %s[%d]: %s (%s: %s) %s %s %s %s %s %s %s: %s, %s %s>%s %s %s %s %s %s, %s %s %s %s %s %s %s %s %s
-%x %d %s %s %s[%d]: %s %s (%s): %x %s %s %s
-%x %d %s %s %s[%d]: %s: %s: %s %s %s
-%x %d %s %s %s[%d]: %s %s %s %s %s (%x) %d %s %s
-%x %d %s %s %s[%d]: %s %s: %x.%s %s (%s)
+```$ cat ignore.templates
+%s %d %s %s %s[%d]: %s: %s %s'%s, %s %s %s %s, %s
+%s %d %s %s %s[%d]: %s %s %s `%s' %s %d %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s    => '%d'
+%s %d %s %s %s[%d]: %s:%d: %s %s %s %s %s %s %s '%s:%s=/%s/%s/%d/%s/%s': %s %s %s: %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s (%s %s %s %s).
+%s %d %s %s %s[%d]: %c_%s: %s '%s > %d' %s
+%s %d %s %s %s[%d]: (%s) %s (%s -%s/%s/%s/%s || ( %x / && %s --%s /%s/%s ))
+%s %d %s %s %s/%s[%d]: %x: %s=<%s>, %s=<%s>, %s=%s, %s=%f, %s=%f/%d/%d/%d, %s=%s %s=%s (%s %s %s)
+%s %d %s %s %s[%d]: %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %x %s
+%s %d %s %s [%d]: %c_%s: %s '%s > %d' %s
+%s %d %s %s %s[%d]: %s %s %s %s: %s %s %s: %s %s
+%s %d %s %s %s[%d]: %s %s %s %s (%s %s).
+%s %d %s %s %s[%d]: %s %s %x %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s `%s' %s %s
+%s %d %s %s %s[%d]: [%s] %s %s %s '%s'
+%s %d %s %s %s[%d]: <%s>  [%f] %s: %s %s %s %s %s
+%s %d %s %s %s[%d]: %s: %s %s %s '%s'.
+%s %d %s %s %s[%d]: %s %s %s://%s/%s/%s
+%s %d %s %s %s[%d]: %s %s & %s %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s: %s[%x,:%f/%s/%d]: %s %s
+%s %d %s %s %s[%d]: %s %d %s %s %d %s %s %d %s
+%s %d %s %s %s[%d]: %s %f %s %s %s
+%s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s '%x.%s'
+%s %d %s %s %s[%d]: [%s] %s %s %s: /%s/%s/%s/%s/%d
+%s %d %s %s %s[%d]: %s[%d]: %s %s %s '%s'
+%s %d %s %s %s[%d]: %s %s %s: 
+%s %d %s %s %s[%d]: %s: %s
+%s %d %s %s %s[%d]: %s %s %s & %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s %s %s, %s %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s; %s/%s %s %s
+%s %d %s %s %s[%d]: %s %s %s %d %s %s %d %s %s '%d' %s %s %s %s %s -%f
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s %s &%s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s - %s
+%s %d %s %s %s[%d]: %s:%s %s %s %s %s %s: %s:%s: %s %s %s %s %s %s %s %s .%s %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s      => '%d'
+%s %d %s %s %s[%d]: (%s) %s (%s)
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s -%s %s %s
+%s %d %s %s %s[%d]: (%s) %s ([ -%s/%s/%s/%s ] && %s [ ! -%x /%s/%s/%s ]; %s /%s/%s/%s %s %s >/%s/%s; %s)
+%s %d %s %s %s[%d]: %s: %s %s'%s %s %s %s %s %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s => '%d'
+%s %d %s %s %s[%d]: %s %s %s --%s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s (%s).
+%s %d %s %s %s[%d]: %s: %s '%s (%s)' %s
+%s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s '%s'
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s; %s %s/%s/%s
+%s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s %s %s
+%s %d %s %s %s[%d]: (%s) %s (   %x / && %s --%s /%s/%s)
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %x %s %s %s %s %s '%s'. %s %s %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s /%s/%s/%s -%s %s %s
+%s %d %s %s %s[%d]: %s
+%s %d %s %s %s[%d]: %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %x %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %d %s %s %d %s %s '%d' %s %s %s %f
+%s %d %s %s %s[%d]: %s[%d]: %s %s %s='%s' %s %s ':%f' (%s=%d %s=%d %s="%s" %s="%s")
+%s %d %s %s %s[%d]: %s %s: %s=:%f %s=/%s/%s/%s
+%s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s: %s %s='%s' %s='%s' %s %s ':%f' (%s=%d %s=%d %s="%s" %s="%s")
+%s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s='%x.%s' %s %s ':%f' (%s=%d %s=%d %s="%s" %s="%s")
+%s %d %s %s %s[%d]: %s %s %s %s - %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s: %d %s %s %s
+%s %d %s %s %s[%d]: %s:%d: %s: %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s (%s).
+%s %d %s %s %s[%d]: %s `%s' %s
+%s %d %s %s %s[%d]: %s %s:%s>'%s'
+%s %d %s %s %s[%d]: %x %s %s %s %s %s'%s %s
+%s %d %s %s %s[%d]: %s %s %d %s: [ %s %s %s %s() %s: %s %s %s %s]
+%s %d %s %s %s[%d]: %s:%d: %s %s: %s %s %s %s %s: "%s", "%s", "%s", "%s", "%s"
+%s %d %s %s %s[%d]: %s %s %s %s %s (%s %s).
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s              => '%i'
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s  => '%i'
+%s %d %s %s %s[%d]: %s %s %s %s - %s %s %s %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s          => '%i'
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s  => '%d'
+%s %d %s %s %s[%d]: [%s] %s %s %s %s %s: /%s/%s/%s/%s/%d
+%s %d %s %s %s/%s[%d]: %x: %s=%d %s=<%s>
+%s %d %s %s %s[%d]: %s: %s %s %s, %s=%s, %s=%d/%s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s       => '%d'
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s: %s
+%s %d %s %s %s[%d]: [%s] %s %x %s %s %s: /%s/%s/%s/%s/%d
+%s %d %s %s %s[%d]: (%s) %s (   %s -%s/%s/%s/%s && { [ -%s" ] && . "%s" ; %s -%c%s /%s/%s/%s -%s; })
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s, %s
+%s %d %s %s %s[%d]: %s %s %s %s: %s:%s: %s %s %s %s
+%s %d %s %s %s[%d]: [%s %s=%d %s=%d] %s %s %s='%s' %s %s ':%f' (%s=%d %s=%d %s="%s" %s="%s")
+%s %d %s %s %s[%d]: %s %s %s %s %d %s %s %s %s %f
+%s %d %s %s %s[%d]: %s: %s %s %d (%s) %s %s %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s           => '%i'
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s               => '%d'
+%s %d %s %s %s/%s[%d]: %x: %s=<%s>, %s=<%s>, %s=%s, %s=%d, %s=%d/%d/%d/%d, %s=%s %s=%s (%s %s %s)
+%s %d %s %s %s: %s %s
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s          => '%s'
+%s %d %s %s %s[%d]: %s %s %s %s %s %f
+%s %d %s %s %s[%d]: (%s) %s (%s -%x /%s/%s/%s || %s=%d /%s/%s -%x -%c)
+%s %d %s %s %s: %s %s %s %s
+%s %d %s %s %s/%s[%d]: %x: %s=<%s>, %s=%d, %s=%d (%s %s)
+%s %d %s %s %s[%d]: [%s] %s
+%s %d %s %s %s[%d]: [%s] %s %s %s: %s %s='%s' %s='%s' %s %s ':%f' (%s=%d %s=%d %s="%s" %s="%s")
+%s %d %s %s %s[%d]: %s %s (%d %s %s)
+%s %d %s %s %s[%d]: %s %s %s %s /%s/%s/%f
+%s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s %s -> %s
+%s %d %s %s %s/%s[%d]: %x: %s
+%s %d %s %s %s[%d]: %s `%s' %s (%s %s: %d) (%s %s)
+%s %d %s %s %s[%d]: %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s (%s %s %s %s).
+%s %d %s %s %s[%d]: %s %s %s %s() %s: %s %s %s %s
+%s %d %s %s %s[%d]: %s %s
+%s %d %s %s %s[%d]: %s %s %s %s /%s/%s/%s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %f
+%s %d %s %s %s/%s[%d]: %x: %s=<%s>
+%s %d %s %s %s[%d]: %s %s %s %s %s %d
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s %s %s %s
+%s %d %s %s %s[%d]: %s %s %s %s %s %s %s -- %s %x %s %s() %s %d %s %s %s < %s
 ```
 
 You can now pass this file back into tmpltr and all

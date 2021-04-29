@@ -37,3 +37,9 @@ version 0.9 (January 14, 2021):
 version 0.11 (April 4, 2021):
 
 * Ported to FreeBSD 12.2
+
+version 0.12 (April 29, 2021):
+
+* Updated hash functions to use binary insert sort on matching keys
+* Fixed minor bugs
+

@@ -36,4 +36,9 @@
 2021-04-04  Ron Dilley <ron.dilley@uberadmin.com>
 
 	* Ported to FreeBSD 12.2
+
+2021-04-29  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Updated hash functions to use binary insert sort on matching keys
+	* Fixed minor bugs
 	
