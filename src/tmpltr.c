@@ -92,8 +92,10 @@ char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize)
       else if (template[rPos] EQ '%')
       {
         if ((template[rPos + 1] EQ 'd') |
+            (template[rPos + 1] EQ 'f') |
             (template[rPos + 1] EQ 's') |
             (template[rPos + 1] EQ 'c') |
+            (template[rPos + 1] EQ 't') |
             (template[rPos + 1] EQ 'x') |
             (template[rPos + 1] EQ 'm') |
             (template[rPos + 1] EQ 'i') |
@@ -172,6 +174,7 @@ int printTemplate(const struct hashRec_s *hashRec)
       else
         curFieldPtr = NULL;
 
+      /* free per field records and binary trees */
       while (curFieldPtr != NULL)
       {
         tmpFieldPtr = curFieldPtr;
@@ -180,6 +183,8 @@ int printTemplate(const struct hashRec_s *hashRec)
         XFREE(tmpFieldPtr);
       }
     }
+
+    XFREE( tmpMd );
   }
 
   /* can use this later to interrupt traversing the hash */
