@@ -67,8 +67,6 @@ extern Config_t *config;
  *
  ****/
 
-/* XXX moving this inside of functions for performance */
-
 uint32_t calcHash(uint32_t hashSize, const char *keyString)
 {
   int32_t val = 0;
@@ -175,7 +173,8 @@ void freeHash(struct hash_s *hash)
             hash->records[key]->records[i] = NULL;
           }
         }
-        if (hash->records[key]->records != NULL) {
+        if (hash->records[key]->records != NULL)
+        {
           XFREE(hash->records[key]->records);
           hash->records[key]->records = NULL;
         }
@@ -183,7 +182,8 @@ void freeHash(struct hash_s *hash)
         hash->records[key] = NULL;
       }
     }
-    if (hash->records != NULL) {
+    if (hash->records != NULL)
+    {
       XFREE(hash->records);
       hash->records = NULL;
     }
@@ -346,7 +346,12 @@ struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, i
           /* existing record found */
 #ifdef DEBUG
           if (config->debug >= 4)
-            printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n", (char *)keyString, key, mid);
+          {
+            if (keyString[keyLen - 1] EQ 0) // it is a null terminated key string
+              printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n", (char *)keyString, key, mid);
+            else
+              printf("DEBUG - Found (%s) in hash table at [%d] at depth [%d]\n", hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), key, mid);
+          }
 #endif
           return NULL;
         }
@@ -396,8 +401,12 @@ struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, i
 
 #ifdef DEBUG
   if (config->debug >= 4)
-    printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key,
-           hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), hash->records[key]->count);
+  {
+    if (keyString[keyLen - 1] EQ 0) // it is a null terminated key string
+      printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key, keyString, hash->records[key]->count);
+    else
+      printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key, hexConvert(keyString, keyLen, nBuf, sizeof(nBuf)), hash->records[key]->count);
+  }
 #endif
 
   hash->totalRecords++;
@@ -446,8 +455,12 @@ int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec)
 
 #ifdef DEBUG
   if (config->debug >= 3)
-    printf("DEBUG - Inserting hash [%d] (%s)\n", key,
-           hexConvert(hashRec->keyString, hashRec->keyLen, nBuf, sizeof(nBuf)));
+  {
+    if (hashRec->keyString[hashRec->keyLen - 1] EQ 0) // it is a null terminated key string
+      printf("DEBUG - Inserting hash [%d] (%s)\n", key, hashRec->keyString);
+    else
+      printf("DEBUG - Inserting hash [%d] (%s)\n", key, hexConvert(hashRec->keyString, hashRec->keyLen, nBuf, sizeof(nBuf)));
+  }
 #endif
 
   if (hash->records[key] EQ NULL)
@@ -503,7 +516,11 @@ int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec)
         else
         {
           /* existing record found */
-          fprintf(stderr, "ERR - Found duplicate hash record [%s] at [%d] in record list [%d]\n", hashRec->keyString, key, mid);
+          if (hashRec->keyString[hashRec->keyLen - 1] EQ 0) // it is a null terminated key string
+            fprintf(stderr, "ERR - Found duplicate hash record [%s][%s] at [%d] in record list [%d]\n", hashRec->keyString, hash->records[key]->records[mid]->keyString, key, mid);
+          else
+            fprintf(stderr, "ERR - Found duplicate hash record at [%d] in record list [%d]\n", key, mid);
+
           return FALSE;
         }
       }
@@ -532,8 +549,12 @@ int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec)
 
 #ifdef DEBUG
   if (config->debug >= 4)
-    printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key,
-           hexConvert(hashRec->keyString, hashRec->keyLen, nBuf, sizeof(nBuf)), hash->records[key]->count);
+  {
+    if (hashRec->keyString[hashRec->keyLen - 1] EQ 0) // it is a null terminated key string
+      printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key, hashRec->keyString, hash->records[key]->count);
+    else
+      printf("DEBUG - Added hash [%d] (%s) in record list [%d]\n", key, hexConvert(hashRec->keyString, hashRec->keyLen, nBuf, sizeof(nBuf)), hash->records[key]->count);
+  }
 #endif
 
   hash->totalRecords++;
@@ -1014,7 +1035,7 @@ struct hash_s *dyGrowHash(struct hash_s *oldHash)
       {
         for (i = 0; i < oldHash->records[tmpKey]->count; i++)
         {
-          if (insertUniqueHashRec(tmpHash, oldHash->records[tmpKey]->records[i]) EQ FAILED)
+          if (insertUniqueHashRec(tmpHash, oldHash->records[tmpKey]->records[i]) != TRUE)
           {
             fprintf(stderr, "ERR - Failed to insert hash record while growing\n");
             /* XXX need to do properly handle this error */
