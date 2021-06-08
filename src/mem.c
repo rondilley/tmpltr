@@ -1014,7 +1014,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   }
 
   /* check size of source string */
-  if ((size = (strlen(s_ptr) + 1)) EQ 0)
+  if ((size = (strnlen(s_ptr,len-1) + 1)) EQ 0)
   {
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr, "strncpy called with zero length source pointer at %s:%d\n", filename, linenumber);
@@ -1095,64 +1095,8 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   }
 #endif
 
-  if (s_ptr < d_ptr)
-  {
-    if (s_ptr + len >= d_ptr)
-    {
-      /* overlap, use memmove */
-      if (size >= len)
-      {
-        result = memmove(d_ptr, s_ptr, len);
-      }
-      else
-      {
-        result = memmove(d_ptr, s_ptr, size);
-        XMEMSET(d_ptr + size, 0, len - size);
-      }
-    }
-    else
-    {
-      /* no overlap, use memcpy */
-      if (size >= len)
-      {
-        result = memcpy(d_ptr, s_ptr, len);
-      }
-      else
-      {
-        result = memcpy(d_ptr, s_ptr, size);
-        XMEMSET(d_ptr + size, 0, len - size);
-      }
-    }
-  }
-  else if (s_ptr > d_ptr)
-  {
-    if (d_ptr + size >= s_ptr)
-    {
-      /* overlap, use memmove */
-      if (size >= len)
-      {
-        result = memmove(d_ptr, s_ptr, len);
-      }
-      else
-      {
-        result = memmove(d_ptr, s_ptr, size);
-        XMEMSET(d_ptr + size, 0, len - size);
-      }
-    }
-    else
-    {
-      /* no overlap, use memcpy */
-      if (size >= len)
-      {
-        result = memcpy(d_ptr, s_ptr, len);
-      }
-      else
-      {
-        result = memcpy(d_ptr, s_ptr, len);
-        XMEMSET(d_ptr + size, 0, len - size);
-      }
-    }
-  }
+  if (s_ptr != d_ptr)
+    strncpy( d_ptr, s_ptr, len );
   else
   {
     /* source and dest are the same, freak out */
