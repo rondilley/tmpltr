@@ -2,7 +2,7 @@
  *
  * Description: Line Parser Functions
  *
- * Copyright (c) 2008-2021, Ron Dilley
+ * Copyright (c) 2008-2022, Ron Dilley
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -129,6 +129,7 @@ int parseLine(char *line)
   int inQuotes = FALSE;
   char fieldTypeChar;
   char curChar = line[0];
+  int lineLen = strlen(line);
 
   if (fields[fieldPos] EQ NULL)
   {
@@ -325,7 +326,7 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if ((runLen EQ 4) && (curChar EQ '-'))
+      else if ((runLen EQ 4) && (curChar EQ '-') && (curLinePos+12 <=lineLen))
       {
         /* look forward and see if this may be a date/time */
         /* XXX 2020-12-14 00:14:59.912 UTC */

@@ -1,7 +1,7 @@
 /*****
  *
  * Description: Log Templater Functions
- * 
+ *
  * Copyright (c) 2008-2021, Ron Dilley
  * All rights reserved.
  *
@@ -78,6 +78,8 @@ char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize)
     /* find next variable */
 
     /* XXX make it a state machine */
+    /* need to protect oBuf */
+
     done = FALSE;
     while (!done)
     {
@@ -106,7 +108,15 @@ char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize)
             /* move past the place holder */
             rPos += 2;
             for (i = 1; curFieldPtr->head->value[i] != 0; i++)
-              oBuf[wPos++] = curFieldPtr->head->value[i];
+            {
+              if (isprint(curFieldPtr->head->value[i]))
+                oBuf[wPos++] = curFieldPtr->head->value[i];
+              else
+              {
+                sprintf(oBuf + wPos, "\\x%02x", curFieldPtr->head->value[i]);
+                wPos += 4;
+              }
+            }
           }
           else
           {
@@ -142,7 +152,7 @@ int printTemplate(const struct hashRec_s *hashRec)
 {
   metaData_t *tmpMd;
   struct Fields_s *curFieldPtr, *tmpFieldPtr;
-  char oBuf[4096];
+  char oBuf[MAX_FIELD_LEN];
 
 #ifdef DEBUG
   if (config->debug >= 3)
@@ -184,7 +194,7 @@ int printTemplate(const struct hashRec_s *hashRec)
       }
     }
 
-    XFREE( tmpMd );
+    XFREE(tmpMd);
   }
 
   /* can use this later to interrupt traversing the hash */

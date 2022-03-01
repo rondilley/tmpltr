@@ -42,3 +42,7 @@
 	* Updated hash functions to use binary insert sort on matching keys
 	* Fixed minor bugs
 	
+2022-02-28  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Fixed some issues in the hash and cluster code to handle large lines/fields
+

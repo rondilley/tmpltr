@@ -1,4 +1,4 @@
-.TH TMPLTR 1  "23 August 2015" "tmpltr @VERSION@" "tmpltr @VERSION@"
+.TH TMPLTR 1  "28 February 2022" "tmpltr @VERSION@" "tmpltr @VERSION@"
 .SH NAME
 tmpltr \- High speed log template generator..
 .SH SYNOPSIS

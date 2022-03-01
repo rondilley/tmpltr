@@ -43,3 +43,10 @@ version 0.12 (April 29, 2021):
 * Updated hash functions to use binary insert sort on matching keys
 * Fixed minor bugs
 
+Version 0.13 (April 30, 2021):
+
+* Fixed minor bugs in the hash functions
+
+Version 0.14 (February 28, 2022):
+
+* Update the code to handle larger log lines and fields 
