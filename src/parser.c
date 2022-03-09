@@ -640,7 +640,7 @@ int parseLine(char *line)
         curLinePos++;
         octetLen++;
       }
-      else if ((curChar EQ '.'))
+      else if (curChar EQ '.')
       {
         if ((octet < 3) && (octetLen > 0) && (octetLen <= 3) &&
             (atoi(line + startOfOctet) < 256))

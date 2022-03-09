@@ -50,3 +50,8 @@ Version 0.13 (April 30, 2021):
 Version 0.14 (February 28, 2022):
 
 * Update the code to handle larger log lines and fields 
+
+Version 1.0.0 (March 8, 2022):
+
+* Fixed a compile warning in OS/X
+

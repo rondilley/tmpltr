@@ -46,3 +46,7 @@
 
 	* Fixed some issues in the hash and cluster code to handle large lines/fields
 
+2022-03-08  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Fixed compile warnings when building on OS/X
+
