@@ -55,3 +55,6 @@ Version 1.0.0 (March 8, 2022):
 
 * Fixed a compile warning in OS/X
 
+Version 1.0.1 (March 14th, 2022):
+
+* Minor documentation changes and porting

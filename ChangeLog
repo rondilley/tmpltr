@@ -50,3 +50,7 @@
 
 	* Fixed compile warnings when building on OS/X
 
+2022-03-14  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Minor documentation fixes
+	* Porting to various operating systems

@@ -72,12 +72,13 @@ with the --ENABLE-DEBUG switch.
 A typical run of tmpltr is to pass the target log file as an
 argument and send the output through 'sort -n' to produce
 the following sorted list of unique templates and their
-frequency of occurent from least to most prevalent.
+frequency of occurrence from least to most prevalent.
 
 I normally go through the list in this order to speed up
-catching the anonlylous patterns.
+catching the anonymous patterns.
 
-```% tmpltr /var/log/syslog | sort -n
+```
+% tmpltr /var/log/syslog | sort -n
 Opening [/var/log/syslog] for read
            1 %s %d %s %s [%d]: %c_%s: %s '%s > %d' %s||Apr 29 12:50:34 ubuntu [3008013]: g_object_ref: assertion 'old_val > 0' failed
            1 %s %d %s %s %s[%d]: %s `%s' %s||Apr 29 07:35:35 ubuntu anacron[2996986]: Job `cron.daily' started
@@ -165,9 +166,10 @@ Opening [/var/log/syslog] for read
          754 %s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s => '%d'||Apr 29 00:03:30 ubuntu NetworkManager[753]: <info>  [1619679810.1127] dhcp4 (ens33): option requested_broadcast_address => '1'
 ```
 
-If the standard templating mode is obscuring too much information, you can switch to clustering mode (-c).  This reduces the parsing speed, but allows the templates to retain all of the non-variable strings.  I normally strip off the trailing example line when running in this mode just to keep the line length more managable.  Below is an example of the same log processed with the clustering (-c) parsing option.
+If the standard templating mode is obscuring too much information, you can switch to clustering mode (-c).  This reduces the parsing speed, but allows the templates to retain all of the non-variable strings.  I normally strip off the trailing example line when running in this mode just to keep the line length more manageable.  Below is an example of the same log processed with the clustering (-c) parsing option.
 
-```% tmpltr -c /var/log/secure.log | sort -n
+```
+% tmpltr -c /var/log/secure.log | sort -n
 Opening [/var/log/syslog] for read
            1 Apr 29 03:10:01 ubuntu CRON[2987654]: (root) CMD (test -e /run/systemd/system || SERVICE_MODE=1 /sbin/e2scrub_all -A -r)
            1 Apr 29 06:25:01 ubuntu CRON[2994686]: (root) CMD (test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily ))
@@ -265,7 +267,8 @@ to provide artificial ignorance capabilities.
 After the above run of the tool, a file named ignore.templates
 is created in the current directory as shown below:
 
-```$ cat ignore.templates
+```sh
+$ cat ignore.templates
 %s %d %s %s %s[%d]: %s: %s %s'%s, %s %s %s %s, %s
 %s %d %s %s %s[%d]: %s %s %s `%s' %s %d %s
 %s %d %s %s %s[%d]: <%s>  [%f] %s (%s): %s %s    => '%d'
