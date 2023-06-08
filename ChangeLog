@@ -54,3 +54,7 @@
 
 	* Minor documentation fixes
 	* Porting to various operating systems
+
+2023-06-08  Ron Dilley <ron.dilley@uberadmin.com>
+
+  * Updated autoconf files to address deprecated options

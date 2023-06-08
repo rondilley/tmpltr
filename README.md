@@ -48,7 +48,7 @@ To get a list of all the options, you can execute the
 command with the -h or --help switch.
 
 ```
-tmpltr v0.14 [Feb 28 2022 - 17:09:47]
+tmpltr v1.0.2 [Jun  8 2023 - 14:15:34]
 
 syntax: tmpltr [options] filename [filename ...]
  -c|--cluster           show invariable fields in output
