@@ -4,6 +4,8 @@ AC_PREREQ([2.59])
 AC_INIT([Log Templater], VERSION_NUMBER, [ron.dilley@uberadmin.com], [tmpltr], [http://www.uberadmin.com/Projects/tmpltr/])
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_AUX_DIR(config)
+AC_USE_SYSTEM_EXTENSIONS
+
 AM_INIT_AUTOMAKE
 
 dnl Checks for programs
@@ -199,12 +201,12 @@ AC_FUNC_MALLOC
 AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 AC_FUNC_MEMCMP
+AC_FUNC_STRNLEN
 
 dnl ############## Type checks
 
 AC_STRUCT_TM
 AC_TYPE_PID_T
-AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 AC_C_INLINE
@@ -213,9 +215,10 @@ AC_TYPE_UINT16_T
 AC_TYPE_UINT32_T
 AC_TYPE_UINT8_T
 
-AC_CONFIG_HEADER(include/config.h)
+AC_CONFIG_HEADERS(include/config.h)
 AC_PROG_INSTALL
-AC_OUTPUT(Makefile src/Makefile tmpltr.1)
+AC_CONFIG_FILES([Makefile src/Makefile tmpltr.1])
+AC_OUTPUT
 
 BINDIR=`eval echo ${bindir}`; BINDIR=`eval echo ${BINDIR}`;
 MANDIR=`eval echo ${mandir}/${mansubdir}`; MANDIR=`eval echo ${MANDIR}`;

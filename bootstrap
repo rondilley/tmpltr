@@ -12,5 +12,5 @@ if [ ! -d config ]; then
  mkdir config
 fi
 
-autoreconf --install
+autoreconf -ifv
 

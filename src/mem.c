@@ -2,7 +2,7 @@
  *
  * Memory functions
  *
- * Copyright (c) 2006-2021, Ron Dilley
+ * Copyright (c) 2006-2023, Ron Dilley
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify

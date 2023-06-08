@@ -2,7 +2,7 @@
  *
  * Description: Utility Function Headers
  * 
- * Copyright (c) 2008-2021, Ron Dilley
+ * Copyright (c) 2008-2023, Ron Dilley
  * All rights reserved.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,13 +37,13 @@
 #include <config.h>
 #endif
 
-#include <sysdep.h>
+#include "../include/sysdep.h"
 
 #ifndef __SYSDEP_H__
 #error something is messed up
 #endif
 
-#include <common.h>
+#include "../include/common.h"
 #include "mem.h"
 /****
  *

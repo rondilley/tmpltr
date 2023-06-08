@@ -1,21 +1,24 @@
 /*****
- * $Id: common.h,v 1.7 2014/01/21 06:44:57 rdilley Exp $
+ * 
+ * Common definitions, structures and unions
+ * 
+ * Copyright (c) 2011-2023, Ron Dilley
+ * All rights reserved.
  *
- *           common.h  -  description
- *           -------------------
- * begin     : Tue Aug  1 15:35:14 PDT 2005
- * copyright : (C) 2005 by Ron Dilley
- * email     : ron.dilley@uberadmin.com
- *****/
-
-/*****
- *
- * This program is free software; you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
+ * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- *****/
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ****/
 
 #ifndef COMMON_H
 #define COMMON_H 1
@@ -64,7 +67,7 @@
 # include <config.h>
 #endif
 
-#include <sysdep.h>
+#include "../include/sysdep.h"
 
 #ifndef __SYSDEP_H__
 # error something is messed up

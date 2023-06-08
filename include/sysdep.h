@@ -1,19 +1,24 @@
 /*****
-                          sysdep.h  -  description
-                             -------------------
-    begin                : Mon 16 February 2004
-    copyright            : (C) 2004 by Ron Dilley
-    email                : ron.dilley@uberadmin.com
- *****/
-
-/*****
+ * 
+ * System dependency definitions for autoconf
+ * 
+ * Copyright (c) 2011-2023, Ron Dilley
+ * All rights reserved.
  *
- *   This program is free software; you can redistribute it and/or modify
- *   it under the terms of the GNU General Public License as published by
- *   the Free Software Foundation; either version 2 of the License, or
- *   (at your option) any later version.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- *****/
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ ****/
 
 #ifndef __SYSDEP_H__
 #define __SYSDEP_H__
@@ -29,7 +34,9 @@
 #endif
 
 #include <grp.h>
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include <time.h>
 
 #ifdef HAVE_ARPA_INET_H
