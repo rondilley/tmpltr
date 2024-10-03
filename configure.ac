@@ -51,6 +51,14 @@ AC_ARG_ENABLE(showmemdebug,
       CFLAGS="${CFLAGS} -DMEM_DEBUG -DSHOW_MEM_DEBUG"
     ,)
 
+
+PINEAPPLE="no"
+AC_ARG_ENABLE(pineapple,
+    [  --enable-pineapple      Enable Tom Liston PINEAPPLE mode],
+      PINEAPPLE="yes"
+      CFLAGS="${CFLAGS} -DPINEAPPLE"
+    ,)
+    
 GPROF="no"
 AC_ARG_ENABLE(gprof,
     [  --enable-gprof          Enable profiler],

@@ -47,7 +47,7 @@
 #error something is messed up
 #endif
 
-#include "../include/sysdep.h"
+#include "../include/common.h"
 #include "hash.h"
 #include "util.h"
 #include "mem.h"

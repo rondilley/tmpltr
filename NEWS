@@ -62,3 +62,7 @@ Version 1.0.1 (March 14th, 2022):
 Version 1.0.2 (May 8th, 2023):
 
 * Updated autoconf to address deprecated options
+
+Version 1.0.3 (October 2, 2024):
+
+* Added support for Tom Liston PINEAPPLE mode

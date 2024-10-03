@@ -58,3 +58,7 @@
 2023-06-08  Ron Dilley <ron.dilley@uberadmin.com>
 
   * Updated autoconf files to address deprecated options
+
+2024-10-02  Ron Dilley <ron.dilley@uberadmin.com>
+
+	* Added support for Tom Liston PINEAPPLE mode
