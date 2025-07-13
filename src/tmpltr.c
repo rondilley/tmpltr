@@ -56,6 +56,58 @@ extern int quit;
 extern int reload;
 
 /****
+ * secure file open with symlink protection
+ ****/
+PRIVATE FILE *secure_fopen(const char *path, const char *mode)
+{
+  int flags = 0;
+  int fd;
+  FILE *fp;
+  
+  if (!path || !mode) {
+    return NULL;
+  }
+  
+  /* Determine flags based on mode */
+  if (strchr(mode, 'r') && !strchr(mode, '+')) {
+    flags = O_RDONLY | O_NOFOLLOW;
+  } else if (strchr(mode, 'w')) {
+    flags = O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW;
+  } else if (strchr(mode, 'a')) {
+    flags = O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW;
+  } else if (strchr(mode, '+')) {
+    if (strchr(mode, 'r')) {
+      flags = O_RDWR | O_NOFOLLOW;
+    } else if (strchr(mode, 'w')) {
+      flags = O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW;
+    } else if (strchr(mode, 'a')) {
+      flags = O_RDWR | O_CREAT | O_APPEND | O_NOFOLLOW;
+    }
+  } else {
+    fprintf(stderr, "ERR - Invalid file mode: %s\n", mode);
+    return NULL;
+  }
+  
+  /* Open file with O_NOFOLLOW to prevent symlink attacks */
+  fd = open(path, flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (fd == -1) {
+    if (errno == ELOOP) {
+      fprintf(stderr, "ERR - Symbolic link detected, access denied: %s\n", path);
+    }
+    return NULL;
+  }
+  
+  /* Convert file descriptor to FILE* */
+  fp = fdopen(fd, mode);
+  if (fp == NULL) {
+    close(fd);
+    return NULL;
+  }
+  
+  return fp;
+}
+
+/****
  *
  * functions
  *
@@ -72,72 +124,118 @@ char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize)
   int i, rPos = 0, wPos = 0, done;
   struct Fields_s *curFieldPtr = md->head;
 
+  /* Ensure we have space for at least null terminator */
+  if (bufSize <= 0) {
+    return NULL;
+  }
+
+  /* Initialize buffer */
+  oBuf[0] = '\0';
+
   /* loop through the field argument trees */
-  while ((curFieldPtr != NULL))
+  while ((curFieldPtr != NULL) && (wPos < bufSize - 1))
   {
     /* find next variable */
-
-    /* XXX make it a state machine */
-    /* need to protect oBuf */
-
     done = FALSE;
-    while (!done)
+    while (!done && (wPos < bufSize - 1))
     {
-      while ((template[rPos] != 0) & (template[rPos] != '%') & (wPos < bufSize))
+      /* Copy template characters until % or end, with bounds checking */
+      while ((template[rPos] != 0) && (template[rPos] != '%') && (wPos < bufSize - 1))
         oBuf[wPos++] = template[rPos++];
 
-      if ((wPos >= bufSize) | (template[rPos] EQ 0))
+      /* Check for buffer full or template end */
+      if ((wPos >= bufSize - 1) || (template[rPos] == 0))
       {
-        oBuf[wPos] = 0;
         done = TRUE;
       }
-      else if (template[rPos] EQ '%')
+      else if (template[rPos] == '%')
       {
-        if ((template[rPos + 1] EQ 'd') |
-            (template[rPos + 1] EQ 'f') |
-            (template[rPos + 1] EQ 's') |
-            (template[rPos + 1] EQ 'c') |
-            (template[rPos + 1] EQ 't') |
-            (template[rPos + 1] EQ 'x') |
-            (template[rPos + 1] EQ 'm') |
-            (template[rPos + 1] EQ 'i') |
-            (template[rPos + 1] EQ 'I'))
+        /* Check for valid format specifier and buffer space */
+        if ((template[rPos + 1] == 'd') ||
+            (template[rPos + 1] == 'f') ||
+            (template[rPos + 1] == 's') ||
+            (template[rPos + 1] == 'c') ||
+            (template[rPos + 1] == 't') ||
+            (template[rPos + 1] == 'x') ||
+            (template[rPos + 1] == 'm') ||
+            (template[rPos + 1] == 'i') ||
+            (template[rPos + 1] == 'I'))
         {
-          if (curFieldPtr->count EQ 1)
+          if (curFieldPtr->count == 1)
           {
             /* move past the place holder */
             rPos += 2;
-            for (i = 1; curFieldPtr->head->value[i] != 0; i++)
+            
+            /* Copy field value with bounds checking */
+            for (i = 1; curFieldPtr->head->value[i] != 0 && wPos < bufSize - 1; i++)
             {
               if (isprint(curFieldPtr->head->value[i]))
-                oBuf[wPos++] = curFieldPtr->head->value[i];
+              {
+                /* Single character - check space */
+                if (wPos < bufSize - 1) {
+                  oBuf[wPos++] = curFieldPtr->head->value[i];
+                } else {
+                  break; /* Buffer full */
+                }
+              }
               else
               {
-                sprintf(oBuf + wPos, "\\x%02x", curFieldPtr->head->value[i]);
-                wPos += 4;
+                /* Hex escape sequence needs 4 characters: \x##  */
+                if (wPos <= bufSize - 5) {
+                  int written = snprintf(oBuf + wPos, bufSize - wPos, "\\x%02x", 
+                                       (unsigned char)curFieldPtr->head->value[i]);
+                  if (written > 0 && written < bufSize - wPos) {
+                    wPos += written;
+                  } else {
+                    break; /* Buffer full or error */
+                  }
+                } else {
+                  break; /* Not enough space for hex sequence */
+                }
               }
             }
           }
           else
           {
-            oBuf[wPos++] = template[rPos++];
-            oBuf[wPos++] = template[rPos++];
+            /* Copy the % and format character if space available */
+            if (wPos < bufSize - 2) {
+              oBuf[wPos++] = template[rPos++];
+              oBuf[wPos++] = template[rPos++];
+            } else {
+              done = TRUE; /* Buffer full */
+            }
           }
           done = TRUE;
         }
         else
-          oBuf[wPos++] = template[rPos++];
+        {
+          /* Invalid format specifier, copy the % character */
+          if (wPos < bufSize - 1) {
+            oBuf[wPos++] = template[rPos++];
+          } else {
+            done = TRUE; /* Buffer full */
+          }
+        }
       }
       else
-        oBuf[wPos++] = template[rPos++];
+      {
+        /* Copy single character with bounds check */
+        if (wPos < bufSize - 1) {
+          oBuf[wPos++] = template[rPos++];
+        } else {
+          done = TRUE; /* Buffer full */
+        }
+      }
     }
     curFieldPtr = curFieldPtr->next;
   }
 
-  /* copy the rest of the chatacters */
-  while ((template[rPos] != 0) & (wPos < bufSize))
+  /* copy the rest of the characters with bounds checking */
+  while ((template[rPos] != 0) && (wPos < bufSize - 1))
     oBuf[wPos++] = template[rPos++];
-  oBuf[wPos] = 0;
+  
+  /* Ensure null termination */
+  oBuf[wPos] = '\0';
 
   return (oBuf);
 }
@@ -236,13 +334,8 @@ int processFile(const char *fName)
   }
   else
   {
-#ifdef HAVE_FOPEN64
-    if ((inFile = fopen64(fName, "r")) EQ NULL)
+    if ((inFile = secure_fopen(fName, "r")) EQ NULL)
     {
-#else
-    if ((inFile = fopen(fName, "r")) EQ NULL)
-    {
-#endif
       fprintf(stderr, "ERR - Unable to open file [%s] %d (%s)\n", fName, errno, strerror(errno));
       return (EXIT_FAILURE);
     }
@@ -507,7 +600,7 @@ int loadTemplateFile(const char *fName)
     printf("DEBUG - Loading template file [%s]\n", fName);
 #endif
 
-  if ((inFile = fopen(fName, "r")) EQ NULL)
+  if ((inFile = secure_fopen(fName, "r")) EQ NULL)
   {
     fprintf(stderr, "ERR - Unable to open template file [%s]\n", fName);
     return (FAILED);
@@ -521,7 +614,7 @@ int loadTemplateFile(const char *fName)
       lLen = strlen(inBuf);
       for (i = 0; i < lLen; i++)
       {
-        if (inBuf[i] EQ '\n' | inBuf[i] EQ '\r')
+        if (inBuf[i] EQ '\n' || inBuf[i] EQ '\r')
         {
           inBuf[i] = '\0';
           i = lLen;

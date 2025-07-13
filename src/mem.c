@@ -76,15 +76,30 @@ PUBLIC char *copy_argv(char *argv[])
 {
   PRIVATE char **arg;
   PRIVATE char *buf;
-  PRIVATE int total_length = 0;
+  PRIVATE size_t total_length = 0;
+  PRIVATE size_t arg_len;
 
   for (arg = argv; *arg != NULL; arg++)
   {
-    total_length += (strlen(*arg) + 1); /* length of arg plus space */
+    arg_len = strlen(*arg);
+    
+    /* Check for integer overflow before addition */
+    if (total_length > SIZE_MAX - arg_len - 1) {
+      fprintf(stderr, "ERR - Integer overflow in copy_argv: argument too long\n");
+      return NULL;
+    }
+    
+    total_length += (arg_len + 1); /* length of arg plus space */
   }
 
   if (total_length == 0)
     return NULL;
+
+  /* Check for overflow before final increment */
+  if (total_length >= SIZE_MAX) {
+    fprintf(stderr, "ERR - Integer overflow in copy_argv: total length too large\n");
+    return NULL;
+  }
 
   total_length++; /* add room for a null */
 
@@ -97,8 +112,8 @@ PUBLIC char *copy_argv(char *argv[])
     strlcat(buf, *arg, total_length);
     strlcat(buf, " ", total_length);
 #else
-    strncat(buf, *arg, total_length);
-    strncat(buf, " ", total_length);
+    strncat(buf, *arg, total_length - strlen(buf) - 1);
+    strncat(buf, " ", total_length - strlen(buf) - 1);
 #endif
   }
 
@@ -710,7 +725,6 @@ void xfree_(void *ptr, const char *filename, const int linenumber)
 #endif
 
   free(ptr);
-  ptr = NULL;
 }
 
 /****

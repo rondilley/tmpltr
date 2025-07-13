@@ -111,10 +111,11 @@ int display(int level, char *format, ...)
   PRIVATE int i;
 
   va_start(args, format);
-  vsprintf(tmp_buf, format, args);
-  if (tmp_buf[strlen(tmp_buf) - 1] == '\n')
+  vsnprintf(tmp_buf, sizeof(tmp_buf), format, args);
+  tmp_buf[sizeof(tmp_buf) - 1] = '\0';  /* Ensure null termination */
+  if (strlen(tmp_buf) > 0 && tmp_buf[strlen(tmp_buf) - 1] == '\n')
   {
-    tmp_buf[strlen(tmp_buf) - 1] = 0;
+    tmp_buf[strlen(tmp_buf) - 1] = '\0';
   }
   va_end(args);
 
@@ -294,6 +295,7 @@ int create_pid_file(const char *filename)
   if ((lockfile = fdopen(fd, "w")) EQ NULL)
   {
     display(LOG_ERR, "Unable to fdopen() pid file [%d]", fd);
+    close(fd);
     return FAILED;
   }
   pid = getpid();

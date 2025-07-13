@@ -54,6 +54,125 @@ extern int errno;
 extern char **environ;
 
 /****
+ * secure integer parsing with validation
+ ****/
+PRIVATE int safe_parse_int(const char *str, int min_val, int max_val, int *result)
+{
+  char *endptr;
+  long val;
+  
+  if (!str || !result) {
+    return FALSE;
+  }
+  
+  errno = 0;
+  val = strtol(str, &endptr, 10);
+  
+  /* Check for conversion errors */
+  if (errno == ERANGE || errno == EINVAL) {
+    return FALSE;
+  }
+  
+  /* Check if entire string was consumed */
+  if (*endptr != '\0') {
+    return FALSE;
+  }
+  
+  /* Check bounds */
+  if (val < min_val || val > max_val) {
+    return FALSE;
+  }
+  
+  *result = (int)val;
+  return TRUE;
+}
+
+/****
+ * validate file path for security
+ ****/
+PRIVATE int validate_file_path(const char *path)
+{
+  if (!path) {
+    return FALSE;
+  }
+  
+  /* Check for path traversal attacks */
+  if (strstr(path, "../") || strstr(path, "..\\")) {
+    fprintf(stderr, "ERR - Path traversal detected in: %s\n", path);
+    return FALSE;
+  }
+  
+  /* Check for absolute paths to sensitive directories */
+  if (strncmp(path, "/etc/", 5) == 0 ||
+      strncmp(path, "/proc/", 6) == 0 ||
+      strncmp(path, "/sys/", 5) == 0 ||
+      strncmp(path, "/dev/", 5) == 0) {
+    fprintf(stderr, "ERR - Access to system directory denied: %s\n", path);
+    return FALSE;
+  }
+  
+  /* Check path length */
+  if (strlen(path) >= PATH_MAX) {
+    fprintf(stderr, "ERR - Path too long: %s\n", path);
+    return FALSE;
+  }
+  
+  return TRUE;
+}
+
+/****
+ * secure file open with symlink protection
+ ****/
+PRIVATE FILE *secure_fopen(const char *path, const char *mode)
+{
+  int flags = 0;
+  int fd;
+  FILE *fp;
+  
+  if (!path || !mode) {
+    return NULL;
+  }
+  
+  /* Determine flags based on mode */
+  if (strchr(mode, 'r') && !strchr(mode, '+')) {
+    flags = O_RDONLY | O_NOFOLLOW;
+  } else if (strchr(mode, 'w')) {
+    flags = O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW;
+  } else if (strchr(mode, 'a')) {
+    flags = O_WRONLY | O_CREAT | O_APPEND | O_NOFOLLOW;
+  } else if (strchr(mode, '+')) {
+    if (strchr(mode, 'r')) {
+      flags = O_RDWR | O_NOFOLLOW;
+    } else if (strchr(mode, 'w')) {
+      flags = O_RDWR | O_CREAT | O_TRUNC | O_NOFOLLOW;
+    } else if (strchr(mode, 'a')) {
+      flags = O_RDWR | O_CREAT | O_APPEND | O_NOFOLLOW;
+    }
+  } else {
+    fprintf(stderr, "ERR - Invalid file mode: %s\n", mode);
+    return NULL;
+  }
+  
+  /* Open file with O_NOFOLLOW to prevent symlink attacks */
+  fd = open(path, flags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if (fd == -1) {
+    if (errno == ELOOP) {
+      fprintf(stderr, "ERR - Symbolic link detected, access denied: %s\n", path);
+    }
+    return NULL;
+  }
+  
+  /* Convert file descriptor to FILE* */
+  fp = fdopen(fd, mode);
+  if (fp == NULL) {
+    close(fd);
+    return NULL;
+  }
+  
+  return fp;
+}
+
+/****
  *
  * main function
  *
@@ -128,8 +247,11 @@ int main(int argc, char *argv[])
       break;
 
     case 'd':
-      /* show debig info */
-      config->debug = atoi(optarg);
+      /* show debug info */
+      if (!safe_parse_int(optarg, 0, 9, &config->debug)) {
+        fprintf(stderr, "ERR - Invalid debug level: %s (must be 0-9)\n", optarg);
+        return (EXIT_FAILURE);
+      }
       break;
 
     case 'g':
@@ -139,11 +261,17 @@ int main(int argc, char *argv[])
 
     case 'n':
       /* override default cluster count */
-      config->clusterDepth = atoi(optarg);
+      if (!safe_parse_int(optarg, 1, 10000, &config->clusterDepth)) {
+        fprintf(stderr, "ERR - Invalid cluster depth: %s (must be 1-10000)\n", optarg);
+        return (EXIT_FAILURE);
+      }
       break;
 
     case 't':
       /* load template file */
+      if (!validate_file_path(optarg)) {
+        return (EXIT_FAILURE);
+      }
       if (loadTemplateFile(optarg) != TRUE)
       {
         fprintf(stderr, "ERR - Problem while loading template file\n");
@@ -158,7 +286,10 @@ int main(int argc, char *argv[])
 
     case 'w':
       /* save templates to file */
-      if ((config->outFile_st = fopen(optarg, "w")) EQ NULL)
+      if (!validate_file_path(optarg)) {
+        return (EXIT_FAILURE);
+      }
+      if ((config->outFile_st = secure_fopen(optarg, "w")) EQ NULL)
       {
         fprintf(stderr, "ERR - Unable to open template file for write [%s]\n", optarg);
         return (EXIT_FAILURE);
@@ -167,6 +298,9 @@ int main(int argc, char *argv[])
 
     case 'M':
       /* load match templates from file */
+      if (!validate_file_path(optarg)) {
+        return (EXIT_FAILURE);
+      }
       config->match = loadMatchTemplates(optarg);
       break;
 
@@ -177,6 +311,9 @@ int main(int argc, char *argv[])
 
     case 'L':
       /* load match lines from file and convert to templates */
+      if (!validate_file_path(optarg)) {
+        return (EXIT_FAILURE);
+      }
       config->match = loadMatchLines(optarg);
       break;
 
@@ -191,7 +328,7 @@ int main(int argc, char *argv[])
   }
 
   /* override cluster depth */
-  if ((config->clusterDepth <= 0) | (config->clusterDepth > 10000))
+  if ((config->clusterDepth <= 0) || (config->clusterDepth > 10000))
     config->clusterDepth = MAX_ARGS_IN_FIELD;
 
   /* check dirs and files for danger */
@@ -228,6 +365,11 @@ int main(int argc, char *argv[])
   /* process all the files */
   while (optind < argc)
   {
+    if (!validate_file_path(argv[optind])) {
+      fprintf(stderr, "ERR - Invalid file path: %s\n", argv[optind]);
+      cleanup();
+      return (EXIT_FAILURE);
+    }
     processFile(argv[optind++]);
   }
 
@@ -316,7 +458,7 @@ PRIVATE void print_help(void)
   fprintf(stderr, " -m {template} show all lines that match {template}\n");
   fprintf(stderr, " -M {fname}    show all the lines that match templates in {fname}\n");
   fprintf(stderr, " -n {num}      max cluster args [default: %d]\n", MAX_ARGS_IN_FIELD);
-  fprintf(stderrm " -t {file}     load templates to ignore\n");
+  fprintf(stderr " -t {file}     load templates to ignore\n");
   fprintf(stderr, " -v            display version information\n");
   fprintf(stderr, " -w {file}     save templates to file\n");
   fprintf(stderr, " filename      one or more files to process, use '-' to read from stdin\n");

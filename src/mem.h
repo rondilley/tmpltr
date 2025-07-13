@@ -24,12 +24,12 @@
 #define MEM_DOT_H
 
 #define XMALLOC(c) xmalloc_(c, __FILE__, __LINE__)
-#define XFREE(ptr) xfree_(ptr, __FILE__, __LINE__)
+#define XFREE(ptr) do { xfree_(ptr, __FILE__, __LINE__); (ptr) = NULL; } while(0)
 #define XFREE_ALL() xfree_all_(__FILE__, __LINE__)
 #define XMEMSET(s, c, n) xmemset_(s, c, n, __FILE__, __LINE__)
 #define XMEMCPY(d, s, n) xmemcpy_(d, s, n, __FILE__, __LINE__)
 #define XREALLOC(s, n) xrealloc_(s, n, __FILE__, __LINE__)
-#define XSTRDUP(s) xstrdup_(x, __FILE__, __LINE__)
+#define XSTRDUP(s) xstrdup_(s, __FILE__, __LINE__)
 #define XSTRCPY(d, s) xstrcpy_(d, s, __FILE__, __LINE__)
 #define XSTRNCPY(d, s, n) xstrncpy_(d, s, n, __FILE__, __LINE__)
 #define XMEMCMP(s1, s2, n) xmemcmp_(s1, s2, n, __FILE__, __LINE__)

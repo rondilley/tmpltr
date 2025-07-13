@@ -144,7 +144,7 @@ int parseLine(char *line)
   while (curChar != '\0')
   {
 
-    if (runLen >= MAX_FIELD_LEN)
+    if (runLen >= MAX_FIELD_LEN-1)
     {
 
       fprintf(stderr, "ERR - Field is too long\n");

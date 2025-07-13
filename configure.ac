@@ -58,6 +58,41 @@ AC_ARG_ENABLE(pineapple,
       PINEAPPLE="yes"
       CFLAGS="${CFLAGS} -DPINEAPPLE"
     ,)
+
+HARDENING="no"
+AC_ARG_ENABLE(hardening,
+    [  --enable-hardening      Enable compiler security hardening],
+    [ if test "$GCC" = yes; then
+          HARDENING="yes"
+          CFLAGS="${CFLAGS} -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE"
+          CFLAGS="${CFLAGS} -Wformat -Wformat-security -Werror=format-security"
+          CFLAGS="${CFLAGS} -fno-strict-overflow -fno-delete-null-pointer-checks"
+          LDFLAGS="${LDFLAGS} -pie -Wl,-z,relro -Wl,-z,now"
+      fi
+    ],)
+
+STATIC_ANALYSIS="no"
+AC_ARG_ENABLE(static-analysis,
+    [  --enable-static-analysis Enable static analysis tools],
+    [
+          STATIC_ANALYSIS="yes"
+          # Check for static analysis tools
+          AC_CHECK_PROG(CLANG_ANALYZER, scan-build, yes, no)
+          AC_CHECK_PROG(CPPCHECK, cppcheck, yes, no)
+          AC_CHECK_PROG(SPLINT_TOOL, splint, yes, no)
+          
+          if test "$CLANG_ANALYZER" = "yes"; then
+            AC_MSG_NOTICE([Clang Static Analyzer (scan-build) found])
+          fi
+          
+          if test "$CPPCHECK" = "yes"; then
+            AC_MSG_NOTICE([cppcheck found])
+          fi
+          
+          if test "$SPLINT_TOOL" = "yes"; then
+            AC_MSG_NOTICE([splint found])
+          fi
+    ],)
     
 GPROF="no"
 AC_ARG_ENABLE(gprof,
@@ -245,5 +280,7 @@ echo ""
 echo "Enable debugging      : ${DEBUG}"
 echo "Enable mem debugging  : ${MEM_DEBUG}"
 echo "Show mem debugging    : ${SHOW_MEM_DEBUG}"
+echo "Security hardening    : ${HARDENING}"
+echo "Static analysis       : ${STATIC_ANALYSIS}"
 echo "-----------------------------------------------"
 echo ""
