@@ -72,35 +72,62 @@ PRIVATE struct Mem_s *tail;
  *
  ****/
 
+/****
+ *
+ * Safely concatenate command line arguments with overflow protection
+ *
+ * DESCRIPTION:
+ *   Concatenates all command line arguments into a single string with
+ *   spaces between arguments. Includes comprehensive overflow protection
+ *   and bounds checking to prevent buffer overflow vulnerabilities.
+ *
+ * PARAMETERS:
+ *   argv - Array of argument strings (NULL-terminated)
+ *
+ * RETURNS:
+ *   Pointer to allocated string containing concatenated arguments
+ *   NULL if memory allocation fails or overflow would occur
+ *
+ * SIDE EFFECTS:
+ *   Allocates memory for result string
+ *
+ * SECURITY FEATURES:
+ *   - Checks for integer overflow in length calculations
+ *   - Validates total length against SIZE_MAX
+ *   - Bounds checking during string copying
+ *
+ * MEMORY MANAGEMENT:
+ *   Caller is responsible for freeing returned string
+ *
+ ****/
+
 PUBLIC char *copy_argv(char *argv[])
 {
   PRIVATE char **arg;
   PRIVATE char *buf;
   PRIVATE size_t total_length = 0;
-  PRIVATE size_t arg_len;
 
   for (arg = argv; *arg != NULL; arg++)
   {
-    arg_len = strlen(*arg);
-    
-    /* Check for integer overflow before addition */
-    if (total_length > SIZE_MAX - arg_len - 1) {
+    size_t arg_len = strlen(*arg);
+    /* Check for integer overflow */
+    if (total_length > SIZE_MAX - arg_len - 1)
+    {
       fprintf(stderr, "ERR - Integer overflow in copy_argv: argument too long\n");
       return NULL;
     }
-    
     total_length += (arg_len + 1); /* length of arg plus space */
   }
 
   if (total_length == 0)
     return NULL;
 
-  /* Check for overflow before final increment */
-  if (total_length >= SIZE_MAX) {
-    fprintf(stderr, "ERR - Integer overflow in copy_argv: total length too large\n");
+  /* Check for overflow when adding room for null */
+  if (total_length > SIZE_MAX - 1)
+  {
+    fprintf(stderr, "ERR - Integer overflow in copy_argv (null terminator)\n");
     return NULL;
   }
-
   total_length++; /* add room for a null */
 
   buf = (char *)XMALLOC(sizeof(char) * total_length);
@@ -108,12 +135,17 @@ PUBLIC char *copy_argv(char *argv[])
   *buf = 0;
   for (arg = argv; *arg != NULL; arg++)
   {
+    size_t current_len = strlen(buf);
+    size_t remaining = total_length - current_len - 1;
 #ifdef HAVE_STRLCAT
     strlcat(buf, *arg, total_length);
     strlcat(buf, " ", total_length);
 #else
-    strncat(buf, *arg, total_length - strlen(buf) - 1);
-    strncat(buf, " ", total_length - strlen(buf) - 1);
+    strncat(buf, *arg, remaining);
+    current_len = strlen(buf);
+    remaining = total_length - current_len - 1;
+    if (remaining > 0)
+      strncat(buf, " ", remaining);
 #endif
   }
 
@@ -122,8 +154,32 @@ PUBLIC char *copy_argv(char *argv[])
 
 /****
  *
- * Allocate memory. Checks the return value, aborts if no more memory is
- *available
+ * Debug-aware memory allocation with tracking
+ *
+ * DESCRIPTION:
+ *   Wrapper around malloc() that provides debug tracking, error handling,
+ *   and optional memory leak detection. Maintains allocation records
+ *   in debug builds for comprehensive memory management analysis.
+ *
+ * PARAMETERS:
+ *   size - Number of bytes to allocate
+ *   filename - Source file making allocation (for debugging)
+ *   linenumber - Line number of allocation (for debugging)
+ *
+ * RETURNS:
+ *   Pointer to allocated memory on success
+ *   NULL if allocation fails (program may exit)
+ *
+ * SIDE EFFECTS:
+ *   - Allocates memory using system malloc()
+ *   - In debug builds, adds allocation to tracking list
+ *   - May terminate program on allocation failure
+ *   - Updates allocation statistics
+ *
+ * DEBUG FEATURES:
+ *   - Tracks allocation location and size
+ *   - Enables memory leak detection
+ *   - Provides allocation statistics
  *
  ****/
 

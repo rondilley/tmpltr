@@ -75,6 +75,34 @@
 
 /****
  *
+ * Character Classification Constants
+ *
+ ****/
+
+/* Character classification bits for fast lookup table */
+#define CHAR_ALPHA  0x01  /* Alphabetic character (a-z, A-Z) */
+#define CHAR_DIGIT  0x02  /* Digit character (0-9) */
+#define CHAR_ALNUM  0x03  /* Alpha or numeric (combination of above) */
+#define CHAR_XDIGIT 0x04  /* Hexadecimal digit (0-9, a-f, A-F) */
+#define CHAR_PUNCT  0x08  /* Punctuation character */
+#define CHAR_SPACE  0x10  /* Whitespace character */
+#define CHAR_CNTRL  0x20  /* Control character */
+#define CHAR_PRINT  0x40  /* Printable character */
+
+/* Fast character classification macros using lookup table */
+extern const unsigned char char_class_table[256];
+
+#define FAST_ISALPHA(c)  (char_class_table[(unsigned char)(c)] & CHAR_ALPHA)
+#define FAST_ISDIGIT(c)  (char_class_table[(unsigned char)(c)] & CHAR_DIGIT)
+#define FAST_ISALNUM(c)  (char_class_table[(unsigned char)(c)] & CHAR_ALNUM)
+#define FAST_ISXDIGIT(c) (char_class_table[(unsigned char)(c)] & CHAR_XDIGIT)
+#define FAST_ISPUNCT(c)  (char_class_table[(unsigned char)(c)] & CHAR_PUNCT)
+#define FAST_ISSPACE(c)  (char_class_table[(unsigned char)(c)] & CHAR_SPACE)
+#define FAST_ISCNTRL(c)  (char_class_table[(unsigned char)(c)] & CHAR_CNTRL)
+#define FAST_ISPRINT(c)  (char_class_table[(unsigned char)(c)] & CHAR_PRINT)
+
+/****
+ *
  * enums & typedefs
  *
  ****/

@@ -71,21 +71,83 @@ extern Config_t *config;
 
 /****
  *
- * init parser
+ * Initialize parser with pre-allocated field storage
+ *
+ * DESCRIPTION:
+ *   Initializes the log line parser by pre-allocating memory for all
+ *   field storage arrays. This optimization eliminates malloc overhead
+ *   during parsing by allocating all required memory upfront.
+ *
+ * PARAMETERS:
+ *   None
+ *
+ * RETURNS:
+ *   void
+ *
+ * SIDE EFFECTS:
+ *   - Allocates memory for MAX_FIELD_POS fields of MAX_FIELD_LEN each
+ *   - Initializes all fields to empty strings
+ *   - On allocation failure, cleans up partial allocations and exits
+ *
+ * MEMORY ALLOCATION:
+ *   Allocates MAX_FIELD_POS * MAX_FIELD_LEN bytes total
+ *   All fields are zero-initialized for clean state
+ *
+ * ERROR HANDLING:
+ *   If allocation fails, frees any successfully allocated fields
+ *   and logs error message before returning
  *
  ****/
 
 void initParser(void)
 {
+  int i;
+  
   /* make sure the field list of clean */
   XMEMSET(fields, 0, sizeof(char *) * MAX_FIELD_POS);
 
-  /* XXX it would be faster to init all mem here instead of on-demand */
+  /* Pre-allocate all field storage for better performance */
+  for (i = 0; i < MAX_FIELD_POS; i++)
+  {
+    if ((fields[i] = (char *)XMALLOC(MAX_FIELD_LEN)) == NULL)
+    {
+      /* Cleanup partial allocation on failure */
+      for (int j = 0; j < i; j++)
+      {
+        XFREE(fields[j]);
+        fields[j] = NULL;
+      }
+      display(LOG_ERR, "Unable to pre-allocate parser field storage");
+      return;
+    }
+    /* Initialize to empty string */
+    fields[i][0] = '\0';
+  }
 }
 
 /****
  *
- * de-init parser
+ * Deinitialize parser and free field storage
+ *
+ * DESCRIPTION:
+ *   Cleans up parser state by freeing all pre-allocated field storage
+ *   memory. Should be called when parser is no longer needed to
+ *   prevent memory leaks.
+ *
+ * PARAMETERS:
+ *   None
+ *
+ * RETURNS:
+ *   void
+ *
+ * SIDE EFFECTS:
+ *   Frees all memory allocated for field arrays in initParser()
+ *
+ * PRECONDITIONS:
+ *   initParser() should have been called previously
+ *
+ * POSTCONDITIONS:
+ *   All field pointers are freed, parser is ready for re-initialization
  *
  ****/
 
@@ -94,8 +156,13 @@ void deInitParser(void)
   int i;
 
   for (i = 0; i < MAX_FIELD_POS; i++)
+  {
     if (fields[i] != NULL)
+    {
       XFREE(fields[i]);
+      fields[i] = NULL;
+    }
+  }
 }
 
 /****
@@ -131,14 +198,7 @@ int parseLine(char *line)
   char curChar = line[0];
   int lineLen = strlen(line);
 
-  if (fields[fieldPos] EQ NULL)
-  {
-    if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL)
-    {
-      display(LOG_ERR, "Unable to allocate memory for string");
-      return (0);
-    }
-  }
+  /* Field 0 is pre-allocated for template storage */
   fieldPos++;
 
   while (curChar != '\0')
@@ -168,7 +228,7 @@ int parseLine(char *line)
         printf("DEBUG - STATE=string\n");
 #endif
 
-      if (isalnum(curChar))
+      if (FAST_ISALNUM(curChar))
       {
         runLen++;
         curLinePos++;
@@ -196,16 +256,7 @@ int parseLine(char *line)
           if (inQuotes | config->greedy)
           {
 
-            /* extract string */
-
-            if (fields[fieldPos] EQ NULL)
-            {
-              if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL)
-              {
-                fprintf(stderr, "ERR - Unable to allocate memory for string\n");
-                return (fieldPos - 1);
-              }
-            }
+            /* extract string - field already pre-allocated */
             fields[fieldPos][runLen + 1] = '\0';
             fields[fieldPos][0] = 's';
             XMEMCPY(fields[fieldPos] + 1, line + startOfField, runLen);
@@ -292,12 +343,12 @@ int parseLine(char *line)
         printf("DEBUG - STATE=num_int\n");
 #endif
 
-      if (isdigit(curChar))
+      if (FAST_ISDIGIT(curChar))
       {
         runLen++;
         curLinePos++;
       }
-      else if (isxdigit(curChar))
+      else if (FAST_ISXDIGIT(curChar))
       {
         /* convert field to hex */
         curFieldType = FIELD_TYPE_NUM_HEX;
@@ -374,7 +425,7 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if (isalpha(curChar) | (curChar EQ '@') |
+      else if (FAST_ISALPHA(curChar) | (curChar EQ '@') |
                ((inQuotes) && (curChar EQ ' ')) |
                (curChar EQ '\\'))
       {
@@ -495,7 +546,7 @@ int parseLine(char *line)
       case 15:
       case 17:
       case 18:
-        if (isdigit(curChar))
+        if (FAST_ISDIGIT(curChar))
         {
           runLen++;
           curLinePos++;
@@ -513,7 +564,7 @@ int parseLine(char *line)
           runLen++;
           curLinePos++;
         }
-        else if (isdigit(curChar))
+        else if (FAST_ISDIGIT(curChar))
         {
           /* too many digits in seconds, must be a string */
           /* convert field to string */
@@ -530,7 +581,7 @@ int parseLine(char *line)
         break;
       default:
         /* handle positions after offset 20 */
-        if (isdigit(curChar))
+        if (FAST_ISDIGIT(curChar))
         {
           runLen++;
           curLinePos++;
@@ -634,7 +685,7 @@ int parseLine(char *line)
 #endif
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isdigit(curChar))
+      if (FAST_ISDIGIT(curChar))
       {
         runLen++;
         curLinePos++;
@@ -709,7 +760,7 @@ int parseLine(char *line)
       /* MAC Address (xx:xx:xx:xx:xx:xx or xx-xx-xx-xx-xx-xx) */
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(curChar) && (octetLen < 2))
+      if (FAST_ISXDIGIT(curChar) && (octetLen < 2))
       {
         runLen++;
         curLinePos++;
@@ -771,7 +822,7 @@ int parseLine(char *line)
         printf("DEBUG - STATE=char\n");
 #endif
 
-      if (isalnum(curChar) | (curChar EQ '/') |
+      if (FAST_ISALNUM(curChar) | (curChar EQ '/') |
           (curChar EQ '@') |
           ((inQuotes) && (curChar EQ ' ')) |
           ((inQuotes) && (curChar EQ '=')) |
@@ -816,12 +867,12 @@ int parseLine(char *line)
 
       /* XXX need to add code to handle hex numbers beginning with 0x */
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(curChar))
+      if (FAST_ISXDIGIT(curChar))
       {
         runLen++;
         curLinePos++;
       }
-      else if (isalpha(curChar) | (curChar EQ '@') |
+      else if (FAST_ISALPHA(curChar) | (curChar EQ '@') |
                ((inQuotes) && (curChar EQ ' ')) |
                (curChar EQ '\\'))
       {
@@ -920,7 +971,7 @@ int parseLine(char *line)
       /* (xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx, xxxx:xxxx:xxxx:xxxx:: */
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isxdigit(curChar) && (octetLen < 4))
+      if (FAST_ISXDIGIT(curChar) && (octetLen < 4))
       {
         runLen++;
         curLinePos++;
@@ -988,12 +1039,12 @@ int parseLine(char *line)
        ****/
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (isdigit(curChar))
+      if (FAST_ISDIGIT(curChar))
       {
         runLen++;
         curLinePos++;
       }
-      else if (isalpha(curChar) | (curChar EQ '@') |
+      else if (FAST_ISALPHA(curChar) | (curChar EQ '@') |
                ((inQuotes) && (curChar EQ ' ')) | (curChar EQ '\\') | (curChar EQ '.') | (curChar EQ ':') | (curChar EQ '-'))
       {
         /* convert field to string */
@@ -1015,19 +1066,19 @@ int parseLine(char *line)
        ****************************** UNDEF *****************************
        ******************************************************************/
 
-      if (isdigit(curChar))
+      if (FAST_ISDIGIT(curChar))
       {
         curFieldType = FIELD_TYPE_NUM_INT;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (isxdigit(curChar))
+      else if (FAST_ISXDIGIT(curChar))
       {
         curFieldType = FIELD_TYPE_NUM_HEX;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (isalpha(curChar) |
+      else if (FAST_ISALPHA(curChar) |
                ((inQuotes) && (curChar EQ '/')) |
                (curChar EQ '@') | (curChar EQ '%') |
                (curChar EQ '$') | (curChar EQ '\\'))

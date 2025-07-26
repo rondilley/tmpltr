@@ -64,7 +64,29 @@ extern Config_t *config;
 
 /****
  *
- * calculate hash
+ * Calculate hash value for key string using ELF hash algorithm
+ *
+ * DESCRIPTION:
+ *   Computes hash value for a key string using the ELF hash algorithm,
+ *   which provides good distribution properties for string keys.
+ *   The result is modulo the hash table size for array indexing.
+ *
+ * PARAMETERS:
+ *   hashSize - Size of hash table (for modulo operation)
+ *   keyString - String to hash
+ *
+ * RETURNS:
+ *   Hash value in range [0, hashSize-1]
+ *
+ * SIDE EFFECTS:
+ *   None (pure function)
+ *
+ * ALGORITHM:
+ *   ELF hash with shifting and XOR operations for good distribution
+ *
+ * PERFORMANCE:
+ *   O(n) where n is string length
+ *   Critical path for hash table operations
  *
  ****/
 
@@ -100,7 +122,34 @@ uint32_t calcHash(uint32_t hashSize, const char *keyString)
 
 /****
  *
- * initialize the hash
+ * Initialize hash table with optimal prime size
+ *
+ * DESCRIPTION:
+ *   Creates and initializes a new hash table with size selected from
+ *   a predefined list of prime numbers. Uses the smallest prime that
+ *   is greater than or equal to the requested size for optimal
+ *   distribution properties.
+ *
+ * PARAMETERS:
+ *   hashSize - Desired minimum hash table size
+ *
+ * RETURNS:
+ *   Pointer to initialized hash structure
+ *   NULL if memory allocation fails
+ *
+ * SIDE EFFECTS:
+ *   - Allocates memory for hash structure
+ *   - Allocates array of hash record list pointers
+ *   - Initializes all list pointers to NULL
+ *   - Sets initial statistics (size, count, etc.)
+ *
+ * SIZE SELECTION:
+ *   Chooses optimal prime size from predefined list for
+ *   best hash distribution characteristics
+ *
+ * PERFORMANCE:
+ *   O(1) initialization time
+ *   Memory usage: O(prime_size) where prime_size >= hashSize
  *
  ****/
 
