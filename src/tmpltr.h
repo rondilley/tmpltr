@@ -67,13 +67,46 @@
  *
  ****/
 
+/* Storage types for field values */
+#define FIELD_STORAGE_INLINE  0  /* Using inline array (count <= 8) */
+#define FIELD_STORAGE_DYNAMIC 1  /* Using dynamic array (8 < count <= 32) */
+#define FIELD_STORAGE_HASHSET 2  /* Using hash set (count > 32) */
+
+/* Inline array size - optimized for cache line */
+#define FIELD_INLINE_SIZE 8
+
+/* Threshold to switch from dynamic array to hash set */
+#define FIELD_HASHSET_THRESHOLD 32
+
+/* Simple hash set for field values */
+typedef struct {
+  const char **buckets;    /* Array of interned string pointers */
+  uint16_t capacity;        /* Power of 2 for fast modulo */
+  uint16_t count;          /* Number of entries */
+  uint16_t max_probe;      /* Maximum probe distance seen */
+} field_hashset_t;
+
 struct Fields_s
 {
   uint16_t count;          /* Number of unique values stored */
-  uint16_t capacity;       /* Capacity of values array */
-  char **values;           /* Dynamic array of string pointers */
+  uint8_t storage_type;    /* INLINE, DYNAMIC, or HASHSET */
   uint8_t is_variable;     /* 1 if field is variable (too many values) */
   uint8_t tracking_enabled; /* 1 if still tracking new values */
+  
+  union {
+    /* For small counts (<=8): inline array */
+    const char *inline_values[FIELD_INLINE_SIZE];
+    
+    /* For medium counts (8-32): dynamic array */
+    struct {
+      const char **values;
+      uint16_t capacity;
+    } dynamic;
+    
+    /* For large counts (>32): hash set */
+    field_hashset_t *hashset;
+  } storage;
+  
   struct Fields_s *next;   /* Next field in linked list */
 };
 
@@ -82,6 +115,8 @@ typedef struct
   char lBuf[LINEBUF_SIZE];
   size_t count;
   struct Fields_s *head;
+  uint8_t all_fields_stopped_tracking; /* 1 if all fields have stopped tracking */
+  uint8_t template_complete; /* 1 if this template has enough field samples */
 } metaData_t;
 
 /****
@@ -96,9 +131,15 @@ int showTemplates(void);
 int loadTemplateFile(const char *fName);
 char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize);
 
-/* Array-based field tracking functions */
+/* Hybrid field tracking functions */
 void initField(struct Fields_s *field);
 int trackFieldValue(struct Fields_s *field, const char *value);
 void freeField(struct Fields_s *field);
+
+/* Hash set helper functions */
+field_hashset_t *field_hashset_create(uint16_t initial_capacity);
+void field_hashset_destroy(field_hashset_t *hs);
+int field_hashset_contains_or_add(field_hashset_t *hs, const char *interned_str);
+void field_hashset_resize(field_hashset_t *hs);
 
 #endif /* TMPLTR_DOT_H */

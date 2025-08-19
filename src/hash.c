@@ -355,6 +355,7 @@ int traverseHash(const struct hash_s *hash, int (*fn)(const struct hashRec_s *ha
   uint32_t bucket;
   struct hashRec_s *record;
   
+  
   if (!hash || !fn)
     return FAILED;
     

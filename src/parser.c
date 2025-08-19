@@ -354,7 +354,7 @@ int parseLine(char *line)
         case '\"':
           /* check to see if it is the start or end */
 
-          if (inQuotes | config->greedy)
+          if (inQuotes || config->greedy)
           {
 
             /* extract string - field already pre-allocated */
@@ -527,8 +527,8 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if (FAST_ISALPHA(curChar) | (curChar == '@') |
-               ((inQuotes) && (curChar == ' ')) |
+      else if (FAST_ISALPHA(curChar) || (curChar == '@') ||
+               ((inQuotes) && (curChar == ' ')) ||
                (curChar == '\\'))
       {
         /* convert field to string */
@@ -591,15 +591,15 @@ int parseLine(char *line)
 
 #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(curChar)) | (isblank(curChar)) |
-               (curChar == '/') | (iscntrl(curChar)) |
+      else if ((ispunct(curChar)) || (isblank(curChar)) ||
+               (curChar == '/') || (iscntrl(curChar)) ||
                !(isprint(curChar)))
       {
 #else
       }
-      else if ((ispunct(curChar)) | (curChar == ' ') |
-               (curChar == '\t') | (curChar == '/') |
-               (iscntrl(curChar)) | !(isprint(curChar)))
+      else if ((ispunct(curChar)) || (curChar == ' ') ||
+               (curChar == '\t') || (curChar == '/') ||
+               (iscntrl(curChar)) || !(isprint(curChar)))
       {
 #endif
 
@@ -957,12 +957,12 @@ int parseLine(char *line)
         printf("DEBUG - STATE=char\n");
 #endif
 
-      if (FAST_ISALNUM(curChar) | (curChar == '/') |
-          (curChar == '@') |
-          ((inQuotes) && (curChar == ' ')) |
-          ((inQuotes) && (curChar == '=')) |
-          (curChar == '\\') | (curChar == ' ') |
-          (curChar == '-') | (curChar == ':'))
+      if (FAST_ISALNUM(curChar) || (curChar == '/') ||
+          (curChar == '@') ||
+          ((inQuotes) && (curChar == ' ')) ||
+          ((inQuotes) && (curChar == '=')) ||
+          (curChar == '\\') || (curChar == ' ') ||
+          (curChar == '-') || (curChar == ':'))
       {
 
         /* convery char to string */
@@ -972,13 +972,13 @@ int parseLine(char *line)
 
 #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(curChar)) | (iscntrl(curChar)) |
-               !(isprint(curChar)) | (isblank(curChar)))
+      else if ((ispunct(curChar)) || (iscntrl(curChar)) ||
+               !(isprint(curChar)) || (isblank(curChar)))
       {
 #else
       }
-      else if ((ispunct(curChar)) | (curChar == ' ') |
-               (iscntrl(curChar)) | !(isprint(curChar)) |
+      else if ((ispunct(curChar)) || (curChar == ' ') ||
+               (iscntrl(curChar)) || !(isprint(curChar)) ||
                (curChar == '\t'))
       {
 #endif
@@ -1007,8 +1007,8 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (FAST_ISALPHA(curChar) | (curChar == '@') |
-               ((inQuotes) && (curChar == ' ')) |
+      else if (FAST_ISALPHA(curChar) || (curChar == '@') ||
+               ((inQuotes) && (curChar == ' ')) ||
                (curChar == '\\'))
       {
         /* convert field to string */
@@ -1073,15 +1073,15 @@ int parseLine(char *line)
 
 #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(curChar)) | (isblank(curChar)) |
-               (curChar == '/') | (curChar == '.') |
-               (iscntrl(curChar)) | !(isprint(curChar)))
+      else if ((ispunct(curChar)) || (isblank(curChar)) ||
+               (curChar == '/') || (curChar == '.') ||
+               (iscntrl(curChar)) || !(isprint(curChar)))
       {
 #else
       }
-      else if ((ispunct(curChar)) | (curChar == ' ') |
-               (curChar == '\t') | (curChar == '/') |
-               (curChar == '.') | (iscntrl(curChar)) |
+      else if ((ispunct(curChar)) || (curChar == ' ') ||
+               (curChar == '\t') || (curChar == '/') ||
+               (curChar == '.') || (iscntrl(curChar)) ||
                !(isprint(curChar)))
       {
 #endif
@@ -1179,8 +1179,8 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (FAST_ISALPHA(curChar) | (curChar == '@') |
-               ((inQuotes) && (curChar == ' ')) | (curChar == '\\') | (curChar == '.') | (curChar == ':') | (curChar == '-'))
+      else if (FAST_ISALPHA(curChar) || (curChar == '@') ||
+               ((inQuotes) && (curChar == ' ')) || (curChar == '\\') || (curChar == '.') || (curChar == ':') || (curChar == '-'))
       {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
@@ -1303,10 +1303,10 @@ int parseLine(char *line)
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (FAST_ISALPHA(curChar) |
-               ((inQuotes) && (curChar == '/')) |
-               (curChar == '@') | (curChar == '%') |
-               (curChar == '$') | (curChar == '\\'))
+      else if (FAST_ISALPHA(curChar) ||
+               ((inQuotes) && (curChar == '/')) ||
+               (curChar == '@') || (curChar == '%') ||
+               (curChar == '$') || (curChar == '\\'))
       {
 #ifdef DEBUG
         if (config->debug >= 8)
@@ -1375,19 +1375,19 @@ int parseLine(char *line)
           }
         }
       }
-      else if ((iscntrl(curChar)) | !(isprint(curChar)))
+      else if ((iscntrl(curChar)) || !(isprint(curChar)))
       {
         /* not a valid log character, ignore it for now */
         curLinePos++;
 #ifdef HAVE_ISBLANK
       }
-      else if ((ispunct(curChar)) | (isblank(curChar)) |
+      else if ((ispunct(curChar)) || (isblank(curChar)) ||
                (isprint(curChar)))
       {
 #else
       }
-      else if ((ispunct(curChar)) | (isprint(curChar)) |
-               (curChar == ' ') | (curChar == '\t'))
+      else if ((ispunct(curChar)) || (isprint(curChar)) ||
+               (curChar == ' ') || (curChar == '\t'))
       {
 #endif
         /* printable but not alpha+num */

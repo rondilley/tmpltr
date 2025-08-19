@@ -15,7 +15,7 @@ ignored.
 
 The parser is fast and capable of processing millions of
 lines per minute.  For web and firewall logs, it averages
-**33M** lines per minute on a 3GHz x86 machine running *NIX.
+**37M** lines per minute on a 3GHz x86 machine running *NIX.
 
 The template strategy was originally proposed by a friend
 of mine in 2003 who later built a tool called never before
@@ -256,6 +256,7 @@ The currently supported field types are as follows:
 |%I | IPv6 |
 |%m | MAC address (IEEE 802 syntax) |
 |%t | time (2020-12-17 00:14:59[.000]) |
+|%D | syslog time (Jan 10 00:14:59) |
 
 The template file can be used with the '-t {fname}' switch
 to provide artificial ignorance capabilities.

@@ -40,7 +40,8 @@
  ****/
 
 #define STRING_POOL_SIZE (1024 * 1024)  /* 1MB string pool */
-#define INTERN_HASH_SIZE 4096           /* Hash table size for interned strings */
+#define INTERN_HASH_INITIAL_SIZE 16384  /* Initial hash table size - 4x larger */
+#define INTERN_HASH_MAX_LOAD_FACTOR 4   /* Resize when avg chain length > 4 */
 
 /****
  *
@@ -94,6 +95,9 @@ const char *internStringLen(string_intern_t *intern, const char *str, size_t len
 
 /* Get interned string statistics */
 void getInternStats(string_intern_t *intern, uint32_t *num_strings, size_t *memory_used);
+
+/* Resize string intern hash table when load factor gets too high */
+int resizeInternHashTable(string_intern_t *intern);
 
 /* Fast string equality check for interned strings */
 static inline int internedStringEqual(const char *a, const char *b) {

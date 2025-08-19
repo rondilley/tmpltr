@@ -101,11 +101,18 @@ AC_ARG_ENABLE(gprof,
     [ if test "$GCC" = yes; then
           GPROF="yes"
           CFLAGS="${CFLAGS} -DGPROF -pg"
+          # Remove -fomit-frame-pointer when profiling as they conflict
+          CFLAGS="${CFLAGS} -fno-omit-frame-pointer"
       else
           GPROF="yes"
           CFLAGS="${CFLAGS} -DGPROF"
       fi
-    ],)
+    ],
+    [ if test "$GCC" = yes; then
+          # Add -fomit-frame-pointer only when gprof is disabled
+          CFLAGS="${CFLAGS} -fomit-frame-pointer"
+      fi
+    ])
 
 dnl ############# System Dependencies
 
@@ -282,5 +289,6 @@ echo "Enable mem debugging  : ${MEM_DEBUG}"
 echo "Show mem debugging    : ${SHOW_MEM_DEBUG}"
 echo "Security hardening    : ${HARDENING}"
 echo "Static analysis       : ${STATIC_ANALYSIS}"
+echo "Profiling (gprof)     : ${GPROF}"
 echo "-----------------------------------------------"
 echo ""

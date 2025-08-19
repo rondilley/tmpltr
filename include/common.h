@@ -128,6 +128,7 @@ typedef struct {
   int clusterDepth;
   int chain;
   int match;
+  int no_output;  /* Skip printing templates at end */
   int mode;
   int facility;
   int priority;

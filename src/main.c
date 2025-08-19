@@ -246,10 +246,12 @@ int main(int argc, char *argv[])
         {"matchfile", required_argument, 0, 'M'},
         {"line", required_argument, 0, 'l'},
         {"linefile", required_argument, 0, 'L'},
+        {"quiet", no_argument, 0, 'q'},
+        {"no-output", no_argument, 0, 'q'},
         {0, no_argument, 0, 0}};
-    c = getopt_long(argc, argv, "vd:hn:t:w:cCgm:M:l:L:", long_options, &option_index);
+    c = getopt_long(argc, argv, "vd:hn:t:w:cCgm:M:l:L:q", long_options, &option_index);
 #else
-    c = getopt(argc, argv, "vd:htn::w:cgm:M:l:L:");
+    c = getopt(argc, argv, "vd:htn::w:cgm:M:l:L:q");
 #endif
 
     if (c == -1)
@@ -344,8 +346,10 @@ int main(int argc, char *argv[])
       config->match = addMatchLine(optarg);
       break;
 
-
-
+    case 'q':
+      /* enable quiet mode - skip printing templates at end */
+      config->no_output = TRUE;
+      break;
 
     default:
       fprintf(stderr, "Unknown option code [0%o]\n", c);
@@ -405,7 +409,11 @@ int main(int argc, char *argv[])
   else
   {
     /* print the templates we have found */
-    showTemplates();
+    if (!config->no_output) {
+      showTemplates();
+    } else {
+      fprintf(stderr, "Template processing complete. Use without -q to see results.\n");
+    }
   }
 
   /*

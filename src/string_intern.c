@@ -70,7 +70,7 @@ string_intern_t *initStringIntern(void)
         return NULL;
     }
 
-    intern->hash_size = INTERN_HASH_SIZE;
+    intern->hash_size = INTERN_HASH_INITIAL_SIZE;
     if ((intern->hash_table = (interned_string_t **)XMALLOC(
              sizeof(interned_string_t *) * intern->hash_size)) == NULL) {
         XFREE(intern);
@@ -256,6 +256,11 @@ const char *internStringLen(string_intern_t *intern, const char *str, size_t len
     /* Add to hash table */
     intern->hash_table[bucket] = entry;
     intern->total_strings++;
+    
+    /* Check if we need to resize hash table */
+    if (intern->total_strings > intern->hash_size * INTERN_HASH_MAX_LOAD_FACTOR) {
+        resizeInternHashTable(intern);
+    }
 
     return entry->data;
 }
@@ -280,6 +285,72 @@ const char *internString(string_intern_t *intern, const char *str)
 {
     if (!str) return NULL;
     return internStringLen(intern, str, strlen(str));
+}
+
+/****
+ *
+ * Resize string intern hash table
+ *
+ * DESCRIPTION:
+ *   Doubles the hash table size and rehashes all entries when the load factor
+ *   becomes too high. This maintains O(1) average lookup performance.
+ *
+ * PARAMETERS:
+ *   intern - String interning system
+ *
+ * RETURNS:
+ *   1 on success, 0 on failure
+ *
+ ****/
+int resizeInternHashTable(string_intern_t *intern)
+{
+    interned_string_t **old_table, **new_table;
+    uint32_t old_size, new_size, i;
+    interned_string_t *entry, *next;
+    
+    if (!intern) return 0;
+    
+    old_table = intern->hash_table;
+    old_size = intern->hash_size;
+    new_size = old_size * 2;
+    
+    /* Prevent excessive memory usage - cap at 1M buckets */
+    if (new_size > 1048576) return 0;
+    
+    /* Allocate new hash table */
+    new_table = (interned_string_t **)XMALLOC(sizeof(interned_string_t *) * new_size);
+    if (!new_table) return 0;
+    
+    /* Initialize new table */
+    for (i = 0; i < new_size; i++) {
+        new_table[i] = NULL;
+    }
+    
+    /* Rehash all entries */
+    for (i = 0; i < old_size; i++) {
+        entry = old_table[i];
+        while (entry) {
+            next = entry->next;
+            
+            /* Calculate new bucket */
+            uint32_t new_bucket = entry->hash % new_size;
+            
+            /* Insert into new table */
+            entry->next = new_table[new_bucket];
+            new_table[new_bucket] = entry;
+            
+            entry = next;
+        }
+    }
+    
+    /* Update intern structure */
+    intern->hash_table = new_table;
+    intern->hash_size = new_size;
+    
+    /* Free old table */
+    XFREE(old_table);
+    
+    return 1;
 }
 
 /****

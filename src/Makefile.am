@@ -5,7 +5,8 @@ tmpltr_LDADD =
 # High-performance compiler flags
 AM_CFLAGS = -O3 -march=native -mtune=native -flto
 AM_CFLAGS += -funroll-loops -fprefetch-loop-arrays -finline-functions
-AM_CFLAGS += -fomit-frame-pointer -fstrict-aliasing -falign-functions=32
+# Note: -fomit-frame-pointer conflicts with -pg (gprof), so it's conditionally added
+AM_CFLAGS += -fstrict-aliasing -falign-functions=32
 AM_CFLAGS += -falign-loops=32 -fpredictive-commoning
 AM_CFLAGS += -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes
 AM_CFLAGS += -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings

@@ -1,18 +1,6 @@
 Templater (tmpltr) TODO list
 ==============
 
-Completed (2025-01-18):
------------------------
-* Implemented FNV-1a hash algorithm replacing ELF hash (30-50% performance improvement)
-* Replaced binary tree field tracking with array-based approach (3-6x faster for small datasets)
-* Added memory pooling for hash record allocation
-* Implemented string interning system (20-35% memory reduction)
-* Created optimized parser state machine with lookup tables (25-40% parsing improvement)
-* Applied aggressive compiler optimizations (-O3, -march=native, -flto)
-* Increased I/O buffer sizes from 8KB to 64KB
-* Eliminated dual hash table implementation
-* Added fast character classification lookup tables
-
 Short-term:
 -----------
 * Add support for multiple threads/processes to split the load when speed is important
