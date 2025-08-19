@@ -39,15 +39,24 @@
 
 /****
  *
+ * local function prototypes
+ *
+ ****/
+
+static int safe_open(const char *filename);
+static void cleanup_pid_file(const char *filename);
+
+/****
+ *
  * local variables
  *
  ****/
 
-PRIVATE char *restricted_environ[] = {
+PRIVATE const char *restricted_environ[] = {
     "IFS= \t\n",
     "PATH= /bin:/usr/bin",
     0};
-PRIVATE char *preserve_environ[] = {
+PRIVATE const char *preserve_environ[] = {
     "TZ",
     0};
 
@@ -79,7 +88,10 @@ CODE prioritynames[] =
         {NULL, -1}};
 #else
 #ifdef LINUX
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wredundant-decls"
 extern CODE prioritynames[];
+#pragma GCC diagnostic pop
 #endif
 #endif
 
@@ -90,7 +102,6 @@ extern CODE prioritynames[];
  ****/
 
 extern Config_t *config;
-extern char **environ;
 
 /****
  *
@@ -104,7 +115,7 @@ extern char **environ;
  *
  ****/
 
-int display(int level, char *format, ...)
+int display(int level, const char *format, ...)
 {
   PRIVATE va_list args;
   PRIVATE char tmp_buf[SYSLOG_MAX];
@@ -165,13 +176,13 @@ PUBLIC int open_devnull(int fd)
 {
   FILE *f_st = 0;
 
-  if (fd EQ 0)
+  if (fd == 0)
     f_st = freopen(DEV_NULL, "rb", stdin);
-  else if (fd EQ 1)
+  else if (fd == 1)
     f_st = freopen(DEV_NULL, "wb", stdout);
-  else if (fd EQ 2)
+  else if (fd == 2)
     f_st = freopen(DEV_NULL, "wb", stderr);
-  return (f_st && fileno(f_st) EQ fd);
+  return (f_st && fileno(f_st) == fd);
 }
 
 /****
@@ -199,28 +210,28 @@ int is_dir_safe(const char *dir)
 
   do
   {
-    if (chdir(dir) EQ FAILED)
+    if (chdir(dir) == FAILED)
       break;
     if (!(fd = opendir(".")))
       break;
 
 #ifdef LINUX
-    if (fstat(dirfd(fd), &f) EQ FAILED)
+    if (fstat(dirfd(fd), &f) == FAILED)
     {
 #elif MACOS
-    if (fstat(fd->__dd_fd, &f) EQ FAILED)
+    if (fstat(fd->__dd_fd, &f) == FAILED)
     {
 #elif CYGWIN
-    if (fstat(fd->__d_fd, &f) EQ FAILED)
+    if (fstat(fd->__d_fd, &f) == FAILED)
     {
 #elif OPENBSD
-    if (fstat(dirfd(fd), &f) EQ FAILED)
+    if (fstat(dirfd(fd), &f) == FAILED)
     {
 #elif FREEBSD
-    if (fstat(dirfd(fd), &f) EQ FAILED)
+    if (fstat(dirfd(fd), &f) == FAILED)
     {        
 #else
-    if (fstat(fd->dd_fd, &f) EQ FAILED)
+    if (fstat(fd->dd_fd, &f) == FAILED)
     {
 #endif
 
@@ -237,7 +248,7 @@ int is_dir_safe(const char *dir)
       break;
     }
     dir = "..";
-    if (lstat(dir, &l) EQ FAILED)
+    if (lstat(dir, &l) == FAILED)
       break;
     if (!getcwd(new_dir, PATH_MAX + 1))
       break;
@@ -246,22 +257,22 @@ int is_dir_safe(const char *dir)
     rc = 1;
 
 #ifdef LINUX
-  if (fchdir(dirfd(start)) EQ FAILED)
+  if (fchdir(dirfd(start)) == FAILED)
   {
 #elif MACOS
-  if (fchdir(start->__dd_fd) EQ FAILED)
+  if (fchdir(start->__dd_fd) == FAILED)
   {
 #elif CYGWIN
-  if (fchdir(start->__d_fd) EQ FAILED)
+  if (fchdir(start->__d_fd) == FAILED)
   {
 #elif OPENBSD
-  if (fchdir(dirfd(start)) EQ FAILED)
+  if (fchdir(dirfd(start)) == FAILED)
   {
 #elif FREEBSD
-  if (fstat(dirfd(fd), &f) EQ FAILED)
+  if (fstat(dirfd(fd), &f) == FAILED)
   {     
 #else
-  if (fchdir(start->dd_fd) EQ FAILED)
+  if (fchdir(start->dd_fd) == FAILED)
   {
 #endif
     closedir(start);
@@ -282,7 +293,6 @@ int create_pid_file(const char *filename)
 {
   int fd;
   FILE *lockfile;
-  size_t len;
   pid_t pid;
 
   /* remove old pid file if it exists */
@@ -292,7 +302,7 @@ int create_pid_file(const char *filename)
     display(LOG_ERR, "Unable to open pid file [%s]", filename);
     return FAILED;
   }
-  if ((lockfile = fdopen(fd, "w")) EQ NULL)
+  if ((lockfile = fdopen(fd, "w")) == NULL)
   {
     display(LOG_ERR, "Unable to fdopen() pid file [%d]", fd);
     close(fd);
@@ -305,7 +315,7 @@ int create_pid_file(const char *filename)
     fclose(lockfile);
     return FAILED;
   }
-  if (fflush(lockfile) EQ EOF)
+  if (fflush(lockfile) == EOF)
   {
     display(LOG_ERR, "fflush() failed [%s]", filename);
     fclose(lockfile);
@@ -328,12 +338,12 @@ static int safe_open(const char *filename)
   struct stat sb;
   XMEMSET(&sb, 0, sizeof(struct stat));
 
-  if (lstat(filename, &sb) EQ FAILED)
+  if (lstat(filename, &sb) == FAILED)
   {
     if (errno != ENOENT)
       return (FAILED);
   }
-  else if ((sb.st_mode & S_IFREG) EQ 0)
+  else if ((sb.st_mode & S_IFREG) == 0)
   {
     errno = EOPNOTSUPP;
     return (FAILED);

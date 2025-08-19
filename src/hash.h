@@ -54,17 +54,23 @@ struct hashRec_s
 {
   char *keyString;
   int keyLen;
+  uint32_t hashValue;    /* Cached hash value for faster lookups */
   void *data;
   time_t lastSeen;
   time_t createTime;
   uint32_t accessCount;
   uint16_t modifyCount;
+  struct hashRec_s *next;  /* For linked list in buckets */
 };
 
-struct hashRecList_s
+
+/* Memory pool for hash records */
+struct hashRecPool_s
 {
-  uint16_t count;
-  struct hashRec_s **records;
+  struct hashRec_s *records;
+  size_t capacity;
+  size_t used;
+  struct hashRecPool_s *next;
 };
 
 struct hash_s
@@ -73,7 +79,8 @@ struct hash_s
   uint32_t totalRecords;
   uint16_t maxDepth;
   uint8_t primeOff;
-  struct hashRecList_s **lists;
+  struct hashRec_s **buckets;      /* Optimized bucket array using FNV-1a */
+  struct hashRecPool_s *pools;     /* Memory pools for records */
 };
 
 /****
@@ -83,10 +90,14 @@ struct hash_s
  ****/
 
 uint32_t calcHash(uint32_t hashSize, const char *keyString);
+uint32_t fnv1aHash(const char *keyString, int keyLen);
+uint32_t djb2Hash(const char *keyString, int keyLen);
+uint32_t calcHashWithLen(const char *keyString, int keyLen);
 struct hash_s *initHash(uint32_t hashSize);
 void freeHash(struct hash_s *hash);
 
 struct hashRec_s *addUniqueHashRec(struct hash_s *hash, const char *keyString, int keyLen, void *data);
+struct hashRec_s *addUniqueHashRecWithHash(struct hash_s *hash, const char *keyString, int keyLen, uint32_t hashValue, void *data);
 int insertUniqueHashRec(struct hash_s *hash, struct hashRec_s *hashRec);
 
 struct hashRec_s *getHashRecord(struct hash_s *hash, const char *keyString, int keyLen);

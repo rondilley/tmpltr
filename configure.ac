@@ -1,9 +1,10 @@
 dnl Process this file with autoconf to produce a configure script
-m4_include([version.m4])
+m4_include([m4/version.m4])
 AC_PREREQ([2.59])
 AC_INIT([Log Templater], VERSION_NUMBER, [ron.dilley@uberadmin.com], [tmpltr], [http://www.uberadmin.com/Projects/tmpltr/])
 AC_CONFIG_SRCDIR(src/main.c)
 AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR([m4])
 AC_USE_SYSTEM_EXTENSIONS
 
 AM_INIT_AUTOMAKE
@@ -112,7 +113,6 @@ AC_MSG_CHECKING([for special system dependencies])
 
 AC_CANONICAL_HOST
 AC_C_CONST
-AC_PROG_GCC_TRADITIONAL
 
 dnl Checks for OS type.
 case "$host" in

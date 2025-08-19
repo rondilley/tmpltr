@@ -24,7 +24,12 @@
 #define MEM_DOT_H
 
 #define XMALLOC(c) xmalloc_(c, __FILE__, __LINE__)
-#define XFREE(ptr) do { xfree_(ptr, __FILE__, __LINE__); (ptr) = NULL; } while(0)
+#define XFREE(ptr)                   \
+  do                                 \
+  {                                  \
+    xfree_(ptr, __FILE__, __LINE__); \
+    (ptr) = NULL;                    \
+  } while (0)
 #define XFREE_ALL() xfree_all_(__FILE__, __LINE__)
 #define XMEMSET(s, c, n) xmemset_(s, c, n, __FILE__, __LINE__)
 #define XMEMCPY(d, s, n) xmemcpy_(d, s, n, __FILE__, __LINE__)
@@ -91,6 +96,9 @@ void *xmemset_(void *ptr, const char value, const int size,
                const char *filename, const int linenumber);
 void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
                const int linenumber);
+
+char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len __attribute__((unused)),
+                const int size, const char *filename __attribute__((unused)), const int linenumber __attribute__((unused)));
 int xmemcmp_(const void *s1, const void *s2, size_t n, const char *filename,
              const int linenumber);
 void xfree_(void *ptr, const char *filename, const int linenumber);

@@ -72,6 +72,13 @@
 #define FIELD_TYPE_DT_SYSLOG 40 /* mmm dd hh:mm:ss */
 #define FIELD_TYPE_DT 41        /* mm/dd/yyyy hh:mm:ss */
 #define FIELD_TYPE_DT_FULL 42   /* mm/dd/yyyy hh:mm:ss.s */
+#define FIELD_TYPE_DT_EPOCH 43  /* unix epoch timestamp */
+#define FIELD_TYPE_DT_ISO8601 44 /* ISO8601 format */
+#define FIELD_TYPE_DT_APACHE 45  /* Apache log format */
+
+/* special types */
+#define FIELD_TYPE_URL 50       /* URL/URI */
+#define FIELD_TYPE_BASE64 51    /* Base64 encoded data */
 
 #define PARSER_MIN_FIELD_LEN 0
 
@@ -82,10 +89,15 @@
 #define FIELD_TYPE_CHAR_TOK 'c'
 #define FIELD_TYPE_IP4_TOK 'i'
 #define FIELD_TYPE_IP6_TOK 'I'
-#define FIELD_TYPE MACADDR_TOK 'm'
+#define FIELD_TYPE_MACADDR_TOK 'm'
 #define FIELD_TYPE_SYSLOGDT_TOK 'D'
 #define FIELD_TYPE_DT_TOK 't'
 #define FIELD_TYPE_FULLDT_TOK 'T'
+#define FIELD_TYPE_EPOCH_TOK 'e'
+#define FIELD_TYPE_ISO8601_TOK 'z'
+#define FIELD_TYPE_APACHE_TOK 'a'
+#define FIELD_TYPE_URL_TOK 'u'
+#define FIELD_TYPE_BASE64_TOK 'b'
 
 #define MAX_FIELD_POS 4096
 #define MAX_FIELD_LEN 32768
@@ -106,6 +118,7 @@ void initParser(void);
 void deInitParser(void);
 int parseLine(char *line);
 int getParsedField(char *oBuf, int oBufLen, const unsigned int fieldNum);
+const char *getParsedFieldPtr(const unsigned int fieldNum);
 void showCounts( void );
 
 #endif /* end of PARSER_DOT_H */

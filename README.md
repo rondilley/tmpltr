@@ -15,7 +15,7 @@ ignored.
 
 The parser is fast and capable of processing millions of
 lines per minute.  For web and firewall logs, it averages
-**27M** lines per minute on a 3GHz x86 machine running *NIX.
+**33M** lines per minute on a 3GHz x86 machine running *NIX.
 
 The template strategy was originally proposed by a friend
 of mine in 2003 who later built a tool called never before

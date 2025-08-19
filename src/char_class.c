@@ -21,6 +21,7 @@
  ****/
 
 #include "../include/common.h"
+#include <stdint.h>
 
 /****
  *
@@ -55,7 +56,7 @@
  ****/
 
 /* Character classification lookup table - one entry per byte value */
-const unsigned char char_class_table[256] = {
+const uint8_t char_class_table[256] = {
     /* 0x00-0x0F */
     CHAR_CNTRL, CHAR_CNTRL, CHAR_CNTRL, CHAR_CNTRL,
     CHAR_CNTRL, CHAR_CNTRL, CHAR_CNTRL, CHAR_CNTRL,

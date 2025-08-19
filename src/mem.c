@@ -135,12 +135,12 @@ PUBLIC char *copy_argv(char *argv[])
   *buf = 0;
   for (arg = argv; *arg != NULL; arg++)
   {
-    size_t current_len = strlen(buf);
-    size_t remaining = total_length - current_len - 1;
 #ifdef HAVE_STRLCAT
     strlcat(buf, *arg, total_length);
     strlcat(buf, " ", total_length);
 #else
+    size_t current_len = strlen(buf);
+    size_t remaining = total_length - current_len - 1;
     strncat(buf, *arg, remaining);
     current_len = strlen(buf);
     remaining = total_length - current_len - 1;
@@ -192,7 +192,7 @@ void *xmalloc_(const int size, const char *filename, const int linenumber)
 
   /* allocate buf */
   result = malloc(size);
-  if (result EQ NULL)
+  if (result == NULL)
   {
 #ifdef PINEAPPLE
     fprintf(stderr, "PINEAPPLE\n");
@@ -207,7 +207,7 @@ void *xmalloc_(const int size, const char *filename, const int linenumber)
 
 #ifdef MEM_DEBUG
   d_result = malloc(sizeof(struct Mem_s));
-  if (d_result EQ NULL)
+  if (d_result == NULL)
   {
     fprintf(stderr, "out of memory (%lu at %s:%d)!\n", sizeof(struct Mem_s),
             filename, linenumber);
@@ -223,7 +223,7 @@ void *xmalloc_(const int size, const char *filename, const int linenumber)
 #endif
 
   /* link into the buffer chain */
-  if (tail EQ NULL)
+  if (tail == NULL)
   {
     head = d_result;
     tail = d_result;
@@ -266,7 +266,7 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
   PRIVATE int dest_size;
 #endif
 
-  if (s_ptr EQ NULL)
+  if (s_ptr == NULL)
   {
     fprintf(stderr, "memcpy called with NULL source pointer at %s:%d\n",
             filename, linenumber);
@@ -275,7 +275,7 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
 #endif
     exit(1);
   }
-  if (d_ptr EQ NULL)
+  if (d_ptr == NULL)
   {
     fprintf(stderr, "memcpy called with NULL dest pointer at %s:%d\n", filename,
             linenumber);
@@ -292,12 +292,12 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
   mem_ptr = head;
   while (mem_ptr != NULL)
   {
-    if (mem_ptr->buf_ptr EQ d_ptr)
+    if (mem_ptr->buf_ptr == d_ptr)
     {
       /* found the dest */
       dest_size = mem_ptr->buf_size;
     }
-    else if (mem_ptr->buf_ptr EQ s_ptr)
+    else if (mem_ptr->buf_ptr == s_ptr)
     {
       /* found the source */
       source_size = mem_ptr->buf_size;
@@ -379,7 +379,7 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
   else
   {
     /* source and dest are the same, freak out */
-    fprintf(stderr, "memcpy() called with source EQ dest at %s:%d\n", filename, linenumber);
+    fprintf(stderr, "memcpy() called with source == dest at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
@@ -399,8 +399,8 @@ void *xmemcpy_(void *d_ptr, void *s_ptr, const int size, const char *filename,
  *
  ****/
 
-char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
-                const int size, const char *filename, const int linenumber)
+char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len __attribute__((unused)),
+                const int size, const char *filename __attribute__((unused)), const int linenumber __attribute__((unused)))
 {
   char *result;
 #ifdef MEM_DEBUG
@@ -409,7 +409,7 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   PRIVATE int dest_size;
 #endif
 
-  if (s_ptr EQ NULL)
+  if (s_ptr == NULL)
   {
     fprintf(stderr, "memcpy called with NULL source pointer at %s:%d\n",
             filename, linenumber);
@@ -418,7 +418,7 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
 #endif
     exit(1);
   }
-  if (d_ptr EQ NULL)
+  if (d_ptr == NULL)
   {
     fprintf(stderr, "memcpy called with NULL dest pointer at %s:%d\n", filename,
             linenumber);
@@ -434,12 +434,12 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   mem_ptr = head;
   while (mem_ptr != NULL)
   {
-    if (mem_ptr->buf_ptr EQ d_ptr)
+    if (mem_ptr->buf_ptr == d_ptr)
     {
       /* found the dest */
       dest_size = mem_ptr->buf_size;
     }
-    else if (mem_ptr->buf_ptr EQ s_ptr)
+    else if (mem_ptr->buf_ptr == s_ptr)
     {
       /* found the source */
       source_size = mem_ptr->buf_size;
@@ -521,7 +521,7 @@ char *xmemncpy_(char *d_ptr, const char *s_ptr, const size_t len,
   else
   {
     /* source and dest are the same, freak out */
-    fprintf(stderr, "memcpy() called with source EQ dest at %s:%d\n", filename,
+    fprintf(stderr, "memcpy() called with source == dest at %s:%d\n", filename,
             linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
@@ -547,7 +547,7 @@ void *xmemset_(void *ptr, const char value, const int size,
 {
   void *result;
 
-  if (ptr EQ NULL)
+  if (ptr == NULL)
   {
     fprintf(stderr, "memset() called with NULL ptr at %s:%d\n", filename,
             linenumber);
@@ -555,7 +555,7 @@ void *xmemset_(void *ptr, const char value, const int size,
     exit(1);
   }
 
-  if (value EQ 0)
+  if (value == 0)
   {
     bzero(ptr, size);
     result = ptr;
@@ -583,7 +583,7 @@ int xmemcmp_(const void *s1, const void *s2, size_t n, const char *filename,
 {
   int result;
 
-  if (s1 EQ NULL || s2 EQ NULL)
+  if (s1 == NULL || s2 == NULL)
   {
     fprintf(stderr, "memcmp() called with NULL ptr at %s:%d\n", filename,
             linenumber);
@@ -617,7 +617,7 @@ void *xrealloc_(void *ptr, int size, const char *filename, const int linenumber)
   PRIVATE int d_size = 0;
 #endif
 
-  if (ptr EQ NULL)
+  if (ptr == NULL)
     result = malloc(size);
   else
     result = realloc(ptr, size);
@@ -626,7 +626,7 @@ void *xrealloc_(void *ptr, int size, const char *filename, const int linenumber)
   fprintf(stderr, "%p realloc %s:%d (%d bytes)\n", result, filename, linenumber, size);
 #endif
 
-  if (result EQ NULL)
+  if (result == NULL)
   {
     fprintf(stderr, "out of memory (%d at %s:%d)!\n", size, filename, linenumber);
 #ifdef MEM_DEBUG
@@ -639,7 +639,7 @@ void *xrealloc_(void *ptr, int size, const char *filename, const int linenumber)
   d_ptr = head;
   while (d_ptr != NULL)
   {
-    if (d_ptr->buf_ptr EQ ptr)
+    if (d_ptr->buf_ptr == ptr)
     {
       /* found debug object */
       found = TRUE;
@@ -675,7 +675,7 @@ void *xrealloc_(void *ptr, int size, const char *filename, const int linenumber)
   }
 
   d_result = malloc(sizeof(struct Mem_s));
-  if (d_result EQ NULL)
+  if (d_result == NULL)
   {
     fprintf(stderr, "out of memory (%lu at %s:%d)!\n", sizeof(struct Mem_s), filename, linenumber);
     XFREE_ALL();
@@ -689,7 +689,7 @@ void *xrealloc_(void *ptr, int size, const char *filename, const int linenumber)
 #endif
 
   /* link into the buffer chain */
-  if (tail EQ NULL)
+  if (tail == NULL)
   {
     head = d_result;
     tail = d_result;
@@ -725,7 +725,7 @@ void xfree_(void *ptr, const char *filename, const int linenumber)
   PRIVATE int size = 0;
 #endif
 
-  if (ptr EQ NULL)
+  if (ptr == NULL)
   {
     fprintf(stderr, "free() called with NULL ptr at %s:%d\n", filename,
             linenumber);
@@ -736,7 +736,7 @@ void xfree_(void *ptr, const char *filename, const int linenumber)
   d_ptr = head;
   while (d_ptr != NULL)
   {
-    if (d_ptr->buf_ptr EQ ptr)
+    if (d_ptr->buf_ptr == ptr)
     {
       /* found debug object */
       found = TRUE;
@@ -829,7 +829,7 @@ void xfree_all_(const char *filename, const int linenumber)
  *
  ****/
 
-char *xstrdup_(const char *str, const char *filename, const int linenumber)
+char *xstrdup_(const char *str, const char *filename __attribute__((unused)), const int linenumber __attribute__((unused)))
 {
   char *res;
 
@@ -854,7 +854,7 @@ void xgrow_(void **old, int elementSize, int *oldCount, int newCount, char *file
   int size;
 
   size = newCount * elementSize;
-  if (size EQ 0)
+  if (size == 0)
     tmp = NULL;
   else
   {
@@ -864,7 +864,7 @@ void xgrow_(void **old, int elementSize, int *oldCount, int newCount, char *file
     fprintf(stderr, "%p malloc %s:%d (grow)\n", tmp, filename, linenumber);
 #endif
 
-    if (tmp EQ NULL)
+    if (tmp == NULL)
     {
       fprintf(stderr, "out of memory (%d at %s:%d)!\n", size, filename, linenumber);
       quit = TRUE;
@@ -903,7 +903,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int l
   PRIVATE int dest_size;
 #endif
 
-  if (s_ptr EQ NULL)
+  if (s_ptr == NULL)
   {
     fprintf(stderr, "strcpy called with NULL source pointer at %s:%d\n",
             filename, linenumber);
@@ -912,7 +912,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int l
 #endif
     exit(1);
   }
-  if (d_ptr EQ NULL)
+  if (d_ptr == NULL)
   {
     fprintf(stderr, "strcpy called with NULL dest pointer at %s:%d\n", filename,
             linenumber);
@@ -922,7 +922,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int l
     exit(1);
   }
 
-  if ((size = (strlen(s_ptr) + 1)) EQ 0)
+  if ((size = (strlen(s_ptr) + 1)) == 0)
   {
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr, "strcpy called with zero length source pointer at %s:%d\n",
@@ -938,12 +938,12 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int l
   mem_ptr = head;
   while (mem_ptr != NULL)
   {
-    if (mem_ptr->buf_ptr EQ d_ptr)
+    if (mem_ptr->buf_ptr == d_ptr)
     {
       /* found the dest */
       dest_size = mem_ptr->buf_size;
     }
-    else if (mem_ptr->buf_ptr EQ s_ptr)
+    else if (mem_ptr->buf_ptr == s_ptr)
     {
       /* found the source */
       source_size = mem_ptr->buf_size;
@@ -1025,7 +1025,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int l
   else
   {
     /* source and dest are the same, freak out */
-    fprintf(stderr, "strcpy() called with source EQ dest at %s:%d\n", filename, linenumber);
+    fprintf(stderr, "strcpy() called with source == dest at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();
 #endif
@@ -1049,7 +1049,7 @@ char *xstrcpy_(char *d_ptr, const char *s_ptr, const char *filename, const int l
 char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *filename, const int linenumber)
 {
   char *result;
-  PRIVATE int size;
+  PRIVATE size_t size;
 #ifdef MEM_DEBUG
   PRIVATE struct Mem_s *mem_ptr;
   PRIVATE int source_size;
@@ -1057,7 +1057,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
 #endif
 
   /* check for null source pointer */
-  if (s_ptr EQ NULL)
+  if (s_ptr == NULL)
   {
     fprintf(stderr, "strncpy called with NULL source pointer at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
@@ -1067,7 +1067,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   }
 
   /* check for null dest pointer */
-  if (d_ptr EQ NULL)
+  if (d_ptr == NULL)
   {
     fprintf(stderr, "strncpy called with NULL dest pointer at %s:%d\n", filename, linenumber);
 #ifdef MEM_DEBUG
@@ -1077,7 +1077,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   }
 
   /* check size of len arg */
-  if (len EQ 0)
+  if (len == 0)
   {
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr, "strncpy called with zero copy length at %s:%d\n", filename, linenumber);
@@ -1087,7 +1087,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   }
 
   /* check size of source string */
-  if ((size = (strnlen(s_ptr,len-1) + 1)) EQ 0)
+  if ((size = (strnlen(s_ptr,len-1) + 1)) == 0)
   {
 #ifdef SHOW_MEM_DEBUG
     fprintf(stderr, "strncpy called with zero length source pointer at %s:%d\n", filename, linenumber);
@@ -1110,12 +1110,12 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   mem_ptr = head;
   while (mem_ptr != NULL)
   {
-    if (mem_ptr->buf_ptr EQ d_ptr)
+    if (mem_ptr->buf_ptr == d_ptr)
     {
       /* found the dest */
       dest_size = mem_ptr->buf_size;
     }
-    else if (mem_ptr->buf_ptr EQ s_ptr)
+    else if (mem_ptr->buf_ptr == s_ptr)
     {
       /* found the source */
       source_size = mem_ptr->buf_size;
@@ -1173,7 +1173,7 @@ char *xstrncpy_(char *d_ptr, const char *s_ptr, const size_t len, const char *fi
   else
   {
     /* source and dest are the same, freak out */
-    fprintf(stderr, "strncpy() called with source EQ dest at %s:%d\n", filename,
+    fprintf(stderr, "strncpy() called with source == dest at %s:%d\n", filename,
             linenumber);
 #ifdef MEM_DEBUG
     XFREE_ALL();

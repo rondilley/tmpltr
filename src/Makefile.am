@@ -1,12 +1,19 @@
 bin_PROGRAMS = tmpltr
-tmpltr_SOURCES = main.c main.h tmpltr.c tmpltr.h parser.c parser.h match.c match.h mem.c mem.h util.c util.h hash.c hash.h bintree.c bintree.h char_class.c ../include/sysdep.h ../include/config.h ../include/common.h
+tmpltr_SOURCES = main.c main.h tmpltr.c tmpltr.h parser.c parser.h parser_interface.c parser_interface.h match.c match.h mem.c mem.h util.c util.h hash.c hash.h char_class.c string_intern.c string_intern.h ../include/sysdep.h ../include/config.h ../include/common.h
 tmpltr_LDADD = 
 
-# Additional security-focused compiler flags
-AM_CFLAGS = -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition
+# High-performance compiler flags
+AM_CFLAGS = -O3 -march=native -mtune=native -flto
+AM_CFLAGS += -funroll-loops -fprefetch-loop-arrays -finline-functions
+AM_CFLAGS += -fomit-frame-pointer -fstrict-aliasing -falign-functions=32
+AM_CFLAGS += -falign-loops=32 -fpredictive-commoning
+AM_CFLAGS += -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes
 AM_CFLAGS += -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wwrite-strings
-AM_CFLAGS += -Wmissing-declarations -Wredundant-decls -Wnested-externs -Winline
-AM_CFLAGS += -Wno-long-long -Wundef -Wconversion -Wstrict-overflow=5
+AM_CFLAGS += -Wmissing-declarations -Wredundant-decls -Wnested-externs
+AM_CFLAGS += -Wno-long-long -Wundef
+
+# Performance-focused linker flags
+AM_LDFLAGS = -flto -fuse-linker-plugin
 
 # Static Analysis targets
 .PHONY: static-analysis cppcheck scan-build splint-check

@@ -27,6 +27,8 @@
  ****/
 
 #include "main.h"
+#include "string_intern.h"
+#include "parser_interface.h"
 
 /****
  *
@@ -50,8 +52,6 @@ PUBLIC Config_t *config = NULL;
  *
  ****/
 
-extern int errno;
-extern char **environ;
 
 /****
  * secure integer parsing with validation
@@ -92,22 +92,9 @@ PRIVATE int safe_parse_int(const char *str, int min_val, int max_val, int *resul
  ****/
 PRIVATE int validate_file_path(const char *path)
 {
+  char *resolved_path;
+  
   if (!path) {
-    return FALSE;
-  }
-  
-  /* Check for path traversal attacks */
-  if (strstr(path, "../") || strstr(path, "..\\")) {
-    fprintf(stderr, "ERR - Path traversal detected in: %s\n", path);
-    return FALSE;
-  }
-  
-  /* Check for absolute paths to sensitive directories */
-  if (strncmp(path, "/etc/", 5) == 0 ||
-      strncmp(path, "/proc/", 6) == 0 ||
-      strncmp(path, "/sys/", 5) == 0 ||
-      strncmp(path, "/dev/", 5) == 0) {
-    fprintf(stderr, "ERR - Access to system directory denied: %s\n", path);
     return FALSE;
   }
   
@@ -117,6 +104,42 @@ PRIVATE int validate_file_path(const char *path)
     return FALSE;
   }
   
+  /* Allow stdin */
+  if (strcmp(path, "-") == 0) {
+    return TRUE;
+  }
+  
+  /* Resolve the path to detect traversal attempts */
+  resolved_path = realpath(path, NULL);
+  if (resolved_path == NULL) {
+    /* If realpath fails, the file might not exist yet, which is okay for some operations */
+    /* But we still need to check for obvious traversal patterns */
+    if (strstr(path, "../") != NULL && strstr(path, "../") != path) {
+      /* Allow relative paths that start with ../ but reject embedded ../ */
+      const char *ptr = path;
+      while (strncmp(ptr, "../", 3) == 0) {
+        ptr += 3;
+      }
+      if (strstr(ptr, "../") != NULL) {
+        fprintf(stderr, "ERR - Path traversal detected in: %s\n", path);
+        return FALSE;
+      }
+    }
+    return TRUE;  /* Allow non-existent files for write operations */
+  }
+  
+  /* Check for absolute paths to sensitive directories */
+  if (strncmp(resolved_path, "/etc/", 5) == 0 ||
+      strncmp(resolved_path, "/proc/", 6) == 0 ||
+      strncmp(resolved_path, "/sys/", 5) == 0 ||
+      strncmp(resolved_path, "/dev/", 5) == 0 ||
+      strncmp(resolved_path, "/root/", 6) == 0) {
+    fprintf(stderr, "ERR - Access to system directory denied: %s\n", resolved_path);
+    free(resolved_path);
+    return FALSE;
+  }
+  
+  free(resolved_path);
   return TRUE;
 }
 
@@ -180,10 +203,7 @@ PRIVATE FILE *secure_fopen(const char *path, const char *mode)
 
 int main(int argc, char *argv[])
 {
-  FILE *inFile = NULL, *outFile = NULL;
-  char inBuf[8192];
-  char outFileName[PATH_MAX];
-  PRIVATE int c = 0, i, ret;
+  PRIVATE int c = 0;
 
 #ifndef DEBUG
   struct rlimit rlim;
@@ -199,6 +219,9 @@ int main(int argc, char *argv[])
   /* force mode to forground */
   config->mode = MODE_INTERACTIVE;
 
+  /* default parser */
+  config->parser_type = PARSER_TYPE_LEGACY;
+
   /* store current pid */
   config->cur_pid = getpid();
 
@@ -208,7 +231,6 @@ int main(int argc, char *argv[])
 
   while (1)
   {
-    int this_option_optind = optind ? optind : 1;
 #ifdef HAVE_GETOPT_LONG
     int option_index = 0;
     static struct option long_options[] = {
@@ -230,7 +252,7 @@ int main(int argc, char *argv[])
     c = getopt(argc, argv, "vd:htn::w:cgm:M:l:L:");
 #endif
 
-    if (c EQ - 1)
+    if (c == -1)
       break;
 
     switch (c)
@@ -289,7 +311,7 @@ int main(int argc, char *argv[])
       if (!validate_file_path(optarg)) {
         return (EXIT_FAILURE);
       }
-      if ((config->outFile_st = secure_fopen(optarg, "w")) EQ NULL)
+      if ((config->outFile_st = secure_fopen(optarg, "w")) == NULL)
       {
         fprintf(stderr, "ERR - Unable to open template file for write [%s]\n", optarg);
         return (EXIT_FAILURE);
@@ -322,6 +344,9 @@ int main(int argc, char *argv[])
       config->match = addMatchLine(optarg);
       break;
 
+
+
+
     default:
       fprintf(stderr, "Unknown option code [0%o]\n", c);
     }
@@ -333,7 +358,7 @@ int main(int argc, char *argv[])
 
   /* check dirs and files for danger */
 
-  if (time(&config->current_time) EQ - 1)
+  if (time(&config->current_time) == -1)
   {
     display(LOG_ERR, "Unable to get current time");
 
@@ -392,24 +417,6 @@ int main(int argc, char *argv[])
   return (EXIT_SUCCESS);
 }
 
-/****
- *
- * display prog info
- *
- ****/
-
-void show_info(void)
-{
-  fprintf(stderr, "%s v%s [%s - %s]\n", PROGNAME, VERSION, __DATE__, __TIME__);
-  fprintf(stderr, "By: Ron Dilley\n");
-  fprintf(stderr, "\n");
-  fprintf(stderr, "%s comes with ABSOLUTELY NO WARRANTY.\n", PROGNAME);
-  fprintf(stderr, "This is free software, and you are welcome\n");
-  fprintf(stderr, "to redistribute it under certain conditions;\n");
-  fprintf(stderr, "See the GNU General Public License for details.\n");
-  fprintf(stderr, "\n");
-}
-
 /*****
  *
  * display version info
@@ -458,7 +465,7 @@ PRIVATE void print_help(void)
   fprintf(stderr, " -m {template} show all lines that match {template}\n");
   fprintf(stderr, " -M {fname}    show all the lines that match templates in {fname}\n");
   fprintf(stderr, " -n {num}      max cluster args [default: %d]\n", MAX_ARGS_IN_FIELD);
-  fprintf(stderr " -t {file}     load templates to ignore\n");
+  fprintf(stderr, " -t {file}     load templates to ignore\n");
   fprintf(stderr, " -v            display version information\n");
   fprintf(stderr, " -w {file}     save templates to file\n");
   fprintf(stderr, " filename      one or more files to process, use '-' to read from stdin\n");
@@ -477,6 +484,9 @@ PRIVATE void cleanup(void)
 {
   /* free any match templates */
   cleanMatchList();
+  
+  /* cleanup global string interning system */
+  cleanupGlobalIntern();
 
   if (config->outFile_st != NULL)
     fclose(config->outFile_st);
@@ -500,10 +510,16 @@ void ctime_prog(int signo)
   signal(SIGALRM, SIG_IGN);
   /* update current time */
 
-  if (time(&config->current_time) EQ - 1)
+  if (signo != SIGALRM)
+  {
+    fprintf(stderr, "ERR - ctime_prog called with unexpected signal %d\n", signo);
+    return;
+  }
+
+  if (time(&config->current_time) == -1)
     fprintf(stderr, "ERR - Unable to update current time\n");
   config->alarm_count++;
-  if (config->alarm_count EQ 60)
+  if (config->alarm_count == 60)
   {
     reload = TRUE;
     config->alarm_count = 0;

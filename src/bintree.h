@@ -61,8 +61,8 @@ struct binTree_s
  *
  ****/
 
-void destroyBinTree(struct binTree_s *node);
-void insertBinTree(struct binTree_s **node, char *value);
-struct binTree_s *searchBinTree(struct binTree_s *node, char *value);
+inline void destroyBinTree(struct binTree_s *node);
+inline void insertBinTree(struct binTree_s **node, char *value);
+inline struct binTree_s *searchBinTree(struct binTree_s *node, char *value);
 
 #endif /* end of BINTREE_DOT_H */

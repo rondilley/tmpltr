@@ -135,6 +135,7 @@ typedef struct {
   time_t current_time;
   pid_t cur_pid;
   FILE *outFile_st;
+  int parser_type;  /* Parser type selection */
 } Config_t;
 
 #endif	/* end of COMMON_H */

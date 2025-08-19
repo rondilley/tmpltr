@@ -53,8 +53,116 @@ PRIVATE size_t count_num_int = 0;
 PRIVATE size_t count_num_float = 0;
 PRIVATE size_t count_num_hex = 0;
 PRIVATE size_t count_dt = 0;
+PRIVATE size_t count_dt_syslog = 0;
+PRIVATE size_t count_dt_epoch = 0;
+PRIVATE size_t count_dt_iso8601 = 0;
+PRIVATE size_t count_dt_apache = 0;
+PRIVATE size_t count_url = 0;
+PRIVATE size_t count_base64 = 0;
 PRIVATE size_t count_static = 0;
 #endif
+
+/* Month name lookup table for syslog format */
+PRIVATE const char *month_names[] = {
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+};
+
+/* Helper function to check if string matches a month name */
+PRIVATE int isMonthName(const char *str, int len)
+{
+  int i;
+  if (len != 3)
+    return FALSE;
+  
+  for (i = 0; i < 12; i++)
+  {
+    if (strncmp(str, month_names[i], 3) == 0)
+      return TRUE;
+  }
+  return FALSE;
+}
+
+/* Base64 character lookup table for O(1) validation */
+/* Valid chars: A-Z (65-90), a-z (97-122), 0-9 (48-57), + (43), / (47), = (61) */
+PRIVATE const unsigned char base64_table[256] = {
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 0-15 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 16-31 */
+  0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,  /* 32-47: + at 43, / at 47 */
+  1,1,1,1,1,1,1,1,1,1,0,0,0,2,0,0,  /* 48-63: 0-9, = at 61 (2=padding) */
+  0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  /* 64-79: A-O */
+  1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,  /* 80-95: P-Z */
+  0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  /* 96-111: a-o */
+  1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,  /* 112-127: p-z */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 128-143 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 144-159 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 160-175 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 176-191 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 192-207 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 208-223 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 224-239 */
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   /* 240-255 */
+};
+
+/* Helper function to check for valid Base64 character - inline for speed */
+PRIVATE inline int isBase64Char(unsigned char c)
+{
+  return base64_table[c];
+}
+
+/* Helper function to check if we're at the start of a syslog date pattern */
+PRIVATE int isSyslogDate(const char *line, int pos, int lineLen)
+{
+  /* Pattern: "Mmm dd hh:mm:ss" or "Mmm  d hh:mm:ss" */
+  /* Minimum length needed: 15 characters (double digit day) */
+  if (pos + 15 > lineLen)
+    return FALSE;
+  
+  /* Check month name (3 chars) */
+  if (!isMonthName(line + pos, 3))
+    return FALSE;
+  
+  /* Check space after month */
+  if (line[pos + 3] != ' ')
+    return FALSE;
+  
+  /* Check day (1 or 2 digits with possible leading space) */
+  int dayPos = pos + 4;
+  if (line[dayPos] == ' ') {
+    /* Single digit day with leading space */
+    dayPos++;
+    if (!FAST_ISDIGIT(line[dayPos]))
+      return FALSE;
+  } else if (FAST_ISDIGIT(line[dayPos])) {
+    /* Two digit day */
+    if (!FAST_ISDIGIT(line[dayPos + 1]))
+      return FALSE;
+    dayPos++;
+  } else {
+    return FALSE;
+  }
+  
+  /* Check space before time */
+  dayPos++;
+  if (line[dayPos] != ' ')
+    return FALSE;
+  
+  /* Check time pattern: hh:mm:ss */
+  int timePos = dayPos + 1;
+  if (!FAST_ISDIGIT(line[timePos]) || !FAST_ISDIGIT(line[timePos + 1]))
+    return FALSE;
+  if (line[timePos + 2] != ':')
+    return FALSE;
+  if (!FAST_ISDIGIT(line[timePos + 3]) || !FAST_ISDIGIT(line[timePos + 4]))
+    return FALSE;
+  if (line[timePos + 5] != ':')
+    return FALSE;
+  if (!FAST_ISDIGIT(line[timePos + 6]) || !FAST_ISDIGIT(line[timePos + 7]))
+    return FALSE;
+  
+  return TRUE;
+}
+
 /****
  *
  * external global variables
@@ -176,27 +284,20 @@ void deInitParser(void)
 
 int parseLine(char *line)
 {
-  int curFormPos = 0;
   int curLinePos = 0;
   int startOfField, startOfOctet;
   int octet = 0, octetLen = 0;
   int curFieldType = FIELD_TYPE_UNDEF;
   int runLen = 0;
-  int i;
-  char *posPtr;
-  char *key = NULL;
-  char *tmpString;
-  long tmpOffset;
-  long offsetList[1024];
   int fieldPos = 0; // 0 is where we store the template
-  int offsetPos = 0;
   int templatePos = 0;
-  long tmpLongNum = 0;
-  int tmpNum = 0;
   int inQuotes = FALSE;
   char fieldTypeChar;
   char curChar = line[0];
   int lineLen = strlen(line);
+  int base64BlockPos = 0;  /* Position within 4-byte block */
+  int base64PaddingCount = 0;  /* Track '=' padding chars */
+  int savedFieldType = FIELD_TYPE_UNDEF;  /* For rollback */
 
   /* Field 0 is pre-allocated for template storage */
   fieldPos++;
@@ -216,7 +317,7 @@ int parseLine(char *line)
       fprintf(stderr, "ERR - Too many fields in line\n");
       return (fieldPos - 1);
     }
-    else if (curFieldType EQ FIELD_TYPE_STRING)
+    else if (curFieldType == FIELD_TYPE_STRING)
     {
       /******************************************************************
        ****************************** STRING ****************************
@@ -324,6 +425,7 @@ int parseLine(char *line)
             curLinePos++;
             break;
           }
+          __attribute__((fallthrough));
         default:
           /* extract field */
           fieldTypeChar = 's';
@@ -331,7 +433,7 @@ int parseLine(char *line)
         }
       }
     }
-    else if (curFieldType EQ FIELD_TYPE_NUM_INT)
+    else if (curFieldType == FIELD_TYPE_NUM_INT)
     {
       /******************************************************************
        ***************************** NUM_INT ****************************
@@ -355,7 +457,7 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (curChar EQ '.')
+      else if (curChar == '.')
       {
         if ((runLen <= 3) &
             (atoi(line + startOfField) <
@@ -377,17 +479,17 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if ((runLen EQ 4) && (curChar EQ '-') && (curLinePos+12 <=lineLen))
+      else if ((runLen == 4) && (curChar == '-') && (curLinePos+12 <=lineLen))
       {
         /* look forward and see if this may be a date/time */
         /* XXX 2020-12-14 00:14:59.912 UTC */
-        if (line[curLinePos + 3] EQ '-')
+        if (line[curLinePos + 3] == '-')
         {
-          if (line[curLinePos + 6] EQ ' ')
+          if (line[curLinePos + 6] == ' ')
           {
-            if (line[curLinePos + 9] EQ ':')
+            if (line[curLinePos + 9] == ':')
             {
-              if (line[curLinePos + 12] EQ ':')
+              if (line[curLinePos + 12] == ':')
               {
                 curFieldType = FIELD_TYPE_DT;
                 runLen++;
@@ -425,9 +527,9 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if (FAST_ISALPHA(curChar) | (curChar EQ '@') |
-               ((inQuotes) && (curChar EQ ' ')) |
-               (curChar EQ '\\'))
+      else if (FAST_ISALPHA(curChar) | (curChar == '@') |
+               ((inQuotes) && (curChar == ' ')) |
+               (curChar == '\\'))
       {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
@@ -435,10 +537,10 @@ int parseLine(char *line)
         curLinePos++;
       }
 
-      else if (curChar EQ ':')
+      else if (curChar == ':')
       {
 
-        if (runLen EQ 2)
+        if (runLen == 2)
         {
 
           /* convert field to MAC */
@@ -448,7 +550,7 @@ int parseLine(char *line)
           octet = 1;
           octetLen = 0;
         }
-        else if (runLen EQ 4)
+        else if (runLen == 4)
         {
 
           /* convert field to IPv6 */
@@ -466,10 +568,10 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
       }
-      else if (curChar EQ '-')
+      else if (curChar == '-')
       {
 
-        if (runLen EQ 2)
+        if (runLen == 2)
         {
 
           /* convert field to MAC */
@@ -490,13 +592,13 @@ int parseLine(char *line)
 #ifdef HAVE_ISBLANK
       }
       else if ((ispunct(curChar)) | (isblank(curChar)) |
-               (curChar EQ '/') | (iscntrl(curChar)) |
+               (curChar == '/') | (iscntrl(curChar)) |
                !(isprint(curChar)))
       {
 #else
       }
-      else if ((ispunct(curChar)) | (curChar EQ ' ') |
-               (curChar EQ '\t') | (curChar EQ '/') |
+      else if ((ispunct(curChar)) | (curChar == ' ') |
+               (curChar == '\t') | (curChar == '/') |
                (iscntrl(curChar)) | !(isprint(curChar)))
       {
 #endif
@@ -507,7 +609,7 @@ int parseLine(char *line)
       }
     }
 
-    else if (curFieldType EQ FIELD_TYPE_DT)
+    else if (curFieldType == FIELD_TYPE_DT)
     {
       /******************************************************************
        ****************************** DATE/TIME *************************
@@ -558,7 +660,7 @@ int parseLine(char *line)
         }
         break;
       case 19:
-        if (curChar EQ '.')
+        if (curChar == '.')
         {
           /* date may include milliseconds */
           runLen++;
@@ -595,7 +697,34 @@ int parseLine(char *line)
       }
     }
 
-    else if (curFieldType EQ FIELD_TYPE_EXTRACT)
+    else if (curFieldType == FIELD_TYPE_DT_SYSLOG)
+    {
+      /******************************************************************
+       ****************************** SYSLOG DATE ********************
+       ******************************************************************/
+
+#ifdef DEBUG
+      count_static++;
+      if (config->debug >= 9)
+        printf("DEBUG - STATE=syslog date\n");
+#endif
+
+      /* Pattern: "Mmm dd hh:mm:ss" or "Mmm  d hh:mm:ss" - total 15 chars */
+      if (runLen < 15)
+      {
+        /* Continue consuming characters until we have the full date */
+        runLen++;
+        curLinePos++;
+      }
+      else
+      {
+        /* We've consumed the full syslog date, extract it */
+        fieldTypeChar = 'D';
+        curFieldType = FIELD_TYPE_EXTRACT;
+      }
+    }
+
+    else if (curFieldType == FIELD_TYPE_EXTRACT)
     {
       /******************************************************************
        ****************************** EXTRACT ***************************
@@ -606,9 +735,9 @@ int parseLine(char *line)
       if (config->debug >= 9)
         printf("DEBUG - STATE=extract\n");
 #endif
-      if (fields[fieldPos] EQ NULL)
+      if (fields[fieldPos] == NULL)
       {
-        if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) EQ NULL)
+        if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) == NULL)
         {
           fprintf(stderr, "ERR - Unable to allocate memory for string\n");
           return (fieldPos - 1);
@@ -650,6 +779,12 @@ int parseLine(char *line)
         case 't':
           printf("DEBUG - Extracted date [%s]\n", fields[fieldPos] + 1);
           break;
+        case 'D':
+          printf("DEBUG - Extracted syslog date [%s]\n", fields[fieldPos] + 1);
+          break;
+        case 'b':
+          printf("DEBUG - Extracted base64 [%s]\n", fields[fieldPos] + 1);
+          break;
         default:
           printf("DEBUG - Extracted unknown [%c] - [%s]\n", fieldTypeChar,
                  fields[fieldPos]);
@@ -672,7 +807,7 @@ int parseLine(char *line)
       /* switch field state */
       curFieldType = FIELD_TYPE_UNDEF;
     }
-    else if (curFieldType EQ FIELD_TYPE_IP4)
+    else if (curFieldType == FIELD_TYPE_IP4)
     {
       /******************************************************************
        ****************************** IPv4 ******************************
@@ -691,7 +826,7 @@ int parseLine(char *line)
         curLinePos++;
         octetLen++;
       }
-      else if (curChar EQ '.')
+      else if (curChar == '.')
       {
         if ((octet < 3) && (octetLen > 0) && (octetLen <= 3) &&
             (atoi(line + startOfOctet) < 256))
@@ -711,7 +846,7 @@ int parseLine(char *line)
         }
       }
 
-      else if (octet EQ 3)
+      else if (octet == 3)
       {
         if ((octetLen > 0) && (octetLen <= 3) &&
             (atoi(line + startOfOctet) < 256))
@@ -729,7 +864,7 @@ int parseLine(char *line)
       }
       else
       {
-        if (octet EQ 1)
+        if (octet == 1)
         {
           /* extract field */
           fieldTypeChar = 'f';
@@ -745,7 +880,7 @@ int parseLine(char *line)
       }
     }
 
-    else if (curFieldType EQ FIELD_TYPE_MACADDR)
+    else if (curFieldType == FIELD_TYPE_MACADDR)
     {
       /******************************************************************
        ****************************** MAC ADDR **************************
@@ -767,10 +902,10 @@ int parseLine(char *line)
         octetLen++;
       }
       else if ((octet < 5) &&
-               ((curChar EQ ':') || curChar EQ '-'))
+               ((curChar == ':') || curChar == '-'))
       {
 
-        if (octetLen EQ 2)
+        if (octetLen == 2)
         { /* is the octet valid */
 
           runLen++;
@@ -788,10 +923,10 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if (octet EQ 5)
+      else if (octet == 5)
       {
 
-        if (octetLen EQ 2)
+        if (octetLen == 2)
         { /* is the octet valid */
 
           /* extract field */
@@ -810,7 +945,7 @@ int parseLine(char *line)
       }
     }
 
-    else if (curFieldType EQ FIELD_TYPE_CHAR)
+    else if (curFieldType == FIELD_TYPE_CHAR)
     {
       /******************************************************************
        ****************************** CHAR ******************************
@@ -822,12 +957,12 @@ int parseLine(char *line)
         printf("DEBUG - STATE=char\n");
 #endif
 
-      if (FAST_ISALNUM(curChar) | (curChar EQ '/') |
-          (curChar EQ '@') |
-          ((inQuotes) && (curChar EQ ' ')) |
-          ((inQuotes) && (curChar EQ '=')) |
-          (curChar EQ '\\') | (curChar EQ ' ') |
-          (curChar EQ '-') | (curChar EQ ':'))
+      if (FAST_ISALNUM(curChar) | (curChar == '/') |
+          (curChar == '@') |
+          ((inQuotes) && (curChar == ' ')) |
+          ((inQuotes) && (curChar == '=')) |
+          (curChar == '\\') | (curChar == ' ') |
+          (curChar == '-') | (curChar == ':'))
       {
 
         /* convery char to string */
@@ -842,9 +977,9 @@ int parseLine(char *line)
       {
 #else
       }
-      else if ((ispunct(curChar)) | (curChar EQ ' ') |
+      else if ((ispunct(curChar)) | (curChar == ' ') |
                (iscntrl(curChar)) | !(isprint(curChar)) |
-               (curChar EQ '\t'))
+               (curChar == '\t'))
       {
 #endif
 
@@ -853,7 +988,7 @@ int parseLine(char *line)
         curFieldType = FIELD_TYPE_EXTRACT;
       }
     }
-    else if (curFieldType EQ FIELD_TYPE_NUM_HEX)
+    else if (curFieldType == FIELD_TYPE_NUM_HEX)
     {
       /******************************************************************
        ****************************** NUM HEX ***************************
@@ -872,19 +1007,19 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (FAST_ISALPHA(curChar) | (curChar EQ '@') |
-               ((inQuotes) && (curChar EQ ' ')) |
-               (curChar EQ '\\'))
+      else if (FAST_ISALPHA(curChar) | (curChar == '@') |
+               ((inQuotes) && (curChar == ' ')) |
+               (curChar == '\\'))
       {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
         runLen++;
         curLinePos++;
       }
-      else if (curChar EQ ':')
+      else if (curChar == ':')
       {
 
-        if (runLen EQ 4)
+        if (runLen == 4)
         { /* check to see if this is the start of an IPv6
                               address */
 
@@ -895,7 +1030,7 @@ int parseLine(char *line)
           octet = 1;
           octetLen = 0;
         }
-        else if (runLen EQ 2)
+        else if (runLen == 2)
         { /* check to see if this is the start of a MAC
                                      address */
 
@@ -914,11 +1049,11 @@ int parseLine(char *line)
           curFieldType = FIELD_TYPE_EXTRACT;
         }
       }
-      else if (curChar EQ '-')
+      else if (curChar == '-')
       {
 
         if (runLen
-                EQ 2)
+                == 2)
         { /* check to see if this is the start of a MAC address */
 
           /* convert field to MAC Address */
@@ -939,14 +1074,14 @@ int parseLine(char *line)
 #ifdef HAVE_ISBLANK
       }
       else if ((ispunct(curChar)) | (isblank(curChar)) |
-               (curChar EQ '/') | (curChar EQ '.') |
+               (curChar == '/') | (curChar == '.') |
                (iscntrl(curChar)) | !(isprint(curChar)))
       {
 #else
       }
-      else if ((ispunct(curChar)) | (curChar EQ ' ') |
-               (curChar EQ '\t') | (curChar EQ '/') |
-               (curChar EQ '.') | (iscntrl(curChar)) |
+      else if ((ispunct(curChar)) | (curChar == ' ') |
+               (curChar == '\t') | (curChar == '/') |
+               (curChar == '.') | (iscntrl(curChar)) |
                !(isprint(curChar)))
       {
 #endif
@@ -957,7 +1092,7 @@ int parseLine(char *line)
       }
     }
 
-    else if (curFieldType EQ FIELD_TYPE_IP6)
+    else if (curFieldType == FIELD_TYPE_IP6)
     {
       /******************************************************************
        ****************************** IPv6 ******************************
@@ -977,7 +1112,7 @@ int parseLine(char *line)
         curLinePos++;
         octetLen++;
       }
-      else if ((octet < 8) && (curChar EQ ':'))
+      else if ((octet < 8) && (curChar == ':'))
       {
 
         if ((octetLen > 0) && (octetLen <= 4))
@@ -998,7 +1133,7 @@ int parseLine(char *line)
           curLinePos++;
         }
       }
-      else if (octet EQ 7)
+      else if (octet == 7)
       {
 
         if ((octetLen > 0) && (octetLen <= 4))
@@ -1020,7 +1155,7 @@ int parseLine(char *line)
       }
     }
 
-    else if (curFieldType EQ FIELD_TYPE_NUM_FLOAT)
+    else if (curFieldType == FIELD_TYPE_NUM_FLOAT)
     {
       /******************************************************************
        ****************************** NUM FLOAT *************************
@@ -1044,8 +1179,8 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (FAST_ISALPHA(curChar) | (curChar EQ '@') |
-               ((inQuotes) && (curChar EQ ' ')) | (curChar EQ '\\') | (curChar EQ '.') | (curChar EQ ':') | (curChar EQ '-'))
+      else if (FAST_ISALPHA(curChar) | (curChar == '@') |
+               ((inQuotes) && (curChar == ' ')) | (curChar == '\\') | (curChar == '.') | (curChar == ':') | (curChar == '-'))
       {
         /* convert field to string */
         curFieldType = FIELD_TYPE_STRING;
@@ -1060,34 +1195,143 @@ int parseLine(char *line)
       }
     }
 
+    else if (curFieldType == FIELD_TYPE_BASE64)
+    {
+      /******************************************************************
+       ****************************** BASE64 ****************************
+       ******************************************************************/
+
+#ifdef DEBUG
+      count_base64++;
+      if (config->debug >= 9)
+        printf("DEBUG - STATE=base64 pos=%d blockpos=%d runlen=%d char='%c'\n", 
+               curLinePos, base64BlockPos, runLen, curChar);
+#endif
+
+      unsigned char b64val = base64_table[(unsigned char)curChar];
+      
+      if (b64val == 1) {
+        /* Valid Base64 character */
+        runLen++;
+        curLinePos++;
+        base64BlockPos = (base64BlockPos + 1) % 4;
+        base64PaddingCount = 0;  /* Reset padding if we see valid char */
+      }
+      else if (b64val == 2) {
+        /* Padding character '=' */
+        if (runLen >= 16 && (base64BlockPos == 2 || base64BlockPos == 3)) {
+          /* Valid padding position after minimum length */
+          runLen++;
+          curLinePos++;
+          base64PaddingCount++;
+          base64BlockPos = (base64BlockPos + 1) % 4;
+          
+          /* Check if we've completed a padded block */
+          if (base64BlockPos == 0) {
+            /* Extract as Base64 */
+            fieldTypeChar = 'b';
+            curFieldType = FIELD_TYPE_EXTRACT;
+          }
+        } else {
+          /* Invalid padding - treat accumulated chars as fallback type */
+          if (runLen > 0) {
+            /* Extract what we have so far as the saved type */
+            if (savedFieldType == FIELD_TYPE_NUM_INT) {
+              fieldTypeChar = 'd';
+            } else if (savedFieldType == FIELD_TYPE_NUM_HEX) {
+              fieldTypeChar = 'x';
+            } else if (savedFieldType == FIELD_TYPE_CHAR) {
+              fieldTypeChar = 'c';
+            } else {
+              fieldTypeChar = 's';
+            }
+            curFieldType = FIELD_TYPE_EXTRACT;
+          } else {
+            /* Nothing to extract, reset to UNDEF */
+            curFieldType = FIELD_TYPE_UNDEF;
+          }
+          base64BlockPos = 0;
+          base64PaddingCount = 0;
+        }
+      }
+      else if (b64val == 0) {
+        /* Non-Base64 character encountered */
+        if (runLen >= 16 && base64BlockPos == 0) {
+          /* Valid Base64 ending on block boundary */
+          fieldTypeChar = 'b';
+          curFieldType = FIELD_TYPE_EXTRACT;
+        } else {
+          /* Not valid Base64 - extract as the saved type */
+          if (savedFieldType == FIELD_TYPE_NUM_INT) {
+            fieldTypeChar = 'd';
+          } else if (savedFieldType == FIELD_TYPE_NUM_HEX) {
+            fieldTypeChar = 'x';
+          } else if (savedFieldType == FIELD_TYPE_CHAR) {
+            fieldTypeChar = 'c';
+          } else {
+            fieldTypeChar = 's';
+          }
+          curFieldType = FIELD_TYPE_EXTRACT;
+          base64BlockPos = 0;
+          base64PaddingCount = 0;
+        }
+      }
+    }
+
     else
     {
       /******************************************************************
        ****************************** UNDEF *****************************
        ******************************************************************/
 
+#ifdef DEBUG
+      if (config->debug >= 7)
+        printf("*** UNDEF STATE: char='%c' at pos %d ***\n", curChar, curLinePos);
+#endif
+
       if (FAST_ISDIGIT(curChar))
       {
+        /* Don't check for Base64 on pure numbers - too many false positives */
         curFieldType = FIELD_TYPE_NUM_INT;
         runLen = 1;
         startOfField = curLinePos++;
       }
       else if (FAST_ISXDIGIT(curChar))
       {
+        /* Don't check for Base64 on hex - too many false positives */
         curFieldType = FIELD_TYPE_NUM_HEX;
         runLen = 1;
         startOfField = curLinePos++;
       }
       else if (FAST_ISALPHA(curChar) |
-               ((inQuotes) && (curChar EQ '/')) |
-               (curChar EQ '@') | (curChar EQ '%') |
-               (curChar EQ '$') | (curChar EQ '\\'))
+               ((inQuotes) && (curChar == '/')) |
+               (curChar == '@') | (curChar == '%') |
+               (curChar == '$') | (curChar == '\\'))
       {
-        curFieldType = FIELD_TYPE_CHAR;
-        runLen = 1;
-        startOfField = curLinePos++;
+#ifdef DEBUG
+        if (config->debug >= 8)
+          printf("*** ALPHA CHECK PASSED for char='%c' at pos %d ***\n", curChar, curLinePos);
+#endif
+        /* Check if this might be the start of a syslog date */
+        if (FAST_ISALPHA(curChar) && isSyslogDate(line, curLinePos, lineLen)) {
+#ifdef DEBUG
+          if (config->debug >= 3)
+            printf("*** SYSLOG DATE DETECTED at pos %d: %.20s ***\n", curLinePos, line + curLinePos);
+#endif
+          curFieldType = FIELD_TYPE_DT_SYSLOG;
+          runLen = 1;
+          startOfField = curLinePos++;
+        } else {
+#ifdef DEBUG
+          if (config->debug >= 8)
+            printf("*** NOT SYSLOG DATE at pos %d: char='%c' ***\n", curLinePos, curChar);
+#endif
+          curFieldType = FIELD_TYPE_CHAR;
+          runLen = 1;
+          startOfField = curLinePos++;
+        }
       }
-      else if (curChar EQ '\"')
+      else if (curChar == '\"')
       {
         if (inQuotes)
         {
@@ -1143,7 +1387,7 @@ int parseLine(char *line)
 #else
       }
       else if ((ispunct(curChar)) | (isprint(curChar)) |
-               (curChar EQ ' ') | (curChar EQ '\t'))
+               (curChar == ' ') | (curChar == '\t'))
       {
 #endif
         /* printable but not alpha+num */
@@ -1171,7 +1415,7 @@ int parseLine(char *line)
   }
 
   /* just in case the line was 0 length */
-  if (curLinePos EQ 0)
+  if (curLinePos == 0)
     return (0);
 
   return (fieldPos);
@@ -1185,7 +1429,7 @@ int parseLine(char *line)
 
 int getParsedField(char *oBuf, int oBufLen, const unsigned int fieldNum)
 {
-  if ((fieldNum >= MAX_FIELD_POS) || (fields[fieldNum] EQ NULL))
+  if ((fieldNum >= MAX_FIELD_POS) || (fields[fieldNum] == NULL))
   {
     fprintf(stderr, "ERR - Requested field does not exist [%d]\n", fieldNum);
     oBuf[0] = 0;
@@ -1193,6 +1437,42 @@ int getParsedField(char *oBuf, int oBufLen, const unsigned int fieldNum)
   }
   XSTRNCPY(oBuf, fields[fieldNum], oBufLen);
   return (TRUE);
+}
+
+/****
+ *
+ * Get direct pointer to parsed field (no copy)
+ *
+ * DESCRIPTION:
+ *   Returns a direct pointer to the parsed field data without copying.
+ *   This is much more efficient than getParsedField when the caller
+ *   only needs to read the field data and doesn't need a separate copy.
+ *
+ * PARAMETERS:
+ *   fieldNum - Index of field to retrieve (0 = template)
+ *
+ * RETURNS:
+ *   Pointer to field data on success
+ *   NULL if field doesn't exist or is out of bounds
+ *
+ * SIDE EFFECTS:
+ *   None - just returns existing pointer
+ *
+ * SECURITY FEATURES:
+ *   - Validates field index against MAX_FIELD_POS
+ *   - Returns const pointer to prevent modification
+ *
+ * PERFORMANCE:
+ *   O(1) - Direct array access with no string copying
+ *
+ ****/
+const char *getParsedFieldPtr(const unsigned int fieldNum)
+{
+  if ((fieldNum >= MAX_FIELD_POS) || (fields[fieldNum] == NULL))
+  {
+    return NULL;
+  }
+  return fields[fieldNum];
 }
 
 /****
@@ -1207,6 +1487,10 @@ void showCounts(void)
   fprintf(stderr, "%-15lu STRING Count\n", count_string);
   fprintf(stderr, "%-15lu INT Count\n", count_num_int);
   fprintf(stderr, "%-15lu DATE Count\n", count_dt);
+  fprintf(stderr, "%-15lu SYSLOG_DATE Count\n", count_dt_syslog);
+  fprintf(stderr, "%-15lu EPOCH Count\n", count_dt_epoch);
+  fprintf(stderr, "%-15lu ISO8601 Count\n", count_dt_iso8601);
+  fprintf(stderr, "%-15lu APACHE Count\n", count_dt_apache);
   fprintf(stderr, "%-15lu EXTRACT Count\n", count_extract);
   fprintf(stderr, "%-15lu IPv4 Count\n", count_ip4);
   fprintf(stderr, "%-15lu MAC Count\n", count_mac);
@@ -1214,5 +1498,7 @@ void showCounts(void)
   fprintf(stderr, "%-15lu HEX Count\n", count_num_hex);
   fprintf(stderr, "%-15lu IPv6 Count\n", count_ip6);
   fprintf(stderr, "%-15lu FLOAT Count\n", count_num_float);
+  fprintf(stderr, "%-15lu URL Count\n", count_url);
+  fprintf(stderr, "%-15lu BASE64 Count\n", count_base64);
 #endif
 }

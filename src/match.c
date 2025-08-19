@@ -134,7 +134,7 @@ int addMatchTemplate(char *template)
   XMEMCPY(tmpMatch->template, template, templateLen);
   tmpMatch->len = templateLen;
 
-  if (head EQ NULL)
+  if (head == NULL)
     head = tmpMatch;
   else
   {
@@ -154,7 +154,7 @@ int addMatchTemplate(char *template)
 int loadMatchTemplates(char *fName)
 {
   FILE *inFile;
-  char inBuf[8192];
+  char inBuf[65536];  /* 64KB buffer for better I/O performance */
   size_t count = 0;
   int lLen, i;
 
@@ -163,7 +163,7 @@ int loadMatchTemplates(char *fName)
     printf("DEBUG - Loading match template file [%s]\n", fName);
 #endif
 
-  if ((inFile = secure_fopen(fName, "r")) EQ NULL)
+  if ((inFile = secure_fopen(fName, "r")) == NULL)
   {
     fprintf(stderr, "ERR - Unable to open match template file [%s]\n", fName);
     return (FAILED);
@@ -177,7 +177,7 @@ int loadMatchTemplates(char *fName)
       lLen = strlen(inBuf);
       for (i = 0; i < lLen; i++)
       {
-        if (inBuf[i] EQ '\n' | inBuf[i] EQ '\r')
+        if (inBuf[i] == '\n' || inBuf[i] == '\r')
         {
           inBuf[i] = '\0';
           i = lLen;
@@ -247,7 +247,7 @@ int addMatchLine(char *line)
 int loadMatchLines(char *fName)
 {
   FILE *inFile;
-  char inBuf[8192];
+  char inBuf[65536];  /* 64KB buffer for better I/O performance */
   size_t count = 0;
   int lLen, i;
 
@@ -256,7 +256,7 @@ int loadMatchLines(char *fName)
     printf("DEBUG - Loading match line file [%s]\n", fName);
 #endif
 
-  if ((inFile = secure_fopen(fName, "r")) EQ NULL)
+  if ((inFile = secure_fopen(fName, "r")) == NULL)
   {
     fprintf(stderr, "ERR - Unable to open match line file [%s]\n", fName);
     return (FAILED);
@@ -270,7 +270,7 @@ int loadMatchLines(char *fName)
       lLen = strlen(inBuf);
       for (i = 0; i < lLen; i++)
       {
-        if (inBuf[i] EQ '\n')
+        if (inBuf[i] == '\n')
         {
           inBuf[i] = '\0';
           i = lLen;
@@ -316,12 +316,12 @@ int templateMatches(char *template)
     if (config->debug >= 3)
       printf("DEBUG - Compairing [%s] to [%s]\n", template, matchPtr->template);
 #endif
-    if (matchPtr->len EQ templateLen)
+    if (matchPtr->len == templateLen)
     {
-      for (i = templateLen; match EQ TRUE && i >= 0; i--)
+      for (i = templateLen; match == TRUE && i >= 0; i--)
         if (template[i] != matchPtr->template[i])
           match = FALSE;
-      if (match EQ TRUE)
+      if (match == TRUE)
         return TRUE;
     }
     matchPtr = matchPtr->next;

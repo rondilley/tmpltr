@@ -54,6 +54,7 @@
 #include "mem.h"
 #include "tmpltr.h"
 #include "match.h"
+#include "string_intern.h"
 
 /****
  *
@@ -77,7 +78,6 @@ int main(int argc, char *argv[]);
 PRIVATE void print_version( void );
 PRIVATE void print_help( void );
 PRIVATE void cleanup( void );
-PRIVATE void show_info( void );
 void ctime_prog( int signo );
 
 #endif /* MAIN_DOT_H */

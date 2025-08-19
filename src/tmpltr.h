@@ -52,8 +52,8 @@
 #include "util.h"
 #include "mem.h"
 #include "parser.h"
-#include "bintree.h"
 #include "match.h"
+#include "string_intern.h"
 
 /****
  *
@@ -69,9 +69,12 @@
 
 struct Fields_s
 {
-  int count;
-  struct Fields_s *next;
-  struct binTree_s *head;
+  uint16_t count;          /* Number of unique values stored */
+  uint16_t capacity;       /* Capacity of values array */
+  char **values;           /* Dynamic array of string pointers */
+  uint8_t is_variable;     /* 1 if field is variable (too many values) */
+  uint8_t tracking_enabled; /* 1 if still tracking new values */
+  struct Fields_s *next;   /* Next field in linked list */
 };
 
 typedef struct
@@ -92,5 +95,10 @@ int processFile(const char *fName);
 int showTemplates(void);
 int loadTemplateFile(const char *fName);
 char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize);
+
+/* Array-based field tracking functions */
+void initField(struct Fields_s *field);
+int trackFieldValue(struct Fields_s *field, const char *value);
+void freeField(struct Fields_s *field);
 
 #endif /* TMPLTR_DOT_H */
