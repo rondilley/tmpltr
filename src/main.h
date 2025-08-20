@@ -30,7 +30,7 @@
  ****/
 
 #define PROGNAME "tmpltr"
-#define MAX_ARGS_IN_FIELD 1
+#define MAX_ARGS_IN_FIELD 2
 #define ALARM_TIMER 1
 
 /****

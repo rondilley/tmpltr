@@ -120,7 +120,10 @@ int addMatchTemplate(char *template)
   struct templateMatchList_s *head = matchTemplates;
   struct templateMatchList_s *tmpMatch = XMALLOC(sizeof(struct templateMatchList_s));
 
-  fprintf(stderr, "Adding template to search list [%s]\n", template);
+#ifdef DEBUG
+  if (config->debug >= 1)
+    fprintf(stderr, "Adding template to search list [%s]\n", template);
+#endif
 
   XMEMSET(tmpMatch, 0, sizeof(struct templateMatchList_s));
   if (templateLen > MAX_FIELD_LEN)

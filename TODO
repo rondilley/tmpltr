@@ -4,9 +4,10 @@ Templater (tmpltr) TODO list
 Short-term:
 -----------
 * Add support for multiple threads/processes to split the load when speed is important
-* Benchmark performance improvements against baseline version
 * Add memory usage statistics reporting
-* Implement adaptive hash table resizing based on load factor
+* Implement configurable field type precedence rules
+* Add support for custom date/time format patterns
+* Improve BASE64 minimum length validation
 
 Long-term:
 ----------
@@ -14,4 +15,5 @@ Long-term:
 * Implement template pattern learning/suggestion system
 * Add support for structured log formats (JSON, XML)
 * Create plugin system for custom field extractors
+* Add real-time log stream processing capabilities
 

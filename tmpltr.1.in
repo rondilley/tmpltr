@@ -1,4 +1,4 @@
-.TH TMPLTR 1  "28 February 2022" "tmpltr @VERSION@" "tmpltr @VERSION@"
+.TH TMPLTR 1  "20 August 2025" "tmpltr @VERSION@" "tmpltr @VERSION@"
 .SH NAME
 tmpltr \- High speed log template generator..
 .SH SYNOPSIS
@@ -20,43 +20,43 @@ filename
 
 .SH DESCRIPTION
 .LP
-Log Templater(\fltmpltr\fP) is a small and fast log processor that provides simple artificial ignorance capabilities.  You use the tool to process past log data and store templates that represent normal log line structures.  You then run the tool against current or target logs and all normal patterns are automatically ignored.
+Log Templater(\fltmpltr\fP) is a high-performance log processor that provides advanced artificial ignorance capabilities with intelligent field type detection.  The tool automatically identifies and templates various field types including integers, floats, hexadecimal values, MAC addresses, IPv4/IPv6 addresses, BASE64 encoded data, syslog dates, and ISO timestamps.  You use the tool to process past log data and store templates that represent normal log line structures.  You then run the tool against current or target logs and all normal patterns are automatically ignored, leaving only anomalous entries for analysis.
 
 .SH OPTIONS
 Command line options are described below.
 .TP 5
 .B \-c
-Display template output showing non-variable arguments.
+Enable clustering mode to display template output showing invariant (non-variable) fields alongside variable field templates.  This mode preserves constant portions of log messages while templating variable data.
 .TP
 .B \-d
 Enable debug mode, the higher the \fllog\-level\fP, the more verbose the logging.
 .TP
 .B \-g
-Ignore double quotes and use greedy tokenization.
+Ignore double quotes and use greedy tokenization.  This option treats quoted strings as regular tokens rather than preserving them as literal strings.
 .TP
 .B \-h
 Display help details.
 .TP
 .B \-t
-Load templates from a file.  Matching templates will be ignored.
+Load templates from a file.  Log lines matching these pre-existing templates will be ignored during processing, effectively filtering out known patterns.
 .TP
 .B \-v
 Show version information.
 .TP
 .B \-w
-Save templates to a file.
+Save all discovered templates to a file for later use with the -t option or for analysis of log patterns.
 .TP
 .B filename
-One or more files to process, us '\-' to read from stdin.
+One or more files to process, use '\-' to read from stdin.  Multiple files can be specified for batch processing.
 
 .SH EXAMPLES
 .TP
-Process file using the fast parse and template code.
+Process a log file using standard templating mode.
 .B tmpltr
 .I file
 .PP
 .TP
-Process file using the clustering parse and template code.
+Process a log file using clustering mode to show invariant fields.
 .B tmpltr
 \-c
 .I file
@@ -76,7 +76,7 @@ Read templates from infile and process file, ignoring templates found in infile.
 .I file
 .PP
 .TP
-Read templates from infile and process file, ignorming templated found in infile and writing all templates from infile and new to outfile.
+Read templates from infile and process file, ignoring templates found in infile and writing all templates from infile plus newly discovered ones to outfile.
 .br
 .B tmpltr
 \-t
@@ -97,7 +97,7 @@ SIGTERM will cause \fltmpltr\fP to shutdown.
 
 .SH COPYRIGHT
 .B tmpltr 
-is Copyright (c) 2012 Ron Dilley.
+is Copyright (c) 2012-2025 Ron Dilley.
 
 This program is free software; you can redistribute it and/or modify 
 it under the terms of the GNU General Public License as published 
@@ -121,6 +121,26 @@ tmpltr-workers@uberadmin.com
 Please send source code contributions, etc. to:
 tmpltr-patches@uberadmin.com
 
+Field type detection includes:
+.br
+%d - Integer fields (signed/unsigned)
+.br
+%f - Floating point numbers
+.br
+%x - Hexadecimal values
+.br
+%m - MAC addresses (case consistent)
+.br
+%i - IPv4/IPv6 addresses
+.br
+%b - BASE64 encoded data (with proper validation)
+.br
+%D - Syslog dates (Mmm dd hh:mm:ss format at line start)
+.br
+%t - ISO timestamps
+.br
+%s - Generic string fields
+.PP
 There are no documented bugs at this time.
 .SH AUTHORS
 Ron Dilley e-mail: ron.dilley@uberadmin.com

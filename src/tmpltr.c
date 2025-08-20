@@ -162,10 +162,22 @@ char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize)
             (template[rPos + 1] == 'm') ||
             (template[rPos + 1] == 'i') ||
             (template[rPos + 1] == 'I') ||
-            (template[rPos + 1] == 'b'))
+            (template[rPos + 1] == 'b') ||
+            (template[rPos + 1] == 'D'))
         {
+          /* Special handling for %D - it's already complete, just copy it and skip field */
+          if (template[rPos + 1] == 'D') {
+            /* Copy the %D and skip the corresponding field */
+            if (wPos < bufSize - 2) {
+              oBuf[wPos++] = template[rPos++];
+              oBuf[wPos++] = template[rPos++];
+            } else {
+              done = TRUE; /* Buffer full */
+            }
+            done = TRUE;
+          }
           /* Only substitute if field is invariant (has exactly one unique value) */
-          if (curFieldPtr->count == 1) {
+          else if (curFieldPtr->count == 1) {
             /* Get first value based on storage type */
             const char *firstValue = NULL;
             switch (curFieldPtr->storage_type) {
@@ -178,7 +190,7 @@ char *clusterTemplate(char *template, metaData_t *md, char *oBuf, int bufSize)
               case FIELD_STORAGE_HASHSET:
                 /* For hash set, we need to find the first non-null bucket */
                 if (curFieldPtr->storage.hashset) {
-                  uint16_t j;
+                  uint32_t j;
                   for (j = 0; j < curFieldPtr->storage.hashset->capacity; j++) {
                     if (curFieldPtr->storage.hashset->buckets[j] != NULL) {
                       firstValue = curFieldPtr->storage.hashset->buckets[j];
@@ -373,7 +385,10 @@ int processFile(const char *fName)
   
   current_parser->init();
 
-  fprintf(stderr, "Opening [%s] for read\n", fName);
+#ifdef DEBUG
+  if (config->debug >= 1)
+    fprintf(stderr, "Opening [%s] for read\n", fName);
+#endif
   if (strcmp(fName, "-") == 0)
   {
     inFile = stdin;
@@ -449,6 +464,7 @@ int processFile(const char *fName)
 
       /* the first field is the generated template */
       current_parser->getParsedField(oBuf, sizeof(oBuf), 0);
+      int templateLen = strlen(oBuf) + 1;
 
       if (config->match)
       {
@@ -458,7 +474,7 @@ int processFile(const char *fName)
       else
       {
         /* load it into the hash */
-        if ((tmpRec = getHashRecord(templateHash, oBuf, strlen(oBuf) + 1)) == NULL)
+        if ((tmpRec = getHashRecord(templateHash, oBuf, templateLen)) == NULL)
         { /* new template */
 
 #ifdef DEBUG
@@ -475,7 +491,7 @@ int processFile(const char *fName)
           XSTRNCPY(tmpMd->lBuf, inBuf, LINEBUF_SIZE);
 
           /* stuff the new record into the hash before processing fields */
-          if ((tmpRec = addUniqueHashRec(templateHash, oBuf, strlen(oBuf) + 1, tmpMd)) == NULL)
+          if ((tmpRec = addUniqueHashRec(templateHash, oBuf, templateLen, tmpMd)) == NULL)
           {
             fprintf(stderr, "ERR - Unable to add hash record\n");
           }
@@ -526,81 +542,40 @@ int processFile(const char *fName)
               printf("DEBUG - Updating existing template\n");
 #endif
 
-            /* Only process fields if this template needs more samples */
-            if (config->cluster && !tmpMd->template_complete)
+            /* process arguments if clustering is enabled - only for first few occurrences */
+            if (config->cluster && tmpMd->count <= config->clusterDepth)
             {
               curFieldPtr = &tmpMd->head;
-              int fields_still_tracking = 0;
-              int fields_needing_samples = 0;
-              
-              /* First pass: check which fields still need samples */
-              struct Fields_s *check_field = tmpMd->head;
-              for (i = 1; i < ret && check_field != NULL; i++) {
-                if (check_field->count < config->clusterDepth) {
-                  fields_needing_samples++;
-                }
-                check_field = check_field->next;
-              }
-              
-              /* Skip field processing if template has enough samples */
-              if (fields_needing_samples == 0) {
-                tmpMd->template_complete = 1;
-                tmpMd->all_fields_stopped_tracking = 1;
-              } else {
-                /* Process only fields that need more samples */
-                for (i = 1; i < ret; i++)
+              for (i = 1; i < ret; i++)
+              {
+                current_parser->getParsedField(inBuf, sizeof(inBuf), i);
+
+#ifdef DEBUG
+                if (config->debug >= 4)
+                  printf("DEBUG - Processing argument [%s]\n", inBuf);
+#endif
+
+                if (*curFieldPtr == NULL)
                 {
-                  if (*curFieldPtr == NULL)
-                  {
-                    *curFieldPtr = (struct Fields_s *)XMALLOC(sizeof(struct Fields_s));
-                    initField(*curFieldPtr);
-                  }
-                  
-                  /* Only parse and track if this field needs more samples */
-                  if ((*curFieldPtr)->count < config->clusterDepth) {
-                    current_parser->getParsedField(inBuf, sizeof(inBuf), i);
-
-#ifdef DEBUG
-                    if (config->debug >= 4)
-                      printf("DEBUG - Sampling argument [%s] for field %d\n", inBuf, i);
-#endif
-
-                    /* Track field value */
-                    if (trackFieldValue(*curFieldPtr, inBuf) == 1)
-                    {
-#ifdef DEBUG
-                      if (config->debug)
-                        argCount++;
-#endif
-                    }
-                  }
-                  
-                  /* Count fields that still need samples */
-                  if ((*curFieldPtr)->count < config->clusterDepth) {
-                    fields_still_tracking = 1;
-                  }
-                  
-                  curFieldPtr = &(*curFieldPtr)->next;
+                  *curFieldPtr = (struct Fields_s *)XMALLOC(sizeof(struct Fields_s));
+                  initField(*curFieldPtr);
                 }
-                
-                /* Mark template complete if all fields have enough samples */
-                if (!fields_still_tracking) {
-                  tmpMd->template_complete = 1;
-                  tmpMd->all_fields_stopped_tracking = 1;
+
+                /* Track field value using efficient array-based approach */
+                if (trackFieldValue(*curFieldPtr, inBuf) == 1)
+                {
+#ifdef DEBUG
+                  if (config->debug)
+                    argCount++;
+#endif
                 }
+                curFieldPtr = &(*curFieldPtr)->next;
               }
             }
           }
         }
       }
       lineCount++;
-      
-      /* Periodically check if hash table needs growing during processing */
-      if ((lineCount & 0x3FF) == 0) { /* Every 1024 lines */
-        if (templateHash->totalRecords * 4 > templateHash->size * 3) {
-          templateHash = dyGrowHash(templateHash);
-        }
-      }
     }
   }
 
@@ -804,8 +779,9 @@ int trackFieldValue(struct Fields_s *field, const char *value)
   if (!internedValue)
     return -1;
   
-  /* Stop tracking if we exceed clusterDepth */
-  if (field->count >= config->clusterDepth) {
+  /* Stop tracking if we have enough unique values to determine variability */
+  /* Need at least 2 unique values to know if field is variable */
+  if (field->count > config->clusterDepth) {
     field->is_variable = 1;
     field->tracking_enabled = 0;
     
@@ -949,12 +925,12 @@ static uint32_t field_hash_string(const char *str) {
 }
 
 /* Create a new hash set with given initial capacity */
-field_hashset_t *field_hashset_create(uint16_t initial_capacity) {
+field_hashset_t *field_hashset_create(uint32_t initial_capacity) {
   field_hashset_t *hs;
-  uint16_t capacity = 16;  /* Start with minimum size */
+  uint32_t capacity = 16;  /* Start with minimum size */
   
   /* Round up to next power of 2 */
-  while (capacity < initial_capacity && capacity < 32768) {
+  while (capacity < initial_capacity && capacity < 0x40000000) {  /* Max 1GB entries */
     capacity <<= 1;
   }
   
@@ -992,7 +968,7 @@ void field_hashset_destroy(field_hashset_t *hs) {
 /* Check if value exists or add it to the hash set */
 int field_hashset_contains_or_add(field_hashset_t *hs, const char *interned_str) {
   uint32_t hash;
-  uint16_t index, probe;
+  uint32_t index, probe;
   
   if (!hs || !interned_str)
     return 0;
@@ -1034,9 +1010,9 @@ int field_hashset_contains_or_add(field_hashset_t *hs, const char *interned_str)
 /* Resize hash set when load factor is too high */
 void field_hashset_resize(field_hashset_t *hs) {
   const char **old_buckets;
-  uint16_t old_capacity, i;
+  uint32_t old_capacity, i;
   
-  if (!hs || hs->capacity >= 32768)  /* Max capacity */
+  if (!hs || hs->capacity >= 0x40000000)  /* Max capacity 1GB entries */
     return;
   
   old_buckets = hs->buckets;

@@ -81,14 +81,14 @@
 /* Simple hash set for field values */
 typedef struct {
   const char **buckets;    /* Array of interned string pointers */
-  uint16_t capacity;        /* Power of 2 for fast modulo */
-  uint16_t count;          /* Number of entries */
+  uint32_t capacity;        /* Power of 2 for fast modulo */
+  uint32_t count;          /* Number of entries (32-bit to handle millions) */
   uint16_t max_probe;      /* Maximum probe distance seen */
 } field_hashset_t;
 
 struct Fields_s
 {
-  uint16_t count;          /* Number of unique values stored */
+  uint32_t count;          /* Number of unique values stored (32-bit to handle millions) */
   uint8_t storage_type;    /* INLINE, DYNAMIC, or HASHSET */
   uint8_t is_variable;     /* 1 if field is variable (too many values) */
   uint8_t tracking_enabled; /* 1 if still tracking new values */
@@ -137,7 +137,7 @@ int trackFieldValue(struct Fields_s *field, const char *value);
 void freeField(struct Fields_s *field);
 
 /* Hash set helper functions */
-field_hashset_t *field_hashset_create(uint16_t initial_capacity);
+field_hashset_t *field_hashset_create(uint32_t initial_capacity);
 void field_hashset_destroy(field_hashset_t *hs);
 int field_hashset_contains_or_add(field_hashset_t *hs, const char *interned_str);
 void field_hashset_resize(field_hashset_t *hs);

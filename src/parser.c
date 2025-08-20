@@ -65,8 +65,7 @@ PRIVATE size_t count_static = 0;
 /* Month name lookup table for syslog format */
 PRIVATE const char *month_names[] = {
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-};
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
 /* Helper function to check if string matches a month name */
 PRIVATE int isMonthName(const char *str, int len)
@@ -74,7 +73,7 @@ PRIVATE int isMonthName(const char *str, int len)
   int i;
   if (len != 3)
     return FALSE;
-  
+
   for (i = 0; i < 12; i++)
   {
     if (strncmp(str, month_names[i], 3) == 0)
@@ -86,22 +85,22 @@ PRIVATE int isMonthName(const char *str, int len)
 /* Base64 character lookup table for O(1) validation */
 /* Valid chars: A-Z (65-90), a-z (97-122), 0-9 (48-57), + (43), / (47), = (61) */
 PRIVATE const unsigned char base64_table[256] = {
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 0-15 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 16-31 */
-  0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,  /* 32-47: + at 43, / at 47 */
-  1,1,1,1,1,1,1,1,1,1,0,0,0,2,0,0,  /* 48-63: 0-9, = at 61 (2=padding) */
-  0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  /* 64-79: A-O */
-  1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,  /* 80-95: P-Z */
-  0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,  /* 96-111: a-o */
-  1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,  /* 112-127: p-z */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 128-143 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 144-159 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 160-175 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 176-191 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 192-207 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 208-223 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,  /* 224-239 */
-  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0   /* 240-255 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 0-15 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 16-31 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, /* 32-47: + at 43, / at 47 */
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 2, 0, 0, /* 48-63: 0-9, = at 61 (2=padding) */
+    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 64-79: A-O */
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, /* 80-95: P-Z */
+    0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, /* 96-111: a-o */
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, /* 112-127: p-z */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 128-143 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 144-159 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 160-175 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 176-191 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 192-207 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 208-223 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* 224-239 */
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  /* 240-255 */
 };
 
 /* Helper function to check for valid Base64 character - inline for speed */
@@ -117,36 +116,41 @@ PRIVATE int isSyslogDate(const char *line, int pos, int lineLen)
   /* Minimum length needed: 15 characters (double digit day) */
   if (pos + 15 > lineLen)
     return FALSE;
-  
+
   /* Check month name (3 chars) */
   if (!isMonthName(line + pos, 3))
     return FALSE;
-  
+
   /* Check space after month */
   if (line[pos + 3] != ' ')
     return FALSE;
-  
+
   /* Check day (1 or 2 digits with possible leading space) */
   int dayPos = pos + 4;
-  if (line[dayPos] == ' ') {
+  if (line[dayPos] == ' ')
+  {
     /* Single digit day with leading space */
     dayPos++;
     if (!FAST_ISDIGIT(line[dayPos]))
       return FALSE;
-  } else if (FAST_ISDIGIT(line[dayPos])) {
+  }
+  else if (FAST_ISDIGIT(line[dayPos]))
+  {
     /* Two digit day */
     if (!FAST_ISDIGIT(line[dayPos + 1]))
       return FALSE;
     dayPos++;
-  } else {
+  }
+  else
+  {
     return FALSE;
   }
-  
+
   /* Check space before time */
   dayPos++;
   if (line[dayPos] != ' ')
     return FALSE;
-  
+
   /* Check time pattern: hh:mm:ss */
   int timePos = dayPos + 1;
   if (!FAST_ISDIGIT(line[timePos]) || !FAST_ISDIGIT(line[timePos + 1]))
@@ -159,7 +163,7 @@ PRIVATE int isSyslogDate(const char *line, int pos, int lineLen)
     return FALSE;
   if (!FAST_ISDIGIT(line[timePos + 6]) || !FAST_ISDIGIT(line[timePos + 7]))
     return FALSE;
-  
+
   return TRUE;
 }
 
@@ -210,7 +214,7 @@ extern Config_t *config;
 void initParser(void)
 {
   int i;
-  
+
   /* make sure the field list of clean */
   XMEMSET(fields, 0, sizeof(char *) * MAX_FIELD_POS);
 
@@ -295,9 +299,11 @@ int parseLine(char *line)
   char fieldTypeChar;
   char curChar = line[0];
   int lineLen = strlen(line);
-  int base64BlockPos = 0;  /* Position within 4-byte block */
-  int base64PaddingCount = 0;  /* Track '=' padding chars */
-  int savedFieldType = FIELD_TYPE_UNDEF;  /* For rollback */
+  int base64BlockPos = 0;                /* Position within 4-byte block */
+  int base64PaddingCount = 0;            /* Track '=' padding chars */
+  int savedFieldType = FIELD_TYPE_UNDEF; /* For rollback */
+  int hexCase = 0;                       /* 0=unset, 1=lower, 2=upper */
+  int macCase = 0;                       /* 0=unset, 1=lower, 2=upper */
 
   /* Field 0 is pre-allocated for template storage */
   fieldPos++;
@@ -305,7 +311,7 @@ int parseLine(char *line)
   while (curChar != '\0')
   {
 
-    if (runLen >= MAX_FIELD_LEN-1)
+    if (runLen >= MAX_FIELD_LEN - 1)
     {
 
       fprintf(stderr, "ERR - Field is too long\n");
@@ -348,6 +354,7 @@ int parseLine(char *line)
         case '%':
         case '_':
         case '\\':
+        case '*':
           runLen++;
           curLinePos++;
           break;
@@ -414,7 +421,6 @@ int parseLine(char *line)
         case '\'':
         case '`':
         case '&':
-        case '*':
         case '(':
         case ')':
         case '\r': // to address broken input fields
@@ -445,6 +451,7 @@ int parseLine(char *line)
         printf("DEBUG - STATE=num_int\n");
 #endif
 
+      /* Check for digits first to continue in NUM_INT state */
       if (FAST_ISDIGIT(curChar))
       {
         runLen++;
@@ -457,48 +464,75 @@ int parseLine(char *line)
         runLen++;
         curLinePos++;
       }
-      else if (curChar == '.')
+      else
       {
-        if ((runLen <= 3) &
-            (atoi(line + startOfField) <
-             256))
-        { /* check to see if this is the start of an IP address */
+        /* Use switch for single character decisions */
+        switch (curChar)
+        {
+        case '.':
+          if ((runLen <= 3) &&
+              (atoi(line + startOfField) <
+               256))
+          { /* check to see if this is the start of an IP address */
 
-          /* convert field to IPv4 */
-          curFieldType = FIELD_TYPE_IP4;
-          runLen++;
-          startOfOctet = ++curLinePos;
-          octet = 1;
-          octetLen = 0;
-        }
-        else
-        {
-          /* convert field to float */
-          curFieldType = FIELD_TYPE_NUM_FLOAT;
-          runLen++;
-          curLinePos++;
-        }
-      }
-      else if ((runLen == 4) && (curChar == '-') && (curLinePos+12 <=lineLen))
-      {
-        /* look forward and see if this may be a date/time */
-        /* XXX 2020-12-14 00:14:59.912 UTC */
-        if (line[curLinePos + 3] == '-')
-        {
-          if (line[curLinePos + 6] == ' ')
+            /* convert field to IPv4 */
+            curFieldType = FIELD_TYPE_IP4;
+            runLen++;
+            startOfOctet = ++curLinePos;
+            octet = 1;
+            octetLen = 0;
+          }
+          else
           {
-            if (line[curLinePos + 9] == ':')
+            /* convert field to float */
+            curFieldType = FIELD_TYPE_NUM_FLOAT;
+            runLen++;
+            curLinePos++;
+          }
+
+          break;
+
+        case '-':
+          /* Check for special cases first */
+          if ((runLen == 4) && (curLinePos + 12 <= lineLen))
+          {
+            /* look forward and see if this may be a date/time */
+            /* XXX 2020-12-14 00:14:59.912 UTC */
+            if (line[curLinePos + 3] == '-')
             {
-              if (line[curLinePos + 12] == ':')
+              if (line[curLinePos + 6] == ' ')
               {
-                curFieldType = FIELD_TYPE_DT;
-                runLen++;
-                curLinePos++;
+                if (line[curLinePos + 9] == ':')
+                {
+                  if (line[curLinePos + 12] == ':')
+                  {
+                    curFieldType = FIELD_TYPE_DT;
+                    runLen++;
+                    curLinePos++;
+                  }
+                  else
+                  {
+                    /* convert field to string */
+                    curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+                    runLen++;
+                    curLinePos++;
+                  }
+                }
+                else
+                {
+                  /* convert field to string */
+                  curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+                  runLen++;
+                  curLinePos++;
+                }
               }
               else
               {
                 /* convert field to string */
                 curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
                 runLen++;
                 curLinePos++;
               }
@@ -507,105 +541,119 @@ int parseLine(char *line)
             {
               /* convert field to string */
               curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
               runLen++;
               curLinePos++;
             }
+          }
+          else if (runLen == 2)
+          {
+            /* convert field to MAC */
+            curFieldType = FIELD_TYPE_MACADDR;
+            runLen++;
+            startOfOctet = ++curLinePos;
+            octet = 1;
+            octetLen = 0;
+          }
+          else
+          {
+            /* extract field */
+            fieldTypeChar = 'd';
+            curFieldType = FIELD_TYPE_EXTRACT;
+          }
+          break;
+
+        case ':':
+          if (runLen == 2)
+          {
+            /* convert field to MAC */
+            curFieldType = FIELD_TYPE_MACADDR;
+            runLen++;
+            startOfOctet = ++curLinePos;
+            octet = 1;
+            octetLen = 0;
+          }
+          else if (runLen == 4)
+          {
+            /* convert field to IPv6 */
+            curFieldType = FIELD_TYPE_IP6;
+            runLen++;
+            startOfOctet = ++curLinePos;
+            octet = 1;
+            octetLen = 0;
+          }
+          else
+          {
+            /* extract field */
+            fieldTypeChar = 'd';
+            curFieldType = FIELD_TYPE_EXTRACT;
+          }
+          break;
+
+        case '@':
+        case '\\':
+          /* convert field to string */
+          curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+          runLen++;
+          curLinePos++;
+          break;
+
+        case ' ':
+          if (inQuotes)
+          {
+            /* convert field to string */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+            runLen++;
+            curLinePos++;
+          }
+          else
+          {
+            /* extract field */
+            fieldTypeChar = 'd';
+            curFieldType = FIELD_TYPE_EXTRACT;
+          }
+          break;
+
+        case '\t':
+        case '/':
+          /* extract field */
+          fieldTypeChar = 'd';
+          curFieldType = FIELD_TYPE_EXTRACT;
+          break;
+
+        default:
+          /* Handle alphabetic and other characters */
+          if (FAST_ISALPHA(curChar))
+          {
+            /* convert field to string */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+            runLen++;
+            curLinePos++;
+          }
+#ifdef HAVE_ISBLANK
+          else if ((ispunct(curChar)) || (isblank(curChar)) ||
+                   (iscntrl(curChar)) || !(isprint(curChar)))
+#else
+          else if ((ispunct(curChar)) || (iscntrl(curChar)) || !(isprint(curChar)))
+#endif
+          {
+            /* extract field */
+            fieldTypeChar = 'd';
+            curFieldType = FIELD_TYPE_EXTRACT;
           }
           else
           {
             /* convert field to string */
             curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
             runLen++;
             curLinePos++;
           }
+          break;
         }
-        else
-        {
-          /* convert field to string */
-          curFieldType = FIELD_TYPE_STRING;
-          runLen++;
-          curLinePos++;
-        }
-      }
-      else if (FAST_ISALPHA(curChar) || (curChar == '@') ||
-               ((inQuotes) && (curChar == ' ')) ||
-               (curChar == '\\'))
-      {
-        /* convert field to string */
-        curFieldType = FIELD_TYPE_STRING;
-        runLen++;
-        curLinePos++;
-      }
-
-      else if (curChar == ':')
-      {
-
-        if (runLen == 2)
-        {
-
-          /* convert field to MAC */
-          curFieldType = FIELD_TYPE_MACADDR;
-          runLen++;
-          startOfOctet = ++curLinePos;
-          octet = 1;
-          octetLen = 0;
-        }
-        else if (runLen == 4)
-        {
-
-          /* convert field to IPv6 */
-          curFieldType = FIELD_TYPE_IP6;
-          runLen++;
-          startOfOctet = ++curLinePos;
-          octet = 1;
-          octetLen = 0;
-        }
-        else
-        {
-
-          /* extract field */
-          fieldTypeChar = 'd';
-          curFieldType = FIELD_TYPE_EXTRACT;
-        }
-      }
-      else if (curChar == '-')
-      {
-
-        if (runLen == 2)
-        {
-
-          /* convert field to MAC */
-          curFieldType = FIELD_TYPE_MACADDR;
-          runLen++;
-          startOfOctet = ++curLinePos;
-          octet = 1;
-          octetLen = 0;
-        }
-        else
-        {
-
-          /* extract field */
-          fieldTypeChar = 'd';
-          curFieldType = FIELD_TYPE_EXTRACT;
-        }
-
-#ifdef HAVE_ISBLANK
-      }
-      else if ((ispunct(curChar)) || (isblank(curChar)) ||
-               (curChar == '/') || (iscntrl(curChar)) ||
-               !(isprint(curChar)))
-      {
-#else
-      }
-      else if ((ispunct(curChar)) || (curChar == ' ') ||
-               (curChar == '\t') || (curChar == '/') ||
-               (iscntrl(curChar)) || !(isprint(curChar)))
-      {
-#endif
-
-        /* extract field */
-        fieldTypeChar = 'd';
-        curFieldType = FIELD_TYPE_EXTRACT;
       }
     }
 
@@ -621,8 +669,8 @@ int parseLine(char *line)
         printf("DEBUG - STATE=date\n");
 #endif
 
-        /* XXX 2020-12-14 00:14:59.912 UTC */
-        /* already tested 4, 7, 10, 13, 16 */
+      /* XXX 2020-12-14 00:14:59.912 UTC */
+      /* already tested 4, 7, 10, 13, 16 */
 
 #ifdef DEBUG
       if (config->debug >= 10)
@@ -657,6 +705,7 @@ int parseLine(char *line)
         {
           /* convert field to string */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
         }
         break;
       case 19:
@@ -671,6 +720,7 @@ int parseLine(char *line)
           /* too many digits in seconds, must be a string */
           /* convert field to string */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           runLen++;
           curLinePos++;
         }
@@ -820,7 +870,7 @@ int parseLine(char *line)
 #endif
 
       /* XXX need to add code to handle numbers beginning with 0 */
-      if (FAST_ISDIGIT(curChar))
+      if (isdigit(curChar))
       {
         runLen++;
         curLinePos++;
@@ -841,6 +891,7 @@ int parseLine(char *line)
 
           /* switch field to string */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           runLen++;
           curLinePos++;
         }
@@ -860,6 +911,7 @@ int parseLine(char *line)
         {
           /* last octec is invalid */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
         }
       }
       else
@@ -874,6 +926,7 @@ int parseLine(char *line)
         {
           /* convert field to string */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           runLen++;
           curLinePos++;
         }
@@ -897,6 +950,26 @@ int parseLine(char *line)
       /* XXX need to add code to handle numbers beginning with 0 */
       if (FAST_ISXDIGIT(curChar) && (octetLen < 2))
       {
+        /* Check case consistency for alphabetic hex digits in MAC */
+        if (FAST_ISALPHA(curChar))
+        {
+          int currentCase = islower(curChar) ? 1 : 2;
+          if (macCase == 0)
+          {
+            /* First alphabetic hex digit in MAC, set the case */
+            macCase = currentCase;
+          }
+          else if (macCase != currentCase)
+          {
+            /* Case mismatch - convert to string */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+            runLen++;
+            curLinePos++;
+            macCase = 0; /* Reset for next field */
+            break; /* Exit this case to process as string */
+          }
+        }
         runLen++;
         curLinePos++;
         octetLen++;
@@ -919,6 +992,7 @@ int parseLine(char *line)
           /* not a valid ipv6 octet */
           /* XXX need to add rollback so we dont loose previous fields */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           runLen++;
           curLinePos++;
         }
@@ -932,16 +1006,19 @@ int parseLine(char *line)
           /* extract field */
           fieldTypeChar = 'm';
           curFieldType = FIELD_TYPE_EXTRACT;
+          macCase = 0; /* Reset mac case */
         }
         else
         {
           /* last octec is invalid */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
         }
       }
       else
       {
         curFieldType = FIELD_TYPE_STRING;
+        macCase = 0; /* Reset mac case */
       }
     }
 
@@ -957,35 +1034,123 @@ int parseLine(char *line)
         printf("DEBUG - STATE=char\n");
 #endif
 
-      if (FAST_ISALNUM(curChar) || (curChar == '/') ||
-          (curChar == '@') ||
-          ((inQuotes) && (curChar == ' ')) ||
-          ((inQuotes) && (curChar == '=')) ||
-          (curChar == '\\') || (curChar == ' ') ||
-          (curChar == '-') || (curChar == ':'))
+      switch (curChar)
       {
-
-        /* convery char to string */
+      case 'a':
+      case 'b':
+      case 'c':
+      case 'd':
+      case 'e':
+      case 'f':
+      case 'g':
+      case 'h':
+      case 'i':
+      case 'j':
+      case 'k':
+      case 'l':
+      case 'm':
+      case 'n':
+      case 'o':
+      case 'p':
+      case 'q':
+      case 'r':
+      case 's':
+      case 't':
+      case 'u':
+      case 'v':
+      case 'w':
+      case 'x':
+      case 'y':
+      case 'z':
+      case 'A':
+      case 'B':
+      case 'C':
+      case 'D':
+      case 'E':
+      case 'F':
+      case 'G':
+      case 'H':
+      case 'I':
+      case 'J':
+      case 'K':
+      case 'L':
+      case 'M':
+      case 'N':
+      case 'O':
+      case 'P':
+      case 'Q':
+      case 'R':
+      case 'S':
+      case 'T':
+      case 'U':
+      case 'V':
+      case 'W':
+      case 'X':
+      case 'Y':
+      case 'Z':
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+      case '/':
+      case '@':
+      case '\\':
+      case '-':
+      case ':':
+      case '*':
+        /* convert char to string */
         curFieldType = FIELD_TYPE_STRING;
         runLen++;
         curLinePos++;
+        break;
 
+      case ' ':
+      case '=':
+        if (inQuotes)
+        {
+          /* convert char to string when in quotes */
+          curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+          runLen++;
+          curLinePos++;
+        }
+        else
+        {
+          /* extract field */
+          fieldTypeChar = 'c';
+          curFieldType = FIELD_TYPE_EXTRACT;
+        }
+        break;
+
+      default:
+        /* check if punctuation, control, or non-printable */
+        if (ispunct(curChar) || iscntrl(curChar) || !isprint(curChar)
 #ifdef HAVE_ISBLANK
-      }
-      else if ((ispunct(curChar)) || (iscntrl(curChar)) ||
-               !(isprint(curChar)) || (isblank(curChar)))
-      {
+            || isblank(curChar)
 #else
-      }
-      else if ((ispunct(curChar)) || (curChar == ' ') ||
-               (iscntrl(curChar)) || !(isprint(curChar)) ||
-               (curChar == '\t'))
-      {
+            || curChar == '\t'
 #endif
-
-        /* extract field */
-        fieldTypeChar = 'c';
-        curFieldType = FIELD_TYPE_EXTRACT;
+        )
+        {
+          /* extract field */
+          fieldTypeChar = 'c';
+          curFieldType = FIELD_TYPE_EXTRACT;
+        }
+        else
+        {
+          /* convert char to string for other printable characters */
+          curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+          runLen++;
+          curLinePos++;
+        }
+        break;
       }
     }
     else if (curFieldType == FIELD_TYPE_NUM_HEX)
@@ -1004,6 +1169,26 @@ int parseLine(char *line)
       /* XXX need to add code to handle numbers beginning with 0 */
       if (FAST_ISXDIGIT(curChar))
       {
+        /* Check case consistency for alphabetic hex digits */
+        if (FAST_ISALPHA(curChar))
+        {
+          int currentCase = islower(curChar) ? 1 : 2;
+          if (hexCase == 0)
+          {
+            /* First alphabetic hex digit, set the case */
+            hexCase = currentCase;
+          }
+          else if (hexCase != currentCase)
+          {
+            /* Case mismatch - convert to string */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+            runLen++;
+            curLinePos++;
+            hexCase = 0; /* Reset for next field */
+            break; /* Exit this case to process as string */
+          }
+        }
         runLen++;
         curLinePos++;
       }
@@ -1040,6 +1225,8 @@ int parseLine(char *line)
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
+          macCase = hexCase; /* Inherit case from hex field */
+          hexCase = 0; /* Reset hex case */
         }
         else
         {
@@ -1052,8 +1239,7 @@ int parseLine(char *line)
       else if (curChar == '-')
       {
 
-        if (runLen
-                == 2)
+        if (runLen == 2)
         { /* check to see if this is the start of a MAC address */
 
           /* convert field to MAC Address */
@@ -1062,11 +1248,14 @@ int parseLine(char *line)
           startOfOctet = ++curLinePos;
           octet = 1;
           octetLen = 0;
+          macCase = hexCase; /* Inherit case from hex field */
+          hexCase = 0; /* Reset hex case */
         }
         else
         {
           /* convert field to string */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           runLen++;
           curLinePos++;
         }
@@ -1089,6 +1278,7 @@ int parseLine(char *line)
         /* extract field */
         fieldTypeChar = 'x';
         curFieldType = FIELD_TYPE_EXTRACT;
+        hexCase = 0; /* Reset hex case */
       }
     }
 
@@ -1129,6 +1319,7 @@ int parseLine(char *line)
           /* not a valid ipv6 octet */
           /* XXX need to add rollback so we dont loose previous fields */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           runLen++;
           curLinePos++;
         }
@@ -1147,6 +1338,7 @@ int parseLine(char *line)
         {
           /* last octec is invalid */
           curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
         }
       }
       else
@@ -1204,49 +1396,76 @@ int parseLine(char *line)
 #ifdef DEBUG
       count_base64++;
       if (config->debug >= 9)
-        printf("DEBUG - STATE=base64 pos=%d blockpos=%d runlen=%d char='%c'\n", 
+        printf("DEBUG - STATE=base64 pos=%d blockpos=%d runlen=%d char='%c'\n",
                curLinePos, base64BlockPos, runLen, curChar);
 #endif
 
       unsigned char b64val = base64_table[(unsigned char)curChar];
-      
-      if (b64val == 1) {
-        /* Valid Base64 character */
+
+      if (b64val == 1)
+      {
+        /* Valid Base64 character - always continue as BASE64 regardless of saved type */
+        /* BASE64 includes A-Z, a-z, 0-9, +, / so we should accept all of these */
         runLen++;
         curLinePos++;
         base64BlockPos = (base64BlockPos + 1) % 4;
-        base64PaddingCount = 0;  /* Reset padding if we see valid char */
+        base64PaddingCount = 0; /* Reset padding if we see valid char */
       }
-      else if (b64val == 2) {
+      else if (b64val == 2)
+      {
         /* Padding character '=' */
-        if (runLen >= 16 && (base64BlockPos == 2 || base64BlockPos == 3)) {
-          /* Valid padding position after minimum length */
+        /* Allow padding if total length (including padding) will be >= 16 */
+        if ((base64BlockPos == 2 || base64BlockPos == 3) && 
+            (runLen + (4 - base64BlockPos) >= 16))
+        {
+          /* Valid padding position and will meet minimum length with padding */
           runLen++;
           curLinePos++;
           base64PaddingCount++;
           base64BlockPos = (base64BlockPos + 1) % 4;
-          
+
           /* Check if we've completed a padded block */
-          if (base64BlockPos == 0) {
+          if (base64BlockPos == 0)
+          {
             /* Extract as Base64 */
             fieldTypeChar = 'b';
             curFieldType = FIELD_TYPE_EXTRACT;
           }
-        } else {
-          /* Invalid padding - treat accumulated chars as fallback type */
-          if (runLen > 0) {
-            /* Extract what we have so far as the saved type */
-            if (savedFieldType == FIELD_TYPE_NUM_INT) {
-              fieldTypeChar = 'd';
-            } else if (savedFieldType == FIELD_TYPE_NUM_HEX) {
-              fieldTypeChar = 'x';
-            } else if (savedFieldType == FIELD_TYPE_CHAR) {
-              fieldTypeChar = 'c';
-            } else {
+        }
+        else
+        {
+          /* Invalid padding - treat accumulated chars as STRING for multi-char sequences */
+          if (runLen > 0)
+          {
+            /* Multi-character sequences that failed BASE64 should be STRING */
+            if (runLen > 1)
+            {
               fieldTypeChar = 's';
             }
+            else
+            {
+              /* Single character - use saved type */
+              if (savedFieldType == FIELD_TYPE_NUM_INT)
+              {
+                fieldTypeChar = 'd';
+              }
+              else if (savedFieldType == FIELD_TYPE_NUM_HEX)
+              {
+                fieldTypeChar = 'x';
+              }
+              else if (savedFieldType == FIELD_TYPE_CHAR)
+              {
+                fieldTypeChar = 'c';
+              }
+              else
+              {
+                fieldTypeChar = 's';
+              }
+            }
             curFieldType = FIELD_TYPE_EXTRACT;
-          } else {
+          }
+          else
+          {
             /* Nothing to extract, reset to UNDEF */
             curFieldType = FIELD_TYPE_UNDEF;
           }
@@ -1254,24 +1473,206 @@ int parseLine(char *line)
           base64PaddingCount = 0;
         }
       }
-      else if (b64val == 0) {
+      else if (b64val == 0)
+      {
         /* Non-Base64 character encountered */
-        if (runLen >= 16 && base64BlockPos == 0) {
+        if (runLen >= 16 && base64BlockPos == 0)
+        {
           /* Valid Base64 ending on block boundary */
           fieldTypeChar = 'b';
           curFieldType = FIELD_TYPE_EXTRACT;
-        } else {
-          /* Not valid Base64 - extract as the saved type */
-          if (savedFieldType == FIELD_TYPE_NUM_INT) {
-            fieldTypeChar = 'd';
-          } else if (savedFieldType == FIELD_TYPE_NUM_HEX) {
-            fieldTypeChar = 'x';
-          } else if (savedFieldType == FIELD_TYPE_CHAR) {
-            fieldTypeChar = 'c';
-          } else {
-            fieldTypeChar = 's';
+        }
+        else
+        {
+          /* Not valid Base64 - decide based on length and saved type */
+          if (savedFieldType == FIELD_TYPE_CHAR && runLen > 1)
+          {
+            /* Multi-character sequence starting with CHAR should become STRING */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
           }
-          curFieldType = FIELD_TYPE_EXTRACT;
+          else if (savedFieldType == FIELD_TYPE_NUM_INT && curChar == '.')
+          {
+            /* Check for IPv4 when NUM_INT encounters '.' - same logic as NUM_INT state */
+            if ((runLen <= 3) && (atoi(line + startOfField) < 256))
+            {
+              /* Valid start of IPv4 address */
+              curFieldType = FIELD_TYPE_IP4;
+              runLen++;
+              startOfOctet = ++curLinePos;
+              octet = 1;
+              octetLen = 0;
+            }
+            else
+            {
+              /* IPv4 test failed, transition to NUM_FLOAT like NUM_INT does */
+              curFieldType = FIELD_TYPE_NUM_FLOAT;
+              runLen++;
+              curLinePos++;
+            }
+          }
+          else if (savedFieldType == FIELD_TYPE_NUM_INT && curChar == '-')
+          {
+            /* Check for ISO date when NUM_INT encounters '-' - same logic as NUM_INT state */
+            if ((runLen == 4) && (curLinePos + 12 <= lineLen))
+            {
+              /* look forward and see if this may be a date/time */
+              /* XXX 2020-12-14 00:14:59.912 UTC */
+              if (line[curLinePos + 3] == '-')
+              {
+                if (line[curLinePos + 6] == ' ')
+                {
+                  if (line[curLinePos + 9] == ':')
+                  {
+                    if (line[curLinePos + 12] == ':')
+                    {
+                      curFieldType = FIELD_TYPE_DT;
+                      runLen++;
+                      curLinePos++;
+                    }
+                    else
+                    {
+                      /* convert field to string */
+                      curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+                      runLen++;
+                      curLinePos++;
+                    }
+                  }
+                  else
+                  {
+                    /* convert field to string */
+                    curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+                    runLen++;
+                    curLinePos++;
+                  }
+                }
+                else
+                {
+                  /* convert field to string */
+                  curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+                  runLen++;
+                  curLinePos++;
+                }
+              }
+              else
+              {
+                /* convert field to string */
+                curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+                runLen++;
+                curLinePos++;
+              }
+            }
+            else if (runLen == 2)
+            {
+              /* convert field to MAC */
+              curFieldType = FIELD_TYPE_MACADDR;
+              runLen++;
+              startOfOctet = ++curLinePos;
+              octet = 1;
+              octetLen = 0;
+            }
+            else
+            {
+              /* extract field as number */
+              fieldTypeChar = 'd';
+              curFieldType = FIELD_TYPE_EXTRACT;
+            }
+          }
+          else if (savedFieldType == FIELD_TYPE_NUM_INT && curChar == ':')
+          {
+            /* Check for MAC or IPv6 when NUM_INT encounters ':' - same logic as NUM_INT state */
+            if (runLen == 2)
+            {
+              /* convert field to MAC */
+              curFieldType = FIELD_TYPE_MACADDR;
+              runLen++;
+              startOfOctet = ++curLinePos;
+              octet = 1;
+              octetLen = 0;
+            }
+            else if (runLen == 4)
+            {
+              /* convert field to IPv6 */
+              curFieldType = FIELD_TYPE_IP6;
+              runLen++;
+              startOfOctet = ++curLinePos;
+              octet = 1;
+              octetLen = 0;
+            }
+            else
+            {
+              /* extract field as number */
+              fieldTypeChar = 'd';
+              curFieldType = FIELD_TYPE_EXTRACT;
+            }
+          }
+          else if (savedFieldType == FIELD_TYPE_NUM_INT && (curChar == '+' || curChar == '@' || curChar == '\\'))
+          {
+            /* For NUM_INT saved state, these characters should cause transition to STRING like in NUM_INT state */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+            runLen++;
+            curLinePos++;
+          }
+          else if (savedFieldType == FIELD_TYPE_NUM_INT && FAST_ISALPHA(curChar))
+          {
+            /* convert field to string */
+            curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+            runLen++;
+            curLinePos++;
+          }
+          else if (savedFieldType == FIELD_TYPE_NUM_HEX && (curChar == ':' || curChar == '-'))
+          {
+            /* Check for MAC address when NUM_HEX encounters ':' or '-' */
+            if (runLen == 2)
+            {
+              /* convert field to MAC */
+              curFieldType = FIELD_TYPE_MACADDR;
+              runLen++;
+              startOfOctet = ++curLinePos;
+              octet = 1;
+              octetLen = 0;
+              macCase = hexCase; /* Inherit case from hex field */
+              hexCase = 0; /* Reset hex case */
+            }
+            else
+            {
+              /* extract field as hex */
+              fieldTypeChar = 'x';
+              curFieldType = FIELD_TYPE_EXTRACT;
+              hexCase = 0; /* Reset hex case */
+            }
+          }
+          else
+          {
+            /* Extract as appropriate type - multi-char sequences should be STRING */
+            if (runLen > 1)
+            {
+              fieldTypeChar = 's';
+            }
+            else if (savedFieldType == FIELD_TYPE_NUM_INT)
+            {
+              fieldTypeChar = 'd';
+            }
+            else if (savedFieldType == FIELD_TYPE_NUM_HEX)
+            {
+              fieldTypeChar = 'x';
+            }
+            else if (savedFieldType == FIELD_TYPE_CHAR)
+            {
+              fieldTypeChar = 'c';
+            }
+            else
+            {
+              fieldTypeChar = 's';
+            }
+            curFieldType = FIELD_TYPE_EXTRACT;
+          }
           base64BlockPos = 0;
           base64PaddingCount = 0;
         }
@@ -1289,21 +1690,79 @@ int parseLine(char *line)
         printf("*** UNDEF STATE: char='%c' at pos %d ***\n", curChar, curLinePos);
 #endif
 
-      if (FAST_ISDIGIT(curChar))
+      /* Check if this might be the start of a syslog date - only at beginning of line */
+      if ((curLinePos == 0) && (curChar == 'J' || curChar == 'F' || curChar == 'M' || curChar == 'A' ||
+                                curChar == 'S' || curChar == 'O' || curChar == 'N' || curChar == 'D'))
       {
-        /* Don't check for Base64 on pure numbers - too many false positives */
-        curFieldType = FIELD_TYPE_NUM_INT;
+        if (isSyslogDate(line, curLinePos, lineLen))
+        {
+#ifdef DEBUG
+          if (config->debug >= 3)
+            printf("*** SYSLOG DATE DETECTED at pos %d: %.20s ***\n", curLinePos, line + curLinePos);
+#endif
+          curFieldType = FIELD_TYPE_DT_SYSLOG;
+          runLen = 1;
+          startOfField = curLinePos++;
+        }
+        else
+        {
+          /* Failed syslog test, switch to BASE64 state */
+#ifdef DEBUG
+          if (config->debug >= 8)
+            printf("*** FAILED SYSLOG TEST, switching to BASE64 at pos %d: char='%c' ***\n", curLinePos, curChar);
+#endif
+          /* Determine the saved type based on character class */
+          if (FAST_ISDIGIT(curChar))
+          {
+            savedFieldType = FIELD_TYPE_NUM_INT;
+          }
+          else if (FAST_ISXDIGIT(curChar) && !FAST_ISDIGIT(curChar))
+          {
+            savedFieldType = FIELD_TYPE_NUM_HEX;
+            hexCase = islower(curChar) ? 1 : 2; /* Set case for hex */
+          }
+          else
+          {
+            savedFieldType = FIELD_TYPE_CHAR;
+          }
+          curFieldType = FIELD_TYPE_BASE64;
+          base64BlockPos = 1;
+          base64PaddingCount = 0;
+          runLen = 1;
+          startOfField = curLinePos++;
+        }
+      }
+      else if (base64_table[(unsigned char)curChar] == 1)
+      {
+        /* Determine the saved type based on character class */
+        if (FAST_ISDIGIT(curChar))
+        {
+          savedFieldType = FIELD_TYPE_NUM_INT;
+        }
+        else if (FAST_ISXDIGIT(curChar) && !FAST_ISDIGIT(curChar))
+        {
+          savedFieldType = FIELD_TYPE_NUM_HEX;
+          hexCase = islower(curChar) ? 1 : 2; /* Set case for hex */
+        }
+        else
+        {
+          savedFieldType = FIELD_TYPE_CHAR;
+        }
+
+        curFieldType = FIELD_TYPE_BASE64;
+        base64BlockPos = 1;
+        base64PaddingCount = 0;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (FAST_ISXDIGIT(curChar))
+      else if (curChar == '*')
       {
-        /* Don't check for Base64 on hex - too many false positives */
-        curFieldType = FIELD_TYPE_NUM_HEX;
+        /* Treat * like other characters that can form strings */
+        curFieldType = FIELD_TYPE_CHAR;
         runLen = 1;
         startOfField = curLinePos++;
       }
-      else if (FAST_ISALPHA(curChar) ||
+      else if (
                ((inQuotes) && (curChar == '/')) ||
                (curChar == '@') || (curChar == '%') ||
                (curChar == '$') || (curChar == '\\'))
@@ -1312,113 +1771,169 @@ int parseLine(char *line)
         if (config->debug >= 8)
           printf("*** ALPHA CHECK PASSED for char='%c' at pos %d ***\n", curChar, curLinePos);
 #endif
-        /* Check if this might be the start of a syslog date */
-        if (FAST_ISALPHA(curChar) && isSyslogDate(line, curLinePos, lineLen)) {
-#ifdef DEBUG
-          if (config->debug >= 3)
-            printf("*** SYSLOG DATE DETECTED at pos %d: %.20s ***\n", curLinePos, line + curLinePos);
-#endif
-          curFieldType = FIELD_TYPE_DT_SYSLOG;
-          runLen = 1;
-          startOfField = curLinePos++;
-        } else {
-#ifdef DEBUG
-          if (config->debug >= 8)
-            printf("*** NOT SYSLOG DATE at pos %d: char='%c' ***\n", curLinePos, curChar);
-#endif
-          curFieldType = FIELD_TYPE_CHAR;
-          runLen = 1;
-          startOfField = curLinePos++;
-        }
-      }
-      else if (curChar == '\"')
-      {
-        if (inQuotes)
-        {
-          /* something is really broke */
-          runLen++;
-          curLinePos++;
-          inQuotes = FALSE;
-        }
-        else
-        {
-          if (!config->greedy)
-          {
-            if (templatePos > (MAX_FIELD_LEN - 2))
-            {
-              fprintf(stderr, "ERR - Template is too long\n");
-              return (fieldPos - 1);
-            }
-            fields[0][templatePos++] = curChar;
-            fields[0][templatePos] = '\0';
-            curFieldType = FIELD_TYPE_STRING;
-            inQuotes = TRUE;
-            runLen = 0;
-            startOfField = ++curLinePos;
-          }
-          else
-          {
-            /* printable but not alpha+num */
-            if (templatePos > (MAX_FIELD_LEN - 2))
-            {
-              fprintf(stderr, "ERR - Template is too long\n");
-              return (fieldPos - 1);
-            }
-            fields[0][templatePos++] = curChar;
-            fields[0][templatePos] = '\0';
-#ifdef DEBUG
-            if (config->debug >= 10)
-              printf("DEBUG - Updated template [%s]\n", fields[0]);
-#endif
-            runLen = 1;
-            startOfField = curLinePos++;
-          }
-        }
-      }
-      else if ((iscntrl(curChar)) || !(isprint(curChar)))
-      {
-        /* not a valid log character, ignore it for now */
-        curLinePos++;
-#ifdef HAVE_ISBLANK
-      }
-      else if ((ispunct(curChar)) || (isblank(curChar)) ||
-               (isprint(curChar)))
-      {
-#else
-      }
-      else if ((ispunct(curChar)) || (isprint(curChar)) ||
-               (curChar == ' ') || (curChar == '\t'))
-      {
-#endif
-        /* printable but not alpha+num */
-        if (templatePos > (MAX_FIELD_LEN - 2))
-        {
-          fprintf(stderr, "ERR - Template is too long\n");
-          return (fieldPos - 1);
-        }
-        fields[0][templatePos++] = curChar;
-        fields[0][templatePos] = '\0';
-#ifdef DEBUG
-        if (config->debug >= 10)
-          printf("DEBUG - Updated template [%s]\n", fields[0]);
-#endif
+
+        curFieldType = FIELD_TYPE_CHAR;
         runLen = 1;
         startOfField = curLinePos++;
+    }
+    else if (curChar == '\"')
+    {
+      if (inQuotes)
+      {
+        /* something is really broke */
+        runLen++;
+        curLinePos++;
+        inQuotes = FALSE;
       }
       else
       {
-        /* ignore it */
-        curLinePos++;
+        if (!config->greedy)
+        {
+          if (templatePos > (MAX_FIELD_LEN - 2))
+          {
+            fprintf(stderr, "ERR - Template is too long\n");
+            return (fieldPos - 1);
+          }
+          fields[0][templatePos++] = curChar;
+          fields[0][templatePos] = '\0';
+          curFieldType = FIELD_TYPE_STRING;
+          macCase = 0; /* Reset mac case */
+          inQuotes = TRUE;
+          runLen = 0;
+          startOfField = ++curLinePos;
+        }
+        else
+        {
+          /* printable but not alpha+num */
+          if (templatePos > (MAX_FIELD_LEN - 2))
+          {
+            fprintf(stderr, "ERR - Template is too long\n");
+            return (fieldPos - 1);
+          }
+          fields[0][templatePos++] = curChar;
+          fields[0][templatePos] = '\0';
+#ifdef DEBUG
+          if (config->debug >= 10)
+            printf("DEBUG - Updated template [%s]\n", fields[0]);
+#endif
+          runLen = 1;
+          startOfField = curLinePos++;
+        }
       }
     }
-    curChar = line[curLinePos];
+    else if ((iscntrl(curChar)) || !(isprint(curChar)))
+    {
+      /* not a valid log character, ignore it for now */
+      curLinePos++;
+#ifdef HAVE_ISBLANK
+    }
+    else if ((ispunct(curChar)) || (isblank(curChar)) ||
+             (isprint(curChar)))
+    {
+#else
+    }
+    else if ((ispunct(curChar)) || (isprint(curChar)) ||
+             (curChar == ' ') || (curChar == '\t'))
+    {
+#endif
+      /* printable but not alpha+num */
+      if (templatePos > (MAX_FIELD_LEN - 2))
+      {
+        fprintf(stderr, "ERR - Template is too long\n");
+        return (fieldPos - 1);
+      }
+      fields[0][templatePos++] = curChar;
+      fields[0][templatePos] = '\0';
+#ifdef DEBUG
+      if (config->debug >= 10)
+        printf("DEBUG - Updated template [%s]\n", fields[0]);
+#endif
+      runLen = 1;
+      startOfField = curLinePos++;
+    }
+    else
+    {
+      /* ignore it */
+      curLinePos++;
+    }
   }
+  curChar = line[curLinePos];
+}
 
-  /* just in case the line was 0 length */
-  if (curLinePos == 0)
-    return (0);
+/* Handle any incomplete field at end of line */
+if (curFieldType == FIELD_TYPE_BASE64)
+{
+  if (runLen >= 16 && (base64BlockPos == 0 || (base64PaddingCount > 0 && base64BlockPos == 0)))
+  {
+    fieldTypeChar = 'b';
+    curFieldType = FIELD_TYPE_EXTRACT;
+  }
+  else if (runLen >= 16)
+  {
+    /* Has minimum length but doesn't end on boundary - still could be valid BASE64 */
+    fieldTypeChar = 'b';
+    curFieldType = FIELD_TYPE_EXTRACT;
+  }
+  else
+  {
+    /* Not valid BASE64 - extract as appropriate type */
+    if (runLen > 1)
+    {
+      /* Multi-character sequences should be STRING */
+      fieldTypeChar = 's';
+    }
+    else if (savedFieldType == FIELD_TYPE_NUM_INT)
+    {
+      fieldTypeChar = 'd';
+    }
+    else if (savedFieldType == FIELD_TYPE_NUM_HEX)
+    {
+      fieldTypeChar = 'x';
+    }
+    else if (savedFieldType == FIELD_TYPE_CHAR)
+    {
+      fieldTypeChar = 'c';
+    }
+    else
+    {
+      fieldTypeChar = 's';
+    }
+    curFieldType = FIELD_TYPE_EXTRACT;
+  }
+}
 
-  return (fieldPos);
+/* Extract any pending field at end of line */
+if (curFieldType == FIELD_TYPE_EXTRACT)
+{
+  if (fields[fieldPos] == NULL)
+  {
+    if ((fields[fieldPos] = (char *)XMALLOC(MAX_FIELD_LEN)) == NULL)
+    {
+      fprintf(stderr, "ERR - Unable to allocate memory for string\n");
+      return (fieldPos - 1);
+    }
+  }
+  fields[fieldPos][runLen + 1] = '\0';
+  fields[fieldPos][0] = fieldTypeChar;
+  XMEMCPY(fields[fieldPos] + 1, line + startOfField, runLen);
+
+  /* update template */
+  if (templatePos > (MAX_FIELD_LEN - 3))
+  {
+    fprintf(stderr, "ERR - Template is too long\n");
+    return (fieldPos - 1);
+  }
+  fields[0][templatePos++] = '%';
+  fields[0][templatePos++] = fieldTypeChar;
+  fields[0][templatePos] = '\0';
+  fieldPos++;
+}
+
+/* just in case the line was 0 length */
+if (curLinePos == 0)
+  return (0);
+
+return (fieldPos);
 }
 
 /****
@@ -1478,7 +1993,7 @@ const char *getParsedFieldPtr(const unsigned int fieldNum)
 /****
  *
  * show debug state counts
- * 
+ *
  ****/
 
 void showCounts(void)
